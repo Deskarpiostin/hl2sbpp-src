@@ -1,0 +1,4 @@
+#!/bin/bash
+export PATH="$PWD/clang+llvm-11.1.0-x86_64-linux-gnu-ubuntu-16.04/bin:$PATH"
+./waf configure -T release --build-game=hl2sbpp --prefix=srceng-mod-launcher/android --android=armeabi-v7a-hard,host,21 --target=../armeabi-v7a --disable-warns &&
+./waf install --target=client,server --strip

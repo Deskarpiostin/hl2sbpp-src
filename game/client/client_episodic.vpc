@@ -1,0 +1,42 @@
+//-----------------------------------------------------------------------------
+//	CLIENT_EPISODIC.VPC
+//
+//	Project Script
+//-----------------------------------------------------------------------------
+
+$Macro SRCDIR		"..\.."
+$Macro GAMENAME 	"episodic" [!$SOURCESDK]
+$Macro GAMENAME 	"mod_episodic" [$SOURCESDK]
+
+$Include "$SRCDIR\game\client\client_base.vpc"
+
+$Configuration
+{
+	$Compiler
+	{
+		$AdditionalIncludeDirectories	".\hl2;.\hl2\elements;$SRCDIR\game\shared\hl2;$SRCDIR\game\shared\episodic;..\..\public;$BASE"
+		$PreprocessorDefinitions		"$BASE;HL2_CLIENT_DLL;HL2_EPISODIC"
+	}
+}
+
+$Project "Client (Episodic)"
+{
+	$Folder	"Source Files"
+	{
+		$Folder	"HL2 DLL"
+		{
+			$File	"episodic\c_prop_scalable.cpp"
+			$File	"episodic\c_vehicle_jeep_episodic.cpp"
+			$File	"episodic\c_weapon_hopwire.cpp"
+			$File	"$SRCDIR\game\shared\episodic\npc_advisor_shared.h"
+			$File	"episodic\c_npc_advisor.cpp"
+			$File	"episodic\episodic_screenspaceeffects.cpp"
+			$File	"episodic\episodic_screenspaceeffects.h"
+			$File	"episodic\flesh_internal_material_proxy.cpp"
+			$File	"episodic\c_npc_puppet.cpp"
+			$File 	"hl2\hud_radar.cpp"
+			$File   "$SRCDIR/game/shared/hl2/survival_gamerules.cpp"
+		}
+	}
+	
+}
