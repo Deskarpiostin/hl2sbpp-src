@@ -102,7 +102,7 @@ void CNPC_Barney_HL1::Spawn()
 {
 	Precache( );
 
-	SetModel( "models/barney.mdl");
+	SetModel( "models/barney_hl1.mdl");
 
 	SetRenderColor( 255, 255, 255, 255 );
 	
@@ -138,7 +138,7 @@ void CNPC_Barney_HL1::Precache()
 {
 	m_iAmmoType = GetAmmoDef()->Index("9mmRound");
 
-	PrecacheModel("models/barney.mdl");
+	PrecacheModel("models/barney_hl1.mdl");
 
 	PrecacheScriptSound( "Barney.FirePistol" );
 	PrecacheScriptSound( "Barney.Pain" );

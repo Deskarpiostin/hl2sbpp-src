@@ -27,6 +27,9 @@ public:
 	void SetMouseOverImage( void );
 	void SetMouseClickImage( void );
 
+	// @ThePixelMoon: hacky hack
+	const char* GetCommand() const { return command; }
+
 private:
 	vgui::IImage *i_normalImage; // The image when the mouse isn't over it, and its not being clicked
 	vgui::IImage *i_mouseOverImage; // The image that appears as when the mouse is hovering over it

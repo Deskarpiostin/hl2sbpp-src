@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -39,6 +39,7 @@ protected:
 	virtual void PerformLayout();
 	virtual void OnCommand(const char *command);
 	virtual void OnKeyCodeTyped(KeyCode code);
+	virtual void OnCursorMoved(int x, int y);
 
 public:
 	void EnableApplyButton(bool bEnable);

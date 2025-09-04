@@ -27,6 +27,8 @@ static const luaL_Reg luasrclibs[] = {
 #ifndef CLIENT_DLL
   {LUA_EFFECTSLIBNAME, luaopen_Effects},
   {LUA_HL2MPPLAYERLIBNAME, luaopen_CHL2MP_Player},
+  {LUA_NAVAREALIBNAME, luaopen_CNavArea},
+  {LUA_NAVMESHLIBNAME, luaopen_navmesh},
 #endif
   {LUA_HL2MPPLAYERLIBNAME, luaopen_CHL2MP_Player_shared},
   {LUA_COLORLIBNAME, luaopen_Color},

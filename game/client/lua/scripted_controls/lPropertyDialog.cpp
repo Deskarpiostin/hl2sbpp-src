@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -100,6 +100,16 @@ void LPropertyDialog::OnKeyCodeTyped(KeyCode code)
 	BaseClass::OnKeyCodeTyped(code);
 }
 
+// input messages handlers (designed for override)
+void LPropertyDialog::OnCursorMoved(int x, int y)
+{
+#ifdef LUA_SDK
+	BEGIN_LUA_CALL_PROPERTYDIALOG_METHOD( "OnCursorMoved" );
+		lua_pushinteger( m_lua_State, x );
+		lua_pushinteger( m_lua_State, y );
+	END_LUA_CALL_PANEL_METHOD( 2, 0 );
+#endif
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: Command handler

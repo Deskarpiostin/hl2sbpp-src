@@ -94,7 +94,24 @@ static int luasrc_type (lua_State *L) {
 }
 
 
-static int luasrc_include (lua_State *L) {
+static int luasrc_include(lua_State *L) {
+  lua_Debug ar1;
+  lua_getstack(L, 1, &ar1);
+  lua_getinfo(L, "f", &ar1);
+  lua_Debug ar2;
+  lua_getinfo(L, ">S", &ar2);
+  int iLength = Q_strlen( ar2.source );
+  char source[MAX_PATH];
+  Q_StrRight( ar2.source, iLength-1, source, sizeof( source ) );
+  Q_StripFilename( source );
+  char filename[MAX_PATH];
+  // @ThePixelMoon: hacky hack
+  Q_snprintf( filename, sizeof( filename ), "%s/../%s", source, luaL_checkstring(L, 1) );
+  luasrc_dofile(L, filename);
+  return 0;
+}
+
+static int luasrc_includeC (lua_State *L) {
   lua_Debug ar1;
   lua_getstack(L, 1, &ar1);
   lua_getinfo(L, "f", &ar1);
@@ -110,11 +127,11 @@ static int luasrc_include (lua_State *L) {
   return 0;
 }
 
-
 static const luaL_Reg base_funcs[] = {
   {"print", luasrc_print},
   {"type", luasrc_type},
   {"include", luasrc_include},
+  {"includeC", luasrc_includeC},
   {NULL, NULL}
 };
 
@@ -132,9 +149,13 @@ static void base_open (lua_State *L) {
 #ifdef CLIENT_DLL
   lua_pushboolean(L, 1);
   lua_setglobal(L, "_CLIENT");  /* set global _CLIENT */
+  lua_pushboolean(L, 1);
+  lua_setglobal(L, "CLIENT");  /* set global CLIENT */
 #else
   lua_pushboolean(L, 1);
   lua_setglobal(L, "_GAME");  /* set global _GAME */
+  lua_pushboolean(L, 1);
+  lua_setglobal(L, "SERVER");  /* set global SERVER */
 #endif
 }
 
@@ -193,6 +214,7 @@ void luasrc_init_gameui (void) {
   luaopen_ConCommand(LGameUI);
   luaopen_dbg(LGameUI);
   luaopen_engine(LGameUI);
+  luaopen_Color(LGameUI); /* what genius forgot to add this */
   luaopen_enginevgui(LGameUI);
   luaopen_FCVAR(LGameUI);
   luaopen_KeyValues(LGameUI);

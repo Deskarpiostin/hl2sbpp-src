@@ -891,7 +891,6 @@ CHLClient::CHLClient()
 
 extern IGameSystem *ViewportClientSystem();
 
-
 //-----------------------------------------------------------------------------
 ISourceVirtualReality *g_pSourceVR = NULL;
 
@@ -984,6 +983,77 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 
 	if (!g_pMatSystemSurface)
 		return false;
+
+
+#ifdef HL2SB
+	const char* pFullPath = engine->GetGameDirectory();
+	DevMsg("full path: %s\n", pFullPath);
+
+    const char* relativeTargets[] = {
+        "hl2mp/hl2mp_english_dir.vpk",
+        "hl2mp/hl2mp_pak_dir.vpk",
+        "lostcoast/lostcoast_sound_vo_english_dir.vpk",
+        "lostcoast/lostcoast_pak_dir.vpk",
+        "cstrike/cstrike_pak_dir.vpk",
+        "dod/dod_pak_dir.vpk",
+        "hl1/hl1_pak_dir.vpk",
+        "episodic/ep1_pak_dir.vpk",
+        "ep2/ep2_pak_dir.vpk",
+        "garrysmod/garrysmod_dir.vpk",
+        "portal/portal_sound_vo_english_dir.vpk",
+        "portal/portal_pak_dir.vpk",
+        "cstrike/cstrike_english_dir.vpk",
+        "dod/dod_english_dir.vpk",
+        "hl1_hd/hl1_hd_pak_dir.vpk",
+        "hl1/hl1_sound_vo_english_dir.vpk",
+        "hl1/hl1_pak_dir.vpk",
+        "hl1mp/hl1mp_pak_dir.vpk",
+        "episodic/ep1_sound_vo_english_dir.vpk",
+        "ep2/ep2_sound_vo_english_dir.vpk",
+
+        "episodic",
+        "ep2",
+        "hl2mp",
+        "hl2sb",
+        "hl1",
+        "dod",
+        "portal",
+        "cstrike",
+        "garrysmod"
+    };
+
+    for (int i = 0; i < ARRAYSIZE(relativeTargets); ++i)
+    {
+        char candidate[MAX_PATH * 3];
+        Q_snprintf(candidate, sizeof(candidate), "%s/../%s", pFullPath, relativeTargets[i]);
+
+        // normalize
+        V_FixSlashes(candidate);
+
+        const char *lastSlash = Q_strrchr(candidate, '/');
+        const char *lastName = lastSlash ? lastSlash + 1 : candidate;
+        bool isDir = (candidate[Q_strlen(candidate) - 1] == '/') || (Q_strrchr(lastName, '.') == NULL);
+
+        if (isDir)
+            V_AppendSlash(candidate, sizeof(candidate));
+
+        if (g_pFullFileSystem->FileExists(candidate, "GAME"))
+        {
+			if (!isDir)
+			{
+				DevMsg("Mounting VPK: %s\n", candidate);
+				g_pFullFileSystem->AddSearchPath(candidate, "GAME", PATH_ADD_TO_TAIL);
+			}
+			else
+			{
+				DevMsg("Mounting directory: %s\n", candidate);
+				g_pFullFileSystem->AddSearchPath(candidate, "GAME", PATH_ADD_TO_TAIL);
+			}
+        }
+        else
+            DevMsg("Skipping missing: %s\n", candidate);
+    }
+#endif
 
 #ifdef WORKSHOP_IMPORT_ENABLED
 	if ( !ConnectDataModel( appSystemFactory ) )

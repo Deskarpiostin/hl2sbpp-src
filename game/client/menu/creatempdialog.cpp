@@ -5,32 +5,84 @@
 #include <vgui_controls/PropertySheet.h>
 #include <vgui_controls/PanelListPanel.h>
 #include <vgui_controls/Label.h>
+#include <vgui_controls/Tooltip.h>
 #include <vgui/IScheme.h>
 #include <vgui/IVGui.h>
-#include "vgui_imagebutton.h"
-
-#include <stdio.h>
 #include "filesystem.h"
 
 using namespace vgui;
 
-ConVar selmap("selmap", "");
-ConVar mpdialog("mpdialog", "");
+ConVar selmap("selmap", "", FCVAR_DEVELOPMENTONLY);
+ConVar mpdialog("mpdialog", "0");
 
-void MakeVMT( const char *vmt, const char *vtf_without_ex )
+ServerSettingsPanel::ServerSettingsPanel(vgui::Panel *parent, const char *pName) : BaseClass(parent, pName)
 {
-	FILE *fp;
-	fp = fopen( vmt, "w+" );
-	fprintf( fp, "UnlitGeneric\n");
-	fprintf( fp, "{\n" );
-	fprintf( fp, "	$basetexture %s\n", vtf_without_ex );
-	fprintf( fp, "}");
-	fflush( fp );
+    SetBounds(0, 0, 800, 640);
+
+    const int labelWidth = 180;
+    const int inputWidth = 200;
+    const int rowHeight = 30;
+    const int xLabel = 10;
+    const int xInput = xLabel + labelWidth + 10;
+    int y = 10;
+
+    vgui::Label* lblMaxPlayers = new vgui::Label(this, "MaxPlayersLabel", "Max Players:");
+    lblMaxPlayers->SetPos(xLabel, y);
+    lblMaxPlayers->SetSize(labelWidth, rowHeight);
+    lblMaxPlayers->SetContentAlignment(vgui::Label::a_west);
+
+    m_pMaxPlayers = new vgui::TextEntry(this, "MaxPlayersEntry");
+    m_pMaxPlayers->SetText("16"); // default / placeholder
+    m_pMaxPlayers->SetSize(inputWidth, rowHeight);
+    m_pMaxPlayers->SetPos(xInput, y);
+    y += rowHeight + 15;
+
+    vgui::Label* lblHostname = new vgui::Label(this, "HostnameLabel", "Hostname:");
+    lblHostname->SetPos(xLabel, y);
+    lblHostname->SetSize(labelWidth, rowHeight);
+    lblHostname->SetContentAlignment(vgui::Label::a_west);
+
+    m_pHostname = new vgui::TextEntry(this, "HostnameEntry");
+    m_pHostname->SetText("My Server"); // default / placeholder
+    m_pHostname->SetSize(inputWidth, rowHeight);
+    m_pHostname->SetPos(xInput, y);
+    y += rowHeight + 15;
+
+    vgui::Label* lblPassword = new vgui::Label(this, "PasswordLabel", "Password:");
+    lblPassword->SetPos(xLabel, y);
+    lblPassword->SetSize(labelWidth, rowHeight);
+    lblPassword->SetContentAlignment(vgui::Label::a_west);
+
+    m_pPassword = new vgui::TextEntry(this, "PasswordEntry");
+    m_pPassword->SetText(""); // placeholder
+    m_pPassword->SetSize(inputWidth, rowHeight);
+    m_pPassword->SetPos(xInput, y);
+	m_pPassword->SetTextHidden(true);
+}
+
+void ServerSettingsPanel::OnTick( void )
+{
+	BaseClass::OnTick();
+
+	if ( !IsVisible() )
+		return;
+}
+
+void ServerSettingsPanel::PerformLayout()
+{
+	BaseClass::PerformLayout();
+}
+
+void ServerSettingsPanel::OnCommand( const char *command )
+{
+	BaseClass::OnCommand( command );
 }
 
 MapListPanel::MapListPanel( vgui::Panel *parent, const char *pName ) : BaseClass( parent, pName )
 {
 	SetBounds( 0, 0, 800, 640 );
+    m_pSelectedButton = nullptr;
+	m_bMapsLoaded = false;
 }
 
 void MapListPanel::OnTick( void )
@@ -76,47 +128,136 @@ void MapListPanel::PerformLayout()
 	}	
 }
 
-void MapListPanel::AddButton( MapListPanel *panel, const char *image, const char *command )
+void MapListPanel::AddButton( MapListPanel *panel, const char *image, const char *command, const char *mapName )
 {
 	ImageButton *img = new ImageButton( panel, image, image, NULL, NULL, command );
 	layoutItems.AddToTail( img );
 	panel->AddItem( NULL, img );
+	img->SetFgColor( Color( 180, 180, 180, 255 ) ); // unselected
+	BaseTooltip *pTooltip = img->GetTooltip();
+	pTooltip->SetText( mapName );
 }
 
-void MapListPanel::LoadMaps( MapListPanel *panel )
+void MapListPanel::CreateVMTIfMissing(const char* vtfFullPath)
 {
-	FileFindHandle_t findhandle;
-	for ( const char *pMap = filesystem->FindFirst( "maps/*.bsp", &findhandle ); pMap && *pMap; pMap = filesystem->FindNext( findhandle ) )
-	{
-		char file[64];
-		Q_FileBase( pMap, file, sizeof( file ) );
-		
-		if ( pMap && pMap[0] )
-		{
-			char vtf[260];
-			Q_snprintf( vtf, sizeof( vtf ), "thumb/%s.vtf", file );
-			char vtf_without_ex[260];
-			Q_snprintf( vtf_without_ex, sizeof( vtf_without_ex ), "thumb/%s", file );
-			char vmt[260];
-			Q_snprintf( vmt, sizeof( vmt ), "vgui/thumb/%s.vmt", file );
-			char imageCommand[260];
-			Q_snprintf( imageCommand, sizeof( imageCommand ), "selmap %s", pMap );
-			char fl[260];
-			Q_snprintf( fl, sizeof(fl), "materials/vgui/thumb/%s.vtf", file );
+    char vmtPath[260];
+    Q_strncpy(vmtPath, vtfFullPath, sizeof(vmtPath));
+    Q_StripExtension(vmtPath, vmtPath, sizeof(vmtPath));
+    Q_strncat(vmtPath, ".vmt", sizeof(vmtPath));
 
-			if ( filesystem->FileExists( fl ) ) {
-				AddButton( panel, vtf_without_ex, imageCommand );
-				continue;
-			}
-		}	
-	}
+    if (filesystem->FileExists(vmtPath))
+        return;
+
+    const char* relativePath = vtfFullPath;
+    if (Q_strnicmp(vtfFullPath, "materials/", 10) == 0)
+        relativePath += 10;
+    Q_StripExtension(relativePath, const_cast<char*>(relativePath), 260);
+
+    char vmtContent[1024];
+    Q_snprintf(vmtContent, sizeof(vmtContent),
+        "\"UnlitGeneric\"\n"
+        "{\n"
+        "\t\"$basetexture\" \"%s\"\n"
+        "\t\"$translucent\" \"1\"\n"
+        "\t\"$ignorez\" \"1\"\n"
+        "\t\"$vertexcolor\" \"1\"\n"
+        "\t\"$vertexalpha\" \"1\"\n"
+        "}\n",
+        relativePath
+    );
+	
+    FileHandle_t f = filesystem->Open(vmtPath, "w");
+    if (f)
+    {
+        filesystem->Write(vmtContent, Q_strlen(vmtContent), f);
+        filesystem->Close(f);
+    }
+}
+
+void MapList::OnCancel()
+{
+    mpdialog.SetValue(0);
+}
+
+void MapList::OnClose()
+{
+    mpdialog.SetValue(0);
+}
+
+void MapListPanel::LoadMaps(MapListPanel* panel)
+{
+    if (m_bMapsLoaded) return;
+    m_bMapsLoaded = true;
+
+	layoutItems.RemoveAll();
+	
+	int mapCount = 0;
+    FileFindHandle_t findhandle;
+    for (const char* pMap = filesystem->FindFirstEx("maps/*.bsp", "MOD", &findhandle); pMap && *pMap; pMap = filesystem->FindNext(findhandle))
+    {
+		mapCount++;
+        char file[ MAX_PATH ];
+        Q_FileBase(pMap, file, sizeof(file));
+
+        char vtfFull[ MAX_PATH ];
+        Q_snprintf(vtfFull, sizeof(vtfFull), "materials/vgui/thumb/%s.vtf", file);
+        char vtfMaterial[ MAX_PATH ];
+        Q_snprintf(vtfMaterial, sizeof(vtfMaterial), "vgui/thumb/%s", file);
+		char vtf_without_ex[ MAX_PATH ];
+		Q_snprintf( vtf_without_ex, sizeof( vtf_without_ex ), "thumb/%s", file );
+
+        if (filesystem->FileExists(vtfFull))
+        {
+            CreateVMTIfMissing(vtfFull);
+
+            char imageCommand[ MAX_PATH ];
+            Q_snprintf(imageCommand, sizeof(imageCommand), "select %s", pMap);
+
+            AddButton(panel, vtf_without_ex, imageCommand, file);
+        }
+		else
+		{
+			Q_snprintf(vtf_without_ex, sizeof(vtf_without_ex), "thumb/placeholder");
+
+			char imageCommand[ MAX_PATH ];
+            Q_snprintf(imageCommand, sizeof(imageCommand), "select %s", pMap);
+
+            AddButton(panel, vtf_without_ex, imageCommand, file);
+		}
+    }
+    filesystem->FindClose(findhandle);
 }
 
 void MapListPanel::OnCommand( const char *command )
 {
-	engine->ClientCmd( command );
-}
+    if (Q_strnicmp(command, "select ", 7) == 0)
+    {
+        const char* mapName = command + 7;
+		char mapNameNoExt[ MAX_PATH ];
+		Q_strncpy( mapNameNoExt, mapName, sizeof( mapNameNoExt ) );
+		Q_StripExtension( mapNameNoExt, mapNameNoExt, sizeof( mapNameNoExt ) );
+		selmap.SetValue( mapNameNoExt );
 
+		if ( m_pSelectedButton )
+			m_pSelectedButton->SetFgColor( Color( 180, 180, 180, 255 ) );
+
+		Msg( "Selected %s\n", mapNameNoExt );
+
+        for ( int i = 0; i < layoutItems.Count(); i++ )
+        {
+            ImageButton* btn = dynamic_cast< ImageButton* >( layoutItems[ i ] );
+            if ( !btn ) continue;
+
+            if ( Q_strcmp( btn->GetCommand(), command ) == 0 )
+            {
+                btn->SetFgColor( Color( 255, 255, 255, 255 ) );
+
+                m_pSelectedButton = btn;
+                break;
+            }
+        }
+    }
+}
 
 MapList::MapList( vgui::VPANEL *parent, const char *pName ) : BaseClass( NULL, "MapList" )
 {
@@ -124,7 +265,7 @@ MapList::MapList( vgui::VPANEL *parent, const char *pName ) : BaseClass( NULL, "
 	SetTitle("New Game", true);
 	
 	MapListPanel *maplist = new MapListPanel( this, NULL );
-	MapListPanel *info = new MapListPanel( this, NULL );
+	ServerSettingsPanel *info = new ServerSettingsPanel( this, NULL );
 	maplist->LoadMaps( maplist );
 	AddPage( maplist, "Maps" );
 	AddPage( info, "Server Settings");
@@ -136,6 +277,46 @@ MapList::MapList( vgui::VPANEL *parent, const char *pName ) : BaseClass( NULL, "
 	SetVisible( true );
 	SetSizeable( true );
 	SetProportional( true );
+	SetApplyButtonVisible( false );
+}
+
+bool MapList::OnOK( bool applyOnly )
+{
+    const char* mapName = selmap.GetString();
+    if (mapName && mapName[0] != '\0')
+	{
+		int maxPlayers = 16;
+		const char* hostname = "Hostname";
+		const char* password = "";
+
+		ServerSettingsPanel* infoPanel = dynamic_cast<ServerSettingsPanel*>(GetPropertySheet()->GetPage(1));
+		if (infoPanel)
+		{
+			char maxPlayersBuffer[2048];
+			infoPanel->m_pMaxPlayers->GetText(maxPlayersBuffer, sizeof(maxPlayersBuffer));
+			maxPlayers = atoi(maxPlayersBuffer);
+			char hostnameBuffer[2048];
+			infoPanel->m_pHostname->GetText(hostnameBuffer, sizeof(hostnameBuffer));
+			hostname = hostnameBuffer;
+			char passwordBuffer[2048];
+			infoPanel->m_pPassword->GetText(passwordBuffer, sizeof(passwordBuffer));
+			password = passwordBuffer;
+		}
+
+		char szMapCommand[1024];
+		Q_snprintf(szMapCommand, sizeof(szMapCommand),
+			"disconnect\nwait\nwait\nsv_lan 1\nsetmaster enable\nmaxplayers %i\nsv_password \"%s\"\nhostname \"%s\"\nprogress_enable\nmap %s\n",
+			maxPlayers,
+			password,
+			hostname,
+			selmap.GetString()
+		);
+		engine->ClientCmd_Unrestricted(szMapCommand);
+	}
+
+	mpdialog.SetValue( "0" ); // cannibalism
+
+	return true;
 }
 
 void MapList::OnTick()

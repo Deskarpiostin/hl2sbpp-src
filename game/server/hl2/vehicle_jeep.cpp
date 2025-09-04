@@ -204,6 +204,12 @@ void CPropJeep::Precache( void )
 //------------------------------------------------
 void CPropJeep::Spawn( void )
 {
+	if (GetModelName() == NULL_STRING)
+    {
+		PrecacheModel("models/buggy.mdl");
+		SetModel("models/buggy.mdl");
+	}
+
 	// Setup vehicle as a real-wheels car.
 	SetVehicleType( VEHICLE_TYPE_CAR_WHEELS );
 

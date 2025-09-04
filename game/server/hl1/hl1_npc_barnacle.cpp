@@ -103,7 +103,7 @@ void CNPC_Barnacle_HL1::Spawn()
 {
 	Precache( );
 
-	SetModel( "models/barnacle.mdl" );
+	SetModel( "models/barnacle_hl1.mdl" );
 	UTIL_SetSize( this, Vector(-16, -16, -32), Vector(16, 16, 0) );
 
 	SetSolid( SOLID_BBOX );
@@ -446,7 +446,7 @@ void CNPC_Barnacle_HL1::WaitTillDead ( void )
 //=========================================================
 void CNPC_Barnacle_HL1::Precache()
 {
-	PrecacheModel("models/barnacle.mdl");
+	PrecacheModel("models/barnacle_hl1.mdl");
 
 	PrecacheScriptSound( "Barnacle.Bite" );
 	PrecacheScriptSound( "Barnacle.Chew" );

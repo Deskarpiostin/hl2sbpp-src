@@ -47,9 +47,7 @@ public:
 
 //	DECLARE_SERVERCLASS();
 	DECLARE_DATADESC();
-#ifndef CLIENT_DLL
 	DECLARE_ACTTABLE();
-#endif
 };
 
 

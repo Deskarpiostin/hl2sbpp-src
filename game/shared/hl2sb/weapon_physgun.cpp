@@ -48,6 +48,11 @@
 #include "materialsystem/imaterialproxy.h"
 #endif
 
+#ifdef CLIENT_DLL
+#include "dlight.h"
+#include "r_efx.h"
+#endif
+
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -74,6 +79,8 @@ CLIENTEFFECT_REGISTER_END()
 ConVar physgun_r("physgun_r", "0", FCVAR_USERINFO | FCVAR_ARCHIVE );
 ConVar physgun_g("physgun_g", "229", FCVAR_USERINFO | FCVAR_ARCHIVE );
 ConVar physgun_b("physgun_b", "238", FCVAR_USERINFO | FCVAR_ARCHIVE );
+
+ConVar physgun_light("physgun_light", "1", FCVAR_REPLICATED );
 
 static IPhysicsObject *GetPhysObjFromPhysicsBone( CBaseEntity *pEntity, short physicsbone )
 {
@@ -535,9 +542,7 @@ private:
 	int			m_poseActive;                     // Cached index of "active" pose parameter
 	bool		m_sbStaticPoseParamsLoaded;       // Have we loaded the pose parameter?
 
-#ifndef CLIENT_DLL
 	DECLARE_ACTTABLE();
-#endif
 };
 
 IMPLEMENT_NETWORKCLASS_ALIASED( WeaponPhysicsGun, DT_WeaponPhysicsGun )
@@ -590,20 +595,22 @@ END_PREDICTION_DATA()
 LINK_ENTITY_TO_CLASS( weapon_physgun, CWeaponPhysicsGun );
 PRECACHE_WEAPON_REGISTER(weapon_physgun);
 
-#ifndef CLIENT_DLL
 acttable_t	CWeaponPhysicsGun::m_acttable[] = 
 {
-	{ ACT_HL2MP_IDLE,					ACT_HL2MP_IDLE_PHYSGUN,					false },
-	{ ACT_HL2MP_RUN,					ACT_HL2MP_RUN_PHYSGUN,					false },
-	{ ACT_HL2MP_IDLE_CROUCH,			ACT_HL2MP_IDLE_CROUCH_PHYSGUN,			false },
-	{ ACT_HL2MP_WALK_CROUCH,			ACT_HL2MP_WALK_CROUCH_PHYSGUN,			false },
-	{ ACT_HL2MP_GESTURE_RANGE_ATTACK,	ACT_HL2MP_GESTURE_RANGE_ATTACK_PHYSGUN,	false },
-	{ ACT_HL2MP_GESTURE_RELOAD,			ACT_HL2MP_GESTURE_RELOAD_PHYSGUN,		false },
-	{ ACT_HL2MP_JUMP,					ACT_HL2MP_JUMP_PHYSGUN,					false },
+	{ ACT_MP_STAND_IDLE,				ACT_HL2MP_IDLE_PHYSGUN,					false },
+	{ ACT_MP_CROUCH_IDLE,				ACT_HL2MP_IDLE_CROUCH_PHYSGUN,			false },
+	{ ACT_MP_RUN,						ACT_HL2MP_RUN_PHYSGUN,					false },
+	{ ACT_MP_CROUCHWALK,				ACT_HL2MP_WALK_CROUCH_PHYSGUN,			false },
+	{ ACT_MP_ATTACK_STAND_PRIMARYFIRE,	ACT_HL2MP_GESTURE_RANGE_ATTACK_PHYSGUN,	false },
+	{ ACT_MP_ATTACK_CROUCH_PRIMARYFIRE,	ACT_HL2MP_GESTURE_RANGE_ATTACK_PHYSGUN,	false },
+
+	{ ACT_MP_RELOAD_STAND,				ACT_HL2MP_GESTURE_RELOAD_PHYSGUN,		false },
+	{ ACT_MP_RELOAD_CROUCH,				ACT_HL2MP_GESTURE_RELOAD_PHYSGUN,		false },
+
+	{ ACT_MP_JUMP,						ACT_HL2MP_JUMP_PHYSGUN,					false },
 };
 
 IMPLEMENT_ACTTABLE(CWeaponPhysicsGun);
-#endif
 
 //---------------------------------------------------------
 // Save/Restore
@@ -1239,16 +1246,71 @@ int CWeaponPhysicsGun::DrawModel( int flags )
 	// Only render these on the transparent pass
 	if ( flags & STUDIO_TRANSPARENCY )
 	{
-		if ( !m_active )
-			return 0;
-
 		C_BasePlayer *pOwner = ToBasePlayer( GetOwner() );
-
 		if ( !pOwner )
 			return 0;
 
 		Vector points[3];
 		QAngle tmpAngle;
+		GetAttachment(1, points[0], tmpAngle);
+
+		// funny glow part 2
+		float scale1 = random->RandomFloat(5.0f, 10.0f) * 2.0f;
+
+		IMaterial* pMat1 = materials->FindMaterial("sprites/glow04_noz", TEXTURE_GROUP_PARTICLE, true);
+
+		color32 clr = {
+			static_cast<byte>(m_iPhysgunColorR),
+			static_cast<byte>(m_iPhysgunColorG),
+			static_cast<byte>(m_iPhysgunColorB),
+			static_cast<byte>(255)
+		};
+
+		CViewSetup beamView = *view->GetPlayerViewSetup();
+		Frustum dummyFrustum;
+		render->Push3DView(beamView, 0, NULL, dummyFrustum);
+
+		CMatRenderContextPtr pRenderContext(materials);
+		pRenderContext->DepthRange(0.1f, 0.2f);
+
+		pRenderContext->Bind(pMat1);
+		for (int i = 0; i < 3; ++i)
+		{
+			DrawSprite(points[0], scale1, scale1, clr);
+		}
+
+		pRenderContext->Flush();
+		pRenderContext->DepthRange(0.0f, 1.0f);
+
+		IMaterial* pDefaultMat = materials->FindMaterial("vgui/white", TEXTURE_GROUP_OTHER, true);
+		if (pDefaultMat)
+		{
+			pRenderContext->Bind(pDefaultMat);
+			pRenderContext->Flush();
+		}
+
+		render->PopView(dummyFrustum);
+
+		Vector vecSrc = pOwner->Weapon_ShootPosition( );
+		if (physgun_light.GetBool())
+		{
+			dlight_t* dl[3];
+			for (int i = 0; i < 3; i++)
+			{
+				dl[i] = effects->CL_AllocDlight(m_iViewModelIndex + i);
+				dl[i]->origin = vecSrc;
+				dl[i]->color.r = m_iPhysgunColorR;
+				dl[i]->color.g = m_iPhysgunColorG;
+				dl[i]->color.b = m_iPhysgunColorB;
+				dl[i]->die = gpGlobals->curtime + 0.1f;
+				dl[i]->radius = random->RandomFloat(400.0f / (i + 1), 450.0f / (i + 1));
+				dl[i]->decay = 1024.0f;
+				dl[i]->style = 1;
+			}
+		}
+
+		if ( !m_active )
+			return 0;
 
 		C_BaseEntity *pObject = m_hObject;
 		//if ( pObject == NULL )
@@ -1281,7 +1343,6 @@ int CWeaponPhysicsGun::DrawModel( int flags )
 		}
 		else
 		{
-			Vector vecSrc = pOwner->Weapon_ShootPosition( );
 			points[1] = vecSrc + 0.5f * (forward * points[2].DistTo(points[0]));
 		}
 		
@@ -1292,18 +1353,11 @@ int CWeaponPhysicsGun::DrawModel( int flags )
 		color.Init(1,1,1);
 
 		float scrollOffset = gpGlobals->curtime - (int)gpGlobals->curtime;
-		CMatRenderContextPtr pRenderContext( materials );
 		pRenderContext->Bind( pMat );
 		DrawBeamQuadratic( points[0], points[1], points[2], pObject ? 13/3.0f : 13/5.0f, color, scrollOffset );
 		DrawBeamQuadratic( points[0], points[1], points[2], pObject ? 13/3.0f : 13/5.0f, color, -scrollOffset );
 
 		IMaterial *pMaterial = materials->FindMaterial( PHYSGUN_BEAM_GLOW, TEXTURE_GROUP_CLIENT_EFFECTS );
-		color32 clr = {
-			static_cast<byte>(m_iPhysgunColorR),
-			static_cast<byte>(m_iPhysgunColorG),
-			static_cast<byte>(m_iPhysgunColorB),
-			static_cast<byte>(255)
-		};
 
 		float scale = random->RandomFloat( 3, 5 ) * ( pObject ? 2 : 2 );
 
@@ -1332,7 +1386,6 @@ void CWeaponPhysicsGun::ViewModelDrawn( C_BaseViewModel *pBaseViewModel )
 	QAngle tmpAngle;
 	pBaseViewModel->GetAttachment( 1, points[0], tmpAngle );
 
-#ifdef CLIENT_DLL
 	// funny glow part 2
 	float scale1 = random->RandomFloat(15.0f, 20.0f) * 2.0f;
 
@@ -1369,7 +1422,24 @@ void CWeaponPhysicsGun::ViewModelDrawn( C_BaseViewModel *pBaseViewModel )
     }
 
     render->PopView(dummyFrustum);
-#endif
+
+	Vector vecSrc = pOwner->Weapon_ShootPosition( );
+	if (physgun_light.GetBool())
+	{
+		dlight_t* dl[3];
+		for (int i = 0; i < 3; i++)
+		{
+			dl[i] = effects->CL_AllocDlight(m_iViewModelIndex + i);
+			dl[i]->origin = vecSrc;
+			dl[i]->color.r = m_iPhysgunColorR;
+			dl[i]->color.g = m_iPhysgunColorG;
+			dl[i]->color.b = m_iPhysgunColorB;
+			dl[i]->die = gpGlobals->curtime + 0.1f;
+			dl[i]->radius = random->RandomFloat(400.0f / (i + 1), 450.0f / (i + 1));
+			dl[i]->decay = 1024.0f;
+			dl[i]->style = 1;
+		}
+	}
 
 	// Only draw the beam effects when active
 	if ( !m_active )
@@ -1383,7 +1453,7 @@ void CWeaponPhysicsGun::ViewModelDrawn( C_BaseViewModel *pBaseViewModel )
 
 	// a little noise 11t & 13t should be somewhat non-periodic looking
 	//points[1].z += 4*sin( gpGlobals->curtime*11 ) + 5*cos( gpGlobals->curtime*13 );
-	if ( pObject == NULL )
+	if ( !pObject )
 	{
 		//points[2] = m_targetPosition;
 		trace_t tr;
@@ -1402,7 +1472,6 @@ void CWeaponPhysicsGun::ViewModelDrawn( C_BaseViewModel *pBaseViewModel )
 	Vector forward, right, up;
 	QAngle playerAngles = pOwner->EyeAngles();
 	AngleVectors( playerAngles, &forward, &right, &up );
-	Vector vecSrc = pOwner->Weapon_ShootPosition( );
 	points[1] = vecSrc + 0.5f * (forward * points[2].DistTo(points[0]));
 	
 	IMaterial* pMat = materials->FindMaterial(PHYSGUN_BEAM_SPRITE1, TEXTURE_GROUP_CLIENT_EFFECTS);

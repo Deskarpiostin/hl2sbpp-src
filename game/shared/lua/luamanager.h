@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -18,9 +18,9 @@
 #define LUA_PATH_EXTENSIONS		LUA_ROOT "/includes/extensions"
 #define LUA_PATH_MODULES			LUA_ROOT "/includes/modules"
 #define LUA_PATH_INCLUDES			LUA_ROOT "/includes"
-#define LUA_PATH_GAME_CLIENT	LUA_ROOT "/game/client"
-#define LUA_PATH_GAME_SERVER	LUA_ROOT "/game/server"
-#define LUA_PATH_GAME_SHARED	LUA_ROOT "/game/shared"
+#define LUA_PATH_GAME_CLIENT	LUA_ROOT "/autorun/client"
+#define LUA_PATH_GAME_SERVER	LUA_ROOT "/autorun/server"
+#define LUA_PATH_GAME_SHARED	LUA_ROOT "/autorun"
 #define LUA_PATH_EFFECTS			LUA_ROOT "/effects"
 #define LUA_PATH_ENTITIES			LUA_ROOT "/entities"
 #define LUA_PATH_GAMEUI				LUA_ROOT "/gameui"
