@@ -8,6 +8,7 @@
 #include <vgui_controls/PropertyDialog.h>
 #include <vgui_controls/PanelListPanel.h>
 #include <vgui_controls/TextEntry.h>
+#include <vgui_controls/ComboBox.h>
 #include <vgui_controls/Label.h>
 #include "vgui_imagebutton.h"
 
@@ -42,9 +43,13 @@ public:
 
 	virtual void OnCommand( const char *command );
 
+	void LoadGamemodes();
+
 	vgui::TextEntry* m_pMaxPlayers;
 	vgui::TextEntry* m_pHostname;
 	vgui::TextEntry* m_pPassword;
+
+	vgui::ComboBox *m_pGamemodeCombo;
 };
 
 class MapList : public vgui::PropertyDialog

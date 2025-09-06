@@ -73,6 +73,8 @@ extern ConVar replay_rendersetting_renderglow;
 #include "econ_item_description.h"
 #endif
 
+#include "clienteffectprecachesystem.h"
+
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
@@ -88,6 +90,11 @@ static vgui::HContext s_hVGuiContext = DEFAULT_VGUI_CONTEXT;
 // See interface.h/.cpp for specifics: basically this ensures that we actually Sys_UnloadModule the dll and that we don't call Sys_LoadModule 
 // over and over again.
 static CDllDemandLoader g_GameUI( "GameUI" );
+
+CLIENTEFFECT_REGISTER_BEGIN( PrecachePostProcessingEffectsGlow )
+CLIENTEFFECT_MATERIAL( "dev/glow_color" )
+CLIENTEFFECT_MATERIAL( "dev/halo_add_to_screen" )
+CLIENTEFFECT_REGISTER_END_CONDITIONAL( engine->GetDXSupportLevel() >= 90 )
 
 ConVar cl_drawhud( "cl_drawhud", "1", FCVAR_CHEAT, "Enable the rendering of the hud" );
 ConVar hud_takesshots( "hud_takesshots", "0", FCVAR_CLIENTDLL | FCVAR_ARCHIVE, "Auto-save a scoreboard screenshot at the end of a map." );
@@ -416,8 +423,8 @@ void ClientModeShared::Init()
 			pPanelBg->MakePopup( false );
 			pGameUI->SetLoadingBackgroundDialog( pPanelBg->GetVPanel() );
 
-			ConVar* pHostName = cvar->FindVar("hostname");
-			const char* serverName = pHostName->GetString();
+			ConVarRef hostNameRef("hostname");
+			const char* serverName = hostNameRef.GetString();
 			pPanelBg->setServerName( serverName );
 		}
 	}
@@ -936,6 +943,7 @@ bool ClientModeShared::DoPostScreenSpaceEffects( const CViewSetup *pSetup )
 			return false;
 	}
 #endif 
+	g_GlowObjectManager.RenderGlowEffects( pSetup, 0 );
 	return true;
 }
 

@@ -546,6 +546,7 @@ public:
 	bool					ClearUseEntity();
 	CBaseEntity				*DoubleCheckUseNPC( CBaseEntity *pNPC, const Vector &vecSrc, const Vector &vecDir );
 
+	virtual CBaseEntity		*GetHeldObject( void );
 
 	// physics interactions
 	// mass/size limit set to zero for none

@@ -1428,28 +1428,98 @@ void CBasePanel::DrawBackgroundImage()
 		alpha = 255 - clamp( alpha, 0, 255 );
 	}
 
-	int iImageID = m_iBackgroundImageID;
-	if ( IsX360() )
+	// bg
+	if ( m_BackgroundTextureIDs.Count() == 0 )
+		return;
+
+	const float switchInterval = 10.0f;                          // local: seconds per bg
+
+	int count = m_BackgroundTextureIDs.Count();
+	int iNextBackground = (m_iCurrentBackground + 1) % count;
+
+	// init next switch if needed
+	if ( m_flNextBackgroundSwitch <= 0.0f )
+		m_flNextBackgroundSwitch = frametime + switchInterval;
+
+	float switchTime = m_flNextBackgroundSwitch;
+	float fadeDuration = (m_flFadeDuration > 0.001f) ? m_flFadeDuration : 4.0f;
+	float fadeStart = switchTime - fadeDuration;
+
+	// If we've hit the switch instant, advance now and schedule next (prevents flicker)
+	if ( frametime >= switchTime )
 	{
-		if ( m_ExitingFrameCount )
-		{
-			if ( !m_bRestartSameGame )
-			{
-				iImageID = m_iProductImageID;
-			}
-		}
-		else if ( m_bUseRenderTargetImage )
-		{
-			// the render target image must be opaque, the alpha channel contents are unknown
-			// it is strictly an opaque background image and never used as an overlay
-			iImageID = m_iRenderTargetImageID;
-			alpha = 255;
-		}
+		if ( count > 0 )
+			m_iCurrentBackground = (m_iCurrentBackground + 1) % count;
+
+		m_flNextBackgroundSwitch = switchTime + switchInterval;
+		switchTime = m_flNextBackgroundSwitch;
+		fadeStart = switchTime - fadeDuration;
 	}
 
-	surface()->DrawSetColor( 255, 255, 255, alpha );
-	surface()->DrawSetTexture( iImageID );
-	surface()->DrawTexturedRect( 0, 0, wide, tall );
+	// compute fade (0..1) via smoothstep
+	float fade = 0.0f;
+	if ( frametime >= fadeStart && fadeDuration > 0.0f )
+	{
+		float t = (frametime - fadeStart) / fadeDuration;
+		t = clamp(t, 0.0f, 1.0f);
+		fade = t * t * (3.0f - 2.0f * t);
+	}
+
+	// compute zoom so it grows then zooms OUT during the fade window
+	float lastSwitchTime = m_flNextBackgroundSwitch - switchInterval;
+	float growEnd = fadeStart;                                 // time when growth stops (peak)
+	float growDur = growEnd - lastSwitchTime;
+	if ( growDur < 0.001f ) growDur = 0.001f;                  // avoid div-by-zero
+
+	float zoom = 1.0f;
+	float peakZoom = 1.0f + m_flZoomAmount;                    // max zoom reached just before fade
+	if ( frametime < fadeStart )
+	{
+		// growth phase: ramp from 1.0 -> peakZoom over growDur
+		float pg = (frametime - lastSwitchTime) / growDur;
+		pg = clamp(pg, 0.0f, 1.0f);
+		// slight ease for nicer feel (optional)
+		float pg_eased = pg * pg * (3.0f - 2.0f * pg);
+		zoom = 1.0f + ( (peakZoom - 1.0f) * pg_eased );
+	}
+	else
+	{
+		// fade phase: ramp from peakZoom -> 1.0 as fade goes 0->1
+		float tf = (frametime - fadeStart) / fadeDuration;
+		tf = clamp(tf, 0.0f, 1.0f);
+		// linear reversal (you can use eased tf if desired)
+		zoom = peakZoom * (1.0f - tf) + 1.0f * tf;
+	}
+
+	// compute drawing rect with current zoom
+	int wZoomed = (int)(wide * zoom);
+	int hZoomed = (int)(tall * zoom);
+	int xOff = (wide - wZoomed) / 2;
+	int yOff = (tall - hZoomed) / 2;
+
+	// draw current background (fades out as fade increases)
+	int texIDCurr = m_BackgroundTextureIDs[m_iCurrentBackground];
+	if ( texIDCurr >= 0 )
+	{
+		surface()->DrawSetTexture(texIDCurr);
+		int alphaCurr = (int)(255.0f * (1.0f - fade));
+		surface()->DrawSetColor(128, 128, 128, alphaCurr);
+		surface()->DrawTexturedRect(xOff, yOff, xOff + wZoomed, yOff + hZoomed);
+	}
+
+	// draw next background on top during fade (fades in)
+	if ( fade > 0.0f && count > 1 )
+	{
+		int texIDNext = m_BackgroundTextureIDs[iNextBackground];
+		if ( texIDNext >= 0 )
+		{
+			surface()->DrawSetTexture(texIDNext);
+			int alphaNext = (int)(255.0f * fade);
+			surface()->DrawSetColor(128, 128, 128, alphaNext);
+			surface()->DrawTexturedRect(xOff, yOff, xOff + wZoomed, yOff + hZoomed);
+		}
+	}
+	// end bg
 
 	if ( IsX360() && m_ExitingFrameCount )
 	{
@@ -1865,69 +1935,43 @@ void CBasePanel::ApplySchemeSettings(IScheme *pScheme)
 
 	m_BackdropColor = pScheme->GetColor("mainmenu.backdrop", Color(0, 0, 0, 128));
 
-	char filename[MAX_PATH];
-	if ( IsX360() )
+	// bg
+	m_BackgroundFiles.RemoveAll();
+	m_BackgroundTextureIDs.RemoveAll();
+
+	FileFindHandle_t findHandle;
+	const char *pFilename = g_pFullFileSystem->FindFirstEx("materials/console/bg_*.vtf", "MOD", &findHandle);
+
+	while (pFilename)
 	{
-		// 360 uses FullFrameFB1 RT for map to map transitioning
-		if ( m_iRenderTargetImageID == -1 )
-		{
-			m_iRenderTargetImageID = surface()->CreateNewTextureID();
-			surface()->DrawSetTextureFile( m_iRenderTargetImageID, "console/rt_background", false, false );
-		}
+		// strip extension (.vtf) and "materials/"
+		char baseName[MAX_PATH];
+		Q_StripExtension(pFilename, baseName, sizeof(baseName));
+
+		// prepend "console/" manually
+		char path[MAX_PATH];
+		Q_snprintf(path, sizeof(path), "console/%s", baseName);
+
+		m_BackgroundFiles.AddToTail(path);
+
+		pFilename = g_pFullFileSystem->FindNext(findHandle);
+	}
+	g_pFullFileSystem->FindClose(findHandle);
+
+	for (int i = 0; i < m_BackgroundFiles.Count(); i++)
+	{
+    	DevMsg("Loaded background: %s\n", m_BackgroundFiles[i].Get());
+
+		int texID = surface()->CreateNewTextureID();
+		surface()->DrawSetTextureFile(texID, m_BackgroundFiles[i], false, false);
+		m_BackgroundTextureIDs.AddToTail(texID);
 	}
 
-	int screenWide, screenTall;
-	surface()->GetScreenSize( screenWide, screenTall );
-	float aspectRatio = (float)screenWide/(float)screenTall;
-	bool bIsWidescreen = aspectRatio >= 1.5999f;
+	m_iCurrentBackground = 0;
+	m_flNextBackgroundSwitch = engine->Time() + 10.0f;
+	// end bg
 
-	// work out which background image to use
-	if ( IsPC() || !IsX360() )
-	{
-		// pc uses blurry backgrounds based on the background level
-		char background[MAX_PATH];
-		engine->GetMainMenuBackgroundName( background, sizeof(background) );
-		Q_snprintf( filename, sizeof( filename ), "console/%s%s", background, ( bIsWidescreen ? "_widescreen" : "" ) );
-	}
-	else
-	{
-		// 360 uses hi-res game specific backgrounds
-		char gameName[MAX_PATH];
-		const char *pGameDir = engine->GetGameDirectory();
-		V_FileBase( pGameDir, gameName, sizeof( gameName ) );
-		V_snprintf( filename, sizeof( filename ), "vgui/appchooser/background_%s%s", gameName, ( bIsWidescreen ? "_widescreen" : "" ) );
-	}
 
-	if ( m_iBackgroundImageID == -1 )
-	{
-		m_iBackgroundImageID = surface()->CreateNewTextureID();
-	}
-	surface()->DrawSetTextureFile( m_iBackgroundImageID, filename, false, false );
-
-	if ( IsX360() )
-	{
-		// 360 uses a product image during application exit
-		V_snprintf( filename, sizeof( filename ), "vgui/appchooser/background_orange%s", ( bIsWidescreen ? "_widescreen" : "" ) );
-
-		if ( m_iProductImageID == -1 )
-		{
-			m_iProductImageID = surface()->CreateNewTextureID();
-		}
-		surface()->DrawSetTextureFile( m_iProductImageID, filename, false, false );
-	}
-
-	if ( IsPC() )
-	{
-		// load the loading icon
-		if ( m_iLoadingImageID == -1 )
-		{
-			const char* loading = "console/startup_loading";
-			if ( IsSteamDeck() )
-				loading = "gamepadui/game_logo";
-			m_iLoadingImageID = surface()->CreateNewTextureID();
-			surface()->DrawSetTextureFile( m_iLoadingImageID, loading, false, false );
-		}
-	}
 }
 
 //-----------------------------------------------------------------------------

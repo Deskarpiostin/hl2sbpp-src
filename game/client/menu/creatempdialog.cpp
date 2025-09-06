@@ -8,6 +8,7 @@
 #include <vgui_controls/Tooltip.h>
 #include <vgui/IScheme.h>
 #include <vgui/IVGui.h>
+#include "hl2sb/mapload_background.h"
 #include "filesystem.h"
 
 using namespace vgui;
@@ -58,6 +59,40 @@ ServerSettingsPanel::ServerSettingsPanel(vgui::Panel *parent, const char *pName)
     m_pPassword->SetSize(inputWidth, rowHeight);
     m_pPassword->SetPos(xInput, y);
 	m_pPassword->SetTextHidden(true);
+
+    y += rowHeight + 15;
+
+    vgui::Label* lblGamemode = new vgui::Label(this, "GamemodeLabel", "Gamemode:");
+    lblGamemode->SetPos(xLabel, y);
+    lblGamemode->SetSize(labelWidth, rowHeight);
+    lblGamemode->SetContentAlignment(vgui::Label::a_west);
+
+    m_pGamemodeCombo = new vgui::ComboBox(this, "GamemodeCombo", 6, false);
+    m_pGamemodeCombo->SetSize(inputWidth, rowHeight);
+    m_pGamemodeCombo->SetPos(xInput, y);
+    y += rowHeight + 15;
+
+    // populate the combobox with gamemodes found on disk
+    LoadGamemodes();
+}
+
+void ServerSettingsPanel::LoadGamemodes()
+{
+    if (!m_pGamemodeCombo)
+        return;
+
+    int defaultIndex = m_pGamemodeCombo->AddItem("Default", NULL);
+	m_pGamemodeCombo->ActivateItem( defaultIndex );
+
+    FileFindHandle_t findhandle;
+    for (const char* p = filesystem->FindFirstEx("gamemodes/*", "MOD", &findhandle); p && *p; p = filesystem->FindNext(findhandle))
+    {
+        if (strchr(p, '.'))
+            continue;
+
+        m_pGamemodeCombo->AddItem(p, NULL);
+    }
+    filesystem->FindClose(findhandle);
 }
 
 void ServerSettingsPanel::OnTick( void )
@@ -286,31 +321,53 @@ bool MapList::OnOK( bool applyOnly )
     if (mapName && mapName[0] != '\0')
 	{
 		int maxPlayers = 16;
-		const char* hostname = "Hostname";
+		const char* hostname = "My Server";
 		const char* password = "";
 
 		ServerSettingsPanel* infoPanel = dynamic_cast<ServerSettingsPanel*>(GetPropertySheet()->GetPage(1));
-		if (infoPanel)
-		{
-			char maxPlayersBuffer[2048];
-			infoPanel->m_pMaxPlayers->GetText(maxPlayersBuffer, sizeof(maxPlayersBuffer));
-			maxPlayers = atoi(maxPlayersBuffer);
-			char hostnameBuffer[2048];
-			infoPanel->m_pHostname->GetText(hostnameBuffer, sizeof(hostnameBuffer));
-			hostname = hostnameBuffer;
-			char passwordBuffer[2048];
-			infoPanel->m_pPassword->GetText(passwordBuffer, sizeof(passwordBuffer));
-			password = passwordBuffer;
-		}
 
-		char szMapCommand[1024];
-		Q_snprintf(szMapCommand, sizeof(szMapCommand),
-			"disconnect\nwait\nwait\nsv_lan 1\nsetmaster enable\nmaxplayers %i\nsv_password \"%s\"\nhostname \"%s\"\nprogress_enable\nmap %s\n",
-			maxPlayers,
-			password,
-			hostname,
-			selmap.GetString()
-		);
+		char maxPlayersBuffer[2048];
+		infoPanel->m_pMaxPlayers->GetText(maxPlayersBuffer, sizeof(maxPlayersBuffer));
+		maxPlayers = atoi(maxPlayersBuffer);
+
+		char hostnameBuffer[2048];
+		infoPanel->m_pHostname->GetText(hostnameBuffer, sizeof(hostnameBuffer));
+
+		char passwordBuffer[2048];
+		infoPanel->m_pPassword->GetText(passwordBuffer, sizeof(passwordBuffer));
+
+		char gamemodeBuffer[2048] = "";
+		if (infoPanel->m_pGamemodeCombo)
+			infoPanel->m_pGamemodeCombo->GetText(gamemodeBuffer, sizeof(gamemodeBuffer));
+		
+		// EDIT: PLEASE MOVE THIS I DON'T WANT THIS TO BE HERE
+		// GOD SAVE ME
+		extern CMapLoadBG *pPanelBg;
+		pPanelBg->setServerName( hostnameBuffer );
+
+        char szMapCommand[2048];
+        if (gamemodeBuffer[0] != '\0' && Q_strcmp(gamemodeBuffer, "Default") != 0)
+        {
+            Q_snprintf(szMapCommand, sizeof(szMapCommand),
+                "disconnect\nwait\nwait\nsv_lan 1\nmaxplayers %i\nsv_password \"%s\"\nhostname \"%s\"\nprogress_enable\ngamemode \"%s\"\nmap %s\n",
+                maxPlayers,
+                password,
+                hostnameBuffer,
+                gamemodeBuffer,
+                selmap.GetString()
+            );
+        }
+        else
+        {
+            Q_snprintf(szMapCommand, sizeof(szMapCommand),
+                "disconnect\nwait\nwait\nsv_lan 1\nmaxplayers %i\nsv_password \"%s\"\nhostname \"%s\"\nprogress_enable\nmap %s\ngamemode sandbox\n",
+                maxPlayers,
+                password,
+                hostnameBuffer,
+                selmap.GetString()
+            );
+        }
+
 		engine->ClientCmd_Unrestricted(szMapCommand);
 	}
 

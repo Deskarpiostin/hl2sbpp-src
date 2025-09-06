@@ -3152,6 +3152,11 @@ void CHL2_Player::PickupObject( CBaseEntity *pObject, bool bLimitMassAndSize )
 	PlayerPickupObject( this, pObject );
 }
 
+CBaseEntity	*CHL2_Player::GetHeldObject( void )
+{
+	return PhysCannonGetHeldEntity( GetActiveWeapon() );
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Output : CBaseEntity

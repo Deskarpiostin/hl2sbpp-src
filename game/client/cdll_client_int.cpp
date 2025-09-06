@@ -162,7 +162,6 @@ extern vgui::IInputInternal *g_InputInternal;
 // HPE_END
 //=============================================================================
 
-
 #ifdef LUA_SDK
 #include "luamanager.h"
 #include "luacachefile.h"
@@ -1270,6 +1269,26 @@ void CHLClient::PostInit()
 #endif
 
 	g_ClientVirtualReality.StartupComplete();
+
+	// protect
+	KeyValues *gameInfo = new KeyValues( "GameInfo" );
+	const char *baseTitle = "Half-Life 2: Sandbox++";
+	const char *theTitle = "";
+
+	if ( gameInfo->LoadFromFile( filesystem, "gameinfo.txt", "MOD" ) )
+		theTitle = gameInfo->GetString( "game", "Unknown" );
+
+	if ( Q_strcmp( theTitle, baseTitle ) != 0 )
+	{
+        Error(
+           	"Hey. Stealing is bad.\n"
+            "Do you even know how much WE, the HL2SB++ development team have worked on the mod?\n"
+            "And here you are, just, copying it for your own creation (in a bad way).\n"
+            "We have suffered, cried, but we did it. Just, don't steal. Please.\n\n"
+            "Yours sincerely, the HL2SB++ developer team. https://discord.gg/3DkET6fqXr\n"
+        );
+	}
+	// protect end
 
 #ifdef HL1MP_CLIENT_DLL
 	if ( s_cl_load_hl1_content.GetBool() && steamapicontext && steamapicontext->SteamApps() )

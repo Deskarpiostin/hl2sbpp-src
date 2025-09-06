@@ -14,7 +14,7 @@
 	#include "c_hl2mp_player.h"
 #else
 	#include "hl2mp_player.h"
-	#include "grenade_tripmine.h"
+	#include "hl2mp/grenade_tripmine.h" // Load the hl2mp version!
 	#include "grenade_satchel.h"
 	#include "entitylist.h"
 	#include "eventqueue.h"
@@ -26,6 +26,7 @@
 #include "tier0/memdbgon.h"
 
 #define	SLAM_PRIMARY_VOLUME		450
+#define SLAM_REFIRE_DELAY		0.05f
 
 IMPLEMENT_NETWORKCLASS_ALIASED( Weapon_SLAM, DT_Weapon_SLAM )
 
@@ -333,8 +334,8 @@ void CWeapon_SLAM::StartSatchelDetonate()
 	}
 	SatchelDetonate();
 
-	m_flNextPrimaryAttack	= gpGlobals->curtime + SequenceDuration();
-	m_flNextSecondaryAttack = gpGlobals->curtime + SequenceDuration();
+	// needs a higher delay on all of these, a minimum time really - to elimiate refires.
+	m_flNextPrimaryAttack	= m_flNextSecondaryAttack = SLAM_REFIRE_DELAY + gpGlobals->curtime + SequenceDuration();
 }
 
 
@@ -382,6 +383,8 @@ void CWeapon_SLAM::TripmineAttach( void )
 
 			CTripmineGrenade *pMine = (CTripmineGrenade *)pEnt;
 			pMine->m_hOwner = GetOwner();
+			// Attempt to attach to entity, or just sit still in place.
+			pMine->AttachToEntity( pEntity );
 
 #endif
 
@@ -450,8 +453,8 @@ void CWeapon_SLAM::StartTripmineAttach( void )
 		}
 	}
 	
-	m_flNextPrimaryAttack	= gpGlobals->curtime + SequenceDuration();
-	m_flNextSecondaryAttack	= gpGlobals->curtime + SequenceDuration();
+	// needs a higher delay on all of these, a minimum time really - to elimiate refires.
+	m_flNextPrimaryAttack	= m_flNextSecondaryAttack = SLAM_REFIRE_DELAY + gpGlobals->curtime + SequenceDuration();
 //	SetWeaponIdleTime( gpGlobals->curtime + SequenceDuration() );
 }
 
@@ -535,8 +538,7 @@ void CWeapon_SLAM::StartSatchelThrow( void )
 	m_bNeedReload		= true;
 	m_bThrowSatchel		= true;
 
-	m_flNextPrimaryAttack	= gpGlobals->curtime + SequenceDuration();
-	m_flNextSecondaryAttack = gpGlobals->curtime + SequenceDuration();
+	m_flNextPrimaryAttack	= m_flNextSecondaryAttack = SLAM_REFIRE_DELAY + gpGlobals->curtime + SequenceDuration();
 }
 
 //-----------------------------------------------------------------------------
@@ -636,7 +638,7 @@ void CWeapon_SLAM::StartSatchelAttach( void )
 			m_bNeedReload		= true;
 			m_bAttachSatchel	= true;
 
-			m_flNextPrimaryAttack = gpGlobals->curtime + SequenceDuration();
+			m_flNextPrimaryAttack	= m_flNextSecondaryAttack = SLAM_REFIRE_DELAY + gpGlobals->curtime + SequenceDuration();
 		}
 	}
 #endif

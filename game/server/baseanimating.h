@@ -125,6 +125,13 @@ public:
 	// This will stop animation until you call ResetSequenceInfo() at some point in the future
 	inline void StopAnimation( void ) { m_flPlaybackRate = 0; }
 
+#ifdef GLOWS_ENABLE
+	void				SetGlowEffectColor(float r, float g, float b);
+	void				AddGlowEffect(void);
+	void				RemoveGlowEffect(void);
+	bool				IsGlowEffectActive(void);
+#endif
+
 	virtual void ClampRagdollForce( const Vector &vecForceIn, Vector *vecForceOut ) { *vecForceOut = vecForceIn; } // Base class does nothing.
 	virtual bool BecomeRagdollOnClient( const Vector &force );
 	virtual bool IsRagdoll();
@@ -155,6 +162,15 @@ public:
 	bool	HasPoseParameter( int iSequence, const char *szName );
 	bool	HasPoseParameter( int iSequence, int iParameter );
 	float	EdgeLimitPoseParameter( int iParameter, float flValue, float flBase = 0.0f );
+
+
+#ifdef GLOWS_ENABLE
+protected:
+	CNetworkVar(bool, m_bGlowEnabled);
+	CNetworkVar(float, m_flGlowR);
+	CNetworkVar(float, m_flGlowG);
+	CNetworkVar(float, m_flGlowB);
+#endif
 
 protected:
 	// The modus operandi for pose parameters is that you should not use the const char * version of the functions
@@ -274,6 +290,16 @@ public:
 	void EnableServerIK();
 	void DisableServerIK();
 
+#ifdef GLOWS_ENABLE
+void ReloadGlow(inputdata_t& inputdata);
+void SetGlowEnabled(inputdata_t& inputdata);
+void SetGlowDisabled(inputdata_t& inputdata);
+void SetGlowColorRed(inputdata_t& inputdata);
+void SetGlowColorGreen(inputdata_t& inputdata);
+void SetGlowColorBlue(inputdata_t& inputdata);
+void SetGlowColor(inputdata_t& inputdata);
+#endif
+
 	// for ragdoll vs. car
 	int GetHitboxesFrontside( int *boxList, int boxMax, const Vector &normal, float dist );
 
@@ -334,6 +360,9 @@ public:
 private:
 	void LockStudioHdr();
 	void UnlockStudioHdr();
+
+	void				UpdateGlowEffect( void );
+	void				DestroyGlowEffect( void );
 
 	void StudioFrameAdvanceInternal( CStudioHdr *pStudioHdr, float flInterval );
 	void InputSetLightingOriginRelative( inputdata_t &inputdata );

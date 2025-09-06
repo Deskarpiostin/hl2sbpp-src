@@ -1,4 +1,4 @@
-//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
+//===== Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: Spawn and use functions for editor-placed triggers.
 //
@@ -88,6 +88,9 @@ CBaseScriptedTrigger::~CBaseScriptedTrigger( void )
 {
 #ifdef LUA_SDK
 	lua_unref( L, m_nTableReference );
+	
+	// @ThePixelMoon: i hate lua
+	m_nTableReference = LUA_NOREF;
 #endif
 }
 
@@ -117,11 +120,9 @@ void CBaseScriptedTrigger::LoadScriptedTrigger( void )
 void CBaseScriptedTrigger::InitScriptedTrigger( void )
 {
 #if defined ( LUA_SDK )
-#if 0
 	// Let the instance reinitialize itself for the client.
 	if ( m_nTableReference != LUA_NOREF )
 		return;
-#endif
 
 	SetThink( &CBaseScriptedTrigger::Think );
 	SetNextThink( gpGlobals->curtime );

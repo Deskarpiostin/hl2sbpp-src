@@ -1225,7 +1225,11 @@ protected:
 	virtual bool	IsTransparent( void );
 	virtual void	OnDataChanged( DataUpdateType_t type );
 	virtual void	ClientThink( void );
-	
+
+private:
+	virtual void ThirdPersonSwitch( bool bThirdPerson );
+protected:
+
 	void			ManagePredictedObject( void );
 	void			DrawEffects( void );
 	void			GetEffectParameters( EffectType_t effectID, color32 &color, float &scale, IMaterial **pMaterial, Vector &vecAttachment );
@@ -2680,56 +2684,27 @@ void CWeaponPhysCannon::DoEffectIdle( void )
 
 	StartEffects();
 
-	//if ( ShouldDrawUsingViewModel() )
+	// Turn on the glow sprites
+	for ( int i = PHYSCANNON_GLOW1; i < (PHYSCANNON_GLOW1+NUM_GLOW_SPRITES); i++ )
 	{
-		// Turn on the glow sprites
-		for ( int i = PHYSCANNON_GLOW1; i < (PHYSCANNON_GLOW1+NUM_GLOW_SPRITES); i++ )
-		{
-			m_Parameters[i].GetScale().SetAbsolute( random->RandomFloat( 0.075f, 0.05f ) * SPRITE_SCALE );
-			m_Parameters[i].GetAlpha().SetAbsolute( random->RandomInt( 24, 32 ) );
-		}
-
-		// Turn on the glow sprites
-		for ( int i = PHYSCANNON_ENDCAP1; i < (PHYSCANNON_ENDCAP1+NUM_ENDCAP_SPRITES); i++ )
-		{
-			m_Parameters[i].GetScale().SetAbsolute( random->RandomFloat( 3, 5 ) );
-			m_Parameters[i].GetAlpha().SetAbsolute( random->RandomInt( 200, 255 ) );
-		}
-
-		if ( m_EffectState != EFFECT_HOLDING )
-		{
-			// Turn beams off
-			m_Beams[0].SetVisible( false );
-			m_Beams[1].SetVisible( false );
-			m_Beams[2].SetVisible( false );
-		}
+		m_Parameters[i].GetScale().SetAbsolute( random->RandomFloat( 0.075f, 0.05f ) * SPRITE_SCALE );
+		m_Parameters[i].GetAlpha().SetAbsolute( random->RandomInt( 24, 32 ) );
 	}
-	/*
-	else
+
+	// Turn on the glow sprites
+	for ( int i = PHYSCANNON_ENDCAP1; i < (PHYSCANNON_ENDCAP1+NUM_ENDCAP_SPRITES); i++ )
 	{
-		// Turn on the glow sprites
-		for ( int i = PHYSCANNON_GLOW1; i < (PHYSCANNON_GLOW1+NUM_GLOW_SPRITES); i++ )
-		{
-			m_Parameters[i].GetScale().SetAbsolute( random->RandomFloat( 0.075f, 0.05f ) * SPRITE_SCALE );
-			m_Parameters[i].GetAlpha().SetAbsolute( random->RandomInt( 24, 32 ) );
-		}
-
-		// Turn on the glow sprites
-		for ( i = PHYSCANNON_ENDCAP1; i < (PHYSCANNON_ENDCAP1+NUM_ENDCAP_SPRITES); i++ )
-		{
-			m_Parameters[i].GetScale().SetAbsolute( random->RandomFloat( 3, 5 ) );
-			m_Parameters[i].GetAlpha().SetAbsolute( random->RandomInt( 200, 255 ) );
-		}
-		
-		if ( m_EffectState != EFFECT_HOLDING )
-		{
-			// Turn beams off
-			m_Beams[0].SetVisible( false );
-			m_Beams[1].SetVisible( false );
-			m_Beams[2].SetVisible( false );
-		}
+		m_Parameters[i].GetScale().SetAbsolute( random->RandomFloat( 3, 5 ) );
+		m_Parameters[i].GetAlpha().SetAbsolute( random->RandomInt( 200, 255 ) );
 	}
-	*/
+
+	if ( m_EffectState != EFFECT_HOLDING )
+	{
+		// Turn beams off
+		m_Beams[0].SetVisible( false );
+		m_Beams[1].SetVisible( false );
+		m_Beams[2].SetVisible( false );
+	}
 #endif
 }
 
@@ -2941,6 +2916,16 @@ void CWeaponPhysCannon::OpenElements( void )
 	m_bOldOpen = true;
 #endif
 }
+
+#ifdef CLIENT_DLL
+void CWeaponPhysCannon::ThirdPersonSwitch( bool bThirdPerson )
+{
+	//Tony; if we switch to first or third person or whatever, destroy and recreate the effects.
+	//Note: the sound only ever gets shut off on the server, so it's okay - as this is entirely client side.
+	DestroyEffects();
+	StartEffects();
+}
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: 

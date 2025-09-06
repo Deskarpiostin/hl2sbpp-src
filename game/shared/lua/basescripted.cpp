@@ -102,6 +102,9 @@ CBaseScripted::~CBaseScripted( void )
 	// this is the class that initialized the reference.
 #ifdef LUA_SDK
 	lua_unref( L, m_nTableReference );
+
+	// @ThePixelMoon: i hate lua
+	m_nTableReference = LUA_NOREF;
 #endif
 }
 
@@ -131,12 +134,10 @@ void CBaseScripted::LoadScriptedEntity( void )
 void CBaseScripted::InitScriptedEntity( void )
 {
 #if defined ( LUA_SDK )
-#if 0
 #ifndef CLIENT_DLL
 	// Let the instance reinitialize itself for the client.
 	if ( m_nTableReference != LUA_NOREF )
 		return;
-#endif
 #endif
 
 	SetThink( &CBaseScripted::Think );

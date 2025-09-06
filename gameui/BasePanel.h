@@ -192,6 +192,16 @@ public:
 	CAsyncJobContext *m_pAsyncJob;
 	void ExecuteAsync( CAsyncJobContext *pAsync );
 
+	// bg
+	CUtlVector<int> m_BackgroundTextureIDs;
+	CUtlVector<CUtlString> m_BackgroundFiles;
+	int m_iCurrentBackground = 0;
+	float m_flNextBackgroundSwitch = 0.0f;
+	float m_flFadeDuration = 2.0f;
+	float m_flZoomAmount = 0.05f;
+	float m_flCurrentZoom = 0.0f;
+	float m_flZoomSpeed = 0.001f;
+	// end bg
 
 public:
 	// notifications

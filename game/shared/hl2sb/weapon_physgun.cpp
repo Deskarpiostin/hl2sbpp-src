@@ -17,6 +17,10 @@
 #include "weapon_hl2mpbasehlmpcombatweapon.h"
 #ifndef CLIENT_DLL
 #include "baseviewmodel.h"
+#include "te.h"
+#ifdef GLOWS_ENABLE
+#include "props.h"
+#endif
 #endif
 #include "vphysics/constraints.h"
 #include "physics.h"
@@ -51,6 +55,9 @@
 #ifdef CLIENT_DLL
 #include "dlight.h"
 #include "r_efx.h"
+#else
+extern void TE_Sparks( IRecipientFilter& filter, float delay,
+	const Vector *pos, int nMagnitude, int nTrailLength, const Vector *pDir );
 #endif
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -996,6 +1003,18 @@ void CWeaponPhysicsGun::EffectUpdate( void )
 		}
 #endif 
 
+#if defined( GLOWS_ENABLE ) && defined( GAME_DLL )
+		CBaseAnimating* pAnimating = dynamic_cast<CBaseAnimating*>(pObject);
+		if (pAnimating) {
+			const char* physgun_r = engine->GetClientConVarValue( ENTINDEX( pOwner->edict() ), "physgun_r" );
+			const char* physgun_g = engine->GetClientConVarValue( ENTINDEX( pOwner->edict() ), "physgun_g" );
+			const char* physgun_b = engine->GetClientConVarValue( ENTINDEX( pOwner->edict() ), "physgun_b" );
+
+			pAnimating->SetGlowEffectColor(atoi(physgun_r), atoi(physgun_g), atoi(physgun_b));
+			pAnimating->AddGlowEffect();
+		}
+#endif
+
 		if ( m_useDown )
 		{
 #if 1
@@ -1007,6 +1026,19 @@ void CWeaponPhysicsGun::EffectUpdate( void )
 				{
 #ifdef GAME_DLL
 					pFreeze->EnableMotion( false ); // freeze the object
+
+					int nMagnitude   = 2;   // intensity
+					int nTrailLength = 1;   // how long trails last
+					int nCount       = 4;   // number of sparks
+					Vector dir       = tr.plane.normal;
+
+					CPVSFilter filter(tr.endpos);
+					TE_Sparks(filter, 
+						0.0f,            // no delay
+						&tr.endpos,      // origin
+						nMagnitude, 
+						nTrailLength, 
+						&dir);
 #endif
 				}
 			}
@@ -1026,6 +1058,19 @@ void CWeaponPhysicsGun::EffectUpdate( void )
 				{
 #ifdef GAME_DLL
 					pFreeze->EnableMotion( false ); // freeze the object
+
+					int nMagnitude   = 2;   // intensity
+					int nTrailLength = 1;   // how long trails last
+					int nCount       = 4;   // number of sparks
+					Vector dir       = tr.plane.normal;
+
+					CPVSFilter filter(tr.endpos);
+					TE_Sparks(filter, 
+						0.0f,            // no delay
+						&tr.endpos,      // origin
+						nMagnitude, 
+						nTrailLength, 
+						&dir);
 #endif
 				}
 			}
@@ -1121,16 +1166,55 @@ CBaseEntity *CWeaponPhysicsGun::GetBeamEntity()
 	return pOwner;
 }
 
+
+#pragma warning( disable:4189 )
 void CWeaponPhysicsGun::EffectDestroy( void )
 {
+#ifdef GLOWS_ENABLE // we do this just for glow
+	Vector start, forward, right;
+	trace_t tr;
+
+	CBasePlayer* pOwner = ToBasePlayer(GetOwner());
+	if (!pOwner)
+		return;
+#endif
+
 #ifdef CLIENT_DLL
 	gHUD.m_bSkipClear = false;
 #endif
+
+#ifdef GLOWS_ENABLE
+	pOwner->EyeVectors(&forward, &right, NULL);
+
+	start = pOwner->Weapon_ShootPosition();
+
+	TraceLine(&tr);
+	Vector end = tr.endpos;
+	float distance = tr.fraction * 4096;
+	if (m_hObject == NULL && tr.DidHitNonWorldEntity())
+	{
+		CBaseEntity* pEntity = tr.m_pEnt;
+		AttachObject(pEntity, GetPhysObjFromPhysicsBone(pEntity, tr.physicsbone), tr.physicsbone, start, tr.endpos, distance);
+	}
+
+	// Add the incremental player yaw to the target transform
+	QAngle angles = m_gravCallback.TransformAnglesFromPlayerSpace(m_gravCallback.m_targetRotation, pOwner);
+
+	CBaseEntity* pObject = m_hObject;
+#endif
+
 	m_active = false;
 	SoundStop();
 
+#if defined( GLOWS_ENABLE ) && defined( GAME_DLL )
+	CBaseAnimating* pAnimating = dynamic_cast<CBaseAnimating*>(pObject);
+	if (pAnimating != nullptr)
+		pAnimating->RemoveGlowEffect();
+#endif
+
 	DetachObject();
 }
+
 
 void CWeaponPhysicsGun::UpdateObject( void )
 {

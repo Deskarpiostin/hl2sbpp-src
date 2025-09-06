@@ -10,6 +10,7 @@
 //=============================================================================//
 
 #include "client_pch.h"
+#include "sys_getmodes.h"
 #include "getintersectingsurfaces_struct.h"
 #include "gl_model_private.h"
 #include "surfinfo.h"
@@ -100,6 +101,8 @@
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
+
+extern int startupStep;
 
 //-----------------------------------------------------------------------------
 // forward declarations
@@ -1767,6 +1770,9 @@ bool ClientDLL_Load()
 	// NOTE: Its OK if this returns NULL, as some mods won't provide the interface and will just use the default behavior of the engine
 	g_pClientRenderTargets = (IClientRenderTargets *)g_ClientFactory( CLIENTRENDERTARGETS_INTERFACE_VERSION, NULL );
 
+	startupStep++;
+	videomode->DrawStartupGraphic(); // hate this.
+
 	return true;
 }
 
@@ -1795,6 +1801,9 @@ void InitExtraClientCmdCanExecuteVars()
 	Cmd_AddClientCmdCanExecuteVar( "overview_alpha" );
 
 	Cmd_AddClientCmdCanExecuteVar( "playgamesound" );
+
+	startupStep++;
+	videomode->DrawStartupGraphic(); // hate this.
 }
 
 //-----------------------------------------------------------------------------
@@ -1819,7 +1828,9 @@ void ClientDLL_Init( void )
 		{
 			Sys_Error("Client.dll Init() in library client failed.");
 		}
-
+		startupStep++;
+		videomode->DrawStartupGraphic(); // hate this.
+			
 		if ( g_ClientFactory )
 		{
 			COM_TimestampedLog( "g_pClientSidePrediction->Init" );
@@ -1831,18 +1842,24 @@ void ClientDLL_Init( void )
 				Sys_Error( "Could not get IPrediction interface from library client" );
 			}
 			g_pClientSidePrediction->Init();
+			startupStep++;
+			videomode->DrawStartupGraphic(); // hate this.
 
 			entitylist = ( IClientEntityList  *)g_ClientFactory( VCLIENTENTITYLIST_INTERFACE_VERSION, NULL );
 			if ( !entitylist )
 			{
 				Sys_Error( "Could not get client entity list interface from library client" );
 			}
+			startupStep++;
+			videomode->DrawStartupGraphic(); // hate this.
 
 			centerprint = ( ICenterPrint * )g_ClientFactory( VCENTERPRINT_INTERFACE_VERSION, NULL );
 			if ( !centerprint )
 			{
 				Sys_Error( "Could not get centerprint interface from library client" );
 			}
+			startupStep++;
+			videomode->DrawStartupGraphic(); // hate this.
 
 			clientleafsystem = ( IClientLeafSystemEngine *)g_ClientFactory( CLIENTLEAFSYSTEM_INTERFACE_VERSION, NULL );
 			if ( clientleafsystem )
@@ -1861,6 +1878,8 @@ void ClientDLL_Init( void )
 					g_bClientLeafSystemV1 = true;
 				}
 			}
+			startupStep++;
+			videomode->DrawStartupGraphic(); // hate this.
 
 #if defined( REPLAY_ENABLED )
 			if ( Replay_IsSupportedModAndPlatform() )
@@ -1914,6 +1933,8 @@ void ClientDLL_Init( void )
 #endif
 
 			toolframework->ClientInit( g_ClientFactory );
+			startupStep++;
+			videomode->DrawStartupGraphic(); // hate this.
 		}
 
 		// Don't want TF2 running less than DX 8

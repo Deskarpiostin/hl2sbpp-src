@@ -2865,6 +2865,10 @@ bool CBasePlayer::IsUseableEntity( CBaseEntity *pEntity, unsigned int requiredCa
 	return false;
 }
 
+CBaseEntity	*CBasePlayer::GetHeldObject( void )
+{
+	return NULL;
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: 
