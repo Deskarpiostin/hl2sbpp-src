@@ -36,3 +36,11 @@ waf3*/
 source-engine.sln
 srceng-mod-launcher/
 clang+llvm-11.1.0-x86_64-linux-gnu-ubuntu-16.04.tar.xz
+WinBuild.exe
+WinBuild.ini
+../game
+/hl2sbpp-build/hl2
+hl2sbpp-build/hl2_launcher.exe — ярлык.lnk
+/hl2sbpp-build/hl2mp
+/hl2sbpp-build/platform
+hl2sbpp-build/steam_appid.txt
