@@ -7,7 +7,7 @@
 #include "ivideomode.h"
 typedef uint32 ScreenshotHandle;
 #if defined( _WIN32 ) && !defined( _X360 )
-#include "winlite.h"
+#include "Windows.h"
 #elif defined(POSIX)
 typedef void *HDC;
 #endif
