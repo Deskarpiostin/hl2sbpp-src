@@ -299,6 +299,10 @@ MapList::MapList( vgui::VPANEL *parent, const char *pName ) : BaseClass( NULL, "
 	SetSize( 800, 640 );
 	SetTitle("New Game", true);
 	
+	int screenWide, screenTall;
+	vgui::surface()->GetScreenSize(screenWide, screenTall);
+	SetPos((screenWide - GetWide()) / 2, (screenTall - GetTall()) / 2);
+
 	MapListPanel *maplist = new MapListPanel( this, NULL );
 	ServerSettingsPanel *info = new ServerSettingsPanel( this, NULL );
 	maplist->LoadMaps( maplist );

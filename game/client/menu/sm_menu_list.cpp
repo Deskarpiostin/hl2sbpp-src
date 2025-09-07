@@ -189,6 +189,10 @@ public:
 		SetWide( 800 );
 		SetTall( 640 );
 
+		int screenWide, screenTall;
+		vgui::surface()->GetScreenSize(screenWide, screenTall);
+		SetPos((screenWide - GetWide()) / 2, (screenTall - GetTall()) / 2);
+
 		KeyValues *kv = new KeyValues( "SMenu" );
 		if ( kv )
 		{
@@ -208,50 +212,42 @@ public:
 			kv->deleteThis();
 		}
 
-		CSMList *models = new CSMList( this, "ModelPanel");
+		CSMList *models = new CSMList(this, "ModelPanel");
 
-		FileFindHandle_t fh;
-		for ( const char *pDir = filesystem->FindFirstEx( "models/*", "GAME", &fh ); pDir && *pDir; pDir = filesystem->FindNext( fh ) )
-		{			
-			if ( Q_strncmp( pDir, "props_", Q_strlen("props_") ) == 0 ) {
-				if ( filesystem->FindIsDirectory( fh ) )
-				{
-					char dir[MAX_PATH];
-					char file[MAX_PATH];
-					Q_FileBase( pDir, file, sizeof( file ) );
-					Q_snprintf( dir, sizeof( dir ), "models/%s/*.mdl", file );
-					printf("%s\n", pDir );
-					list.AddToTail( pDir );
-					models->InitModels( models, "prop_physics", file, dir );
-				}
+		const char* hl2ModelFolders[] = {
+			"models/props_c17/*.mdl",
+			"models/props_combine/*.mdl",
+			"models/props_lab/*.mdl",
+			"models/props_interiors/*.mdl",
+			"models/props_junk/*.mdl",
+			"models/props_phx/*.mdl",
+			"models/props_wasteland/*.mdl",
+			"models/characters/*.mdl",
+			"models/weapons/*.mdl"
+		};
+
+		for (int i = 0; i < sizeof(hl2ModelFolders)/sizeof(hl2ModelFolders[0]); i++)
+		{
+			FileFindHandle_t fh;
+			const char *pModel = filesystem->FindFirstEx(hl2ModelFolders[i], "GAME", &fh);
+			while (pModel)
+			{
+				char folder[MAX_PATH], file[MAX_PATH];
+				Q_FileBase(pModel, file, sizeof(file));
+				Q_snprintf(folder, sizeof(folder), "%s/%s", hl2ModelFolders[i], file);
+
+				char mdlPath[MAX_PATH];
+				Q_snprintf(mdlPath, sizeof(mdlPath), "%s", folder);
+
+				models->InitModels(models, "prop_physics", file, mdlPath);
+
+				pModel = filesystem->FindNext(fh);
 			}
+			filesystem->FindClose(fh);
 		}
-		AddPage( models, "Props");
 
-/*		for ( const char *pD = filesystem->FindFirstEx( "models/*", "MOD", &fh ); pD && *pD; pD = filesystem->FindNext( fh ) )
-		{			
-			if ( Q_strncmp( pD, "props_", Q_strlen("props_") ) == 0 ) {
-				
-				if ( filesystem->FindIsDirectory( fh ) )
-				{	
-					for ( int index = 0; index < list.Count(); index++ )
-					{
-						const char *i = list [ index ];
+		AddPage(models, "Props");
 
-						if ( !FStrEq( pD, i ) ) {
-							char dir[MAX_PATH];
-							char file[MAX_PATH];
-							Q_FileBase( pD, file, sizeof( file ) );
-							Q_snprintf( dir, sizeof( dir ), "models/%s/*.mdl", file );
-							printf("ALSO: %s\n", pD );
-							models2->InitModels( models2, "prop_physics", file, dir );
-						}
-					}
-				}
-			}
-		}
-		AddPage( models2, "Props_MOD");
-*/		
 		vgui::ivgui()->AddTickSignal(GetVPanel(), 100);
 	
 		GetPropertySheet()->SetTabWidth(72);

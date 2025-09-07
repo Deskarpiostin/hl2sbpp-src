@@ -2966,7 +2966,9 @@ C_BaseAnimating* C_BaseAnimating::FindFollowedEntity()
 
 	if ( !follow->GetModel() )
 	{
-		Warning( "mod_studio: MOVETYPE_FOLLOW with no model.\n" );
+		// @ThePixelMoon: this isn't necessary anymore since we have
+		// no-weapon anims.
+		//Warning( "mod_studio: MOVETYPE_FOLLOW with no model.\n" );
 		return NULL;
 	}
 

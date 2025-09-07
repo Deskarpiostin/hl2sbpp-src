@@ -136,6 +136,8 @@ IHLTVDirector	*serverGameDirector = NULL;
 
 IServerGameTags *serverGameTags = NULL;
 
+extern int startupStep;
+
 void Sys_InitArgv( char *lpCmdLine );
 void Sys_ShutdownArgv( void );
 
@@ -288,6 +290,7 @@ void Sys_Init( void )
 	// Set default FPU control word to truncate (chop) mode for optimized _ftol()
 	// This does not "stick", the mode is restored somewhere down the line.
 //	Sys_TruncateFPU();	
+	startupStep++;
 }
 
 //-----------------------------------------------------------------------------
@@ -760,6 +763,8 @@ void Sys_InitMemory( void )
 		host_parms.memsize = MAXIMUM_WIN_MEMORY;
 	}
 
+	startupStep++;
+	
 #else
 #error Write me.
 
@@ -1041,6 +1046,8 @@ int Sys_InitGame( CreateInterfaceFn appSystemFactory, const char* pBaseDir, void
 	Q_FixSlashes( s_pBaseDir );
 	host_parms.basedir = s_pBaseDir;
 
+	startupStep++;
+
 #ifndef _X360
 	if ( CommandLine()->FindParm ( "-pidfile" ) )
 	{	
@@ -1081,6 +1088,8 @@ int Sys_InitGame( CreateInterfaceFn appSystemFactory, const char* pBaseDir, void
 	{
 		return 0;
 	}
+
+	startupStep++;
 
 	TRACEINIT( Sys_InitAuthentication(), Sys_ShutdownAuthentication() );
 
@@ -1139,6 +1148,8 @@ static bool LoadThisDll( char *szDllFilename, bool bIsServerOnly )
 		goto IgnoreThisDLL;
 	}
 
+	startupStep++;
+
 	// Load interface factory and any interfaces exported by the game .dll
 	g_iServerGameDLLVersion = 0;
 	g_ServerFactory = Sys_GetFactory( pDLL );
@@ -1146,6 +1157,7 @@ static bool LoadThisDll( char *szDllFilename, bool bIsServerOnly )
 	{
 		// Figure out latest version we understand
 		g_iServerGameDLLVersion = INTERFACEVERSION_SERVERGAMEDLL_INT;
+		startupStep++;
 
 		// Scan for most recent version the game DLL understands.
 		for (;;)
@@ -1170,6 +1182,7 @@ static bool LoadThisDll( char *szDllFilename, bool bIsServerOnly )
 			ConMsg( "Could not get IServerGameEnts interface from library %s", szDllFilename );
 			goto IgnoreThisDLL;
 		}
+		startupStep++;
 		
 		serverGameClients = (IServerGameClients*)g_ServerFactory(INTERFACEVERSION_SERVERGAMECLIENTS, NULL);
 		if ( serverGameClients )
@@ -1197,6 +1210,7 @@ static bool LoadThisDll( char *szDllFilename, bool bIsServerOnly )
 			ConMsg( "Could not get IHLTVDirector interface from library %s", szDllFilename );
 			// this is not a critical 
 		}
+		startupStep++;
 
 		serverGameTags = (IServerGameTags*)g_ServerFactory(INTERFACEVERSION_SERVERGAMETAGS, NULL);
 		// Possible that this is NULL - optional interface
@@ -1249,6 +1263,8 @@ void LoadEntityDLLs( const char *szBaseDir, bool bIsServerOnly )
 		Q_strncpy( gmodinfo.szHLVersion, modinfo->GetString("hlversion"), sizeof( gmodinfo.szHLVersion ) );
 	}
 	modinfo->deleteThis();
+
+	startupStep++;
 	
 	// Load the game .dll
 	LoadThisDll( "server" DLL_EXT_STRING, bIsServerOnly );

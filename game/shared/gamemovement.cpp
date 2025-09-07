@@ -14,6 +14,11 @@
 #include "decals.h"
 #include "coordsize.h"
 #include "rumble_shared.h"
+#ifdef GAME_DLL
+#include "hl2mp_player.h"
+#else
+#include "c_hl2mp_player.h"
+#endif
 
 #if defined(HL2_DLL) || defined(HL2_CLIENT_DLL)
 	#include "hl_movedata.h"
@@ -2436,7 +2441,10 @@ bool CGameMovement::CheckJumpButton( void )
 	
 	player->PlayStepSound( (Vector &)mv->GetAbsOrigin(), player->m_pSurfaceData, 1.0, true );
 	
-	MoveHelper()->PlayerSetAnimation( PLAYER_JUMP );
+	// HACK
+	ToHL2MPPlayer( player )->DoAnimationEvent( PLAYERANIMEVENT_JUMP );
+	
+	//MoveHelper()->PlayerSetAnimation( PLAYER_JUMP );
 
 	float flGroundFactor = 1.0f;
 	if (player->m_pSurfaceData)

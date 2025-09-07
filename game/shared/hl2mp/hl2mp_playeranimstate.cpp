@@ -110,6 +110,32 @@ Activity CHL2MPPlayerAnimState::TranslateActivity( Activity actDesired )
 		bool bDummy = false;
 		translateActivity = GetHL2MPPlayer()->GetActiveWeapon()->ActivityOverride( translateActivity, &bDummy );
 	}
+	else
+	{
+        switch ( actDesired )
+        {
+        case ACT_MP_STAND_IDLE:
+            translateActivity = ACT_HL2MP_IDLE;
+            break;
+        case ACT_MP_WALK:
+            translateActivity = ACT_HL2MP_RUN;
+            break;
+        case ACT_MP_RUN:
+            translateActivity = ACT_HL2MP_RUN;
+            break;
+        case ACT_MP_CROUCH_IDLE:
+            translateActivity = ACT_HL2MP_IDLE_CROUCH;
+            break;
+		case ACT_MP_CROUCHWALK:
+			translateActivity = ACT_HL2MP_WALK_CROUCH;
+			break;
+        case ACT_MP_JUMP:
+            translateActivity = ACT_HL2MP_JUMP;
+            break;
+        default:
+            break;
+        }
+	}
 
 	return translateActivity;
 }

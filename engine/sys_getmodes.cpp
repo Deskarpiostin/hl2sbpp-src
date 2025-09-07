@@ -61,7 +61,7 @@
 //-----------------------------------------------------------------------------
 
 int startupStep = 0;
-const int totalSteps = 8;
+const int totalSteps = 17;
 
 void CL_GetBackgroundLevelName(char *pszBackgroundName, int bufSize, bool bMapName);
 void ClientDLL_HudVidInit( void );

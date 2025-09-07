@@ -19,8 +19,8 @@
 ConVar c_handmodel("c_handmodel", "default", FCVAR_USERINFO | FCVAR_ARCHIVE | FCVAR_CLIENTDLL);
 
 ConVar handmodel_r("handmodel_r", "0", FCVAR_USERINFO | FCVAR_CLIENTDLL | FCVAR_ARCHIVE);
-ConVar handmodel_g("handmodel_g", "255", FCVAR_USERINFO | FCVAR_CLIENTDLL | FCVAR_ARCHIVE);
-ConVar handmodel_b("handmodel_b", "0", FCVAR_USERINFO | FCVAR_CLIENTDLL | FCVAR_ARCHIVE);
+ConVar handmodel_g("handmodel_g", "229", FCVAR_USERINFO | FCVAR_CLIENTDLL | FCVAR_ARCHIVE);
+ConVar handmodel_b("handmodel_b", "238", FCVAR_USERINFO | FCVAR_CLIENTDLL | FCVAR_ARCHIVE);
 
 class HandColorProxy : public IMaterialProxy
 {

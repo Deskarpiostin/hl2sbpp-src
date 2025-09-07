@@ -83,11 +83,16 @@ CLIENTEFFECT_REGISTER_BEGIN( PrecacheEffectGravityGun )
 CLIENTEFFECT_REGISTER_END()
 #endif
 
-ConVar physgun_r("physgun_r", "0", FCVAR_USERINFO | FCVAR_ARCHIVE );
-ConVar physgun_g("physgun_g", "229", FCVAR_USERINFO | FCVAR_ARCHIVE );
-ConVar physgun_b("physgun_b", "238", FCVAR_USERINFO | FCVAR_ARCHIVE );
+ConVar physgun_r( "physgun_r", "0", FCVAR_USERINFO | FCVAR_ARCHIVE );
+ConVar physgun_g( "physgun_g", "229", FCVAR_USERINFO | FCVAR_ARCHIVE );
+ConVar physgun_b( "physgun_b", "238", FCVAR_USERINFO | FCVAR_ARCHIVE );
 
-ConVar physgun_light("physgun_light", "1", FCVAR_REPLICATED );
+ConVar physgun_halo_override( "physgun_halo_override", "0", FCVAR_USERINFO | FCVAR_ARCHIVE );
+ConVar physgun_halo_override_r( "physgun_halo_override_r", "0", FCVAR_USERINFO | FCVAR_ARCHIVE );
+ConVar physgun_halo_override_g( "physgun_halo_override_g", "229", FCVAR_USERINFO | FCVAR_ARCHIVE );
+ConVar physgun_halo_override_b( "physgun_halo_override_b", "238", FCVAR_USERINFO | FCVAR_ARCHIVE );
+
+ConVar physgun_light( "physgun_light", "1", FCVAR_REPLICATED );
 
 static IPhysicsObject *GetPhysObjFromPhysicsBone( CBaseEntity *pEntity, short physicsbone )
 {
@@ -1006,11 +1011,31 @@ void CWeaponPhysicsGun::EffectUpdate( void )
 #if defined( GLOWS_ENABLE ) && defined( GAME_DLL )
 		CBaseAnimating* pAnimating = dynamic_cast<CBaseAnimating*>(pObject);
 		if (pAnimating) {
-			const char* physgun_r = engine->GetClientConVarValue( ENTINDEX( pOwner->edict() ), "physgun_r" );
-			const char* physgun_g = engine->GetClientConVarValue( ENTINDEX( pOwner->edict() ), "physgun_g" );
-			const char* physgun_b = engine->GetClientConVarValue( ENTINDEX( pOwner->edict() ), "physgun_b" );
+			if ( !physgun_halo_override.GetBool() )
+			{
+				const char* physgun_r = engine->GetClientConVarValue( ENTINDEX( pOwner->edict() ), "physgun_r" );
+				const char* physgun_g = engine->GetClientConVarValue( ENTINDEX( pOwner->edict() ), "physgun_g" );
+				const char* physgun_b = engine->GetClientConVarValue( ENTINDEX( pOwner->edict() ), "physgun_b" );
 
-			pAnimating->SetGlowEffectColor(atoi(physgun_r), atoi(physgun_g), atoi(physgun_b));
+				float r = atoi( physgun_r );
+				float g = atoi( physgun_g );
+				float b = atoi( physgun_b );
+
+				pAnimating->SetGlowEffectColor( r, g, b );
+			}
+			else
+			{
+				const char* physgun_r = engine->GetClientConVarValue( ENTINDEX( pOwner->edict() ), "physgun_halo_override_r" );
+				const char* physgun_g = engine->GetClientConVarValue( ENTINDEX( pOwner->edict() ), "physgun_halo_override_g" );
+				const char* physgun_b = engine->GetClientConVarValue( ENTINDEX( pOwner->edict() ), "physgun_halo_override_b" );
+
+				float r = atoi( physgun_r );
+				float g = atoi( physgun_g );
+				float b = atoi( physgun_b );
+
+				pAnimating->SetGlowEffectColor( r, g, b );
+			}
+
 			pAnimating->AddGlowEffect();
 		}
 #endif

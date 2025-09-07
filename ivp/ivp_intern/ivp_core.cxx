@@ -117,7 +117,10 @@ void IVP_Core::get_diff_surface_speed_of_two_cores_on_test(const IVP_Core *this_
     diff_speed_this_minus_other_out->subtract(&world_this,&world_other);
 }
 
-
+// @ThePixelMoon: ugly
+#ifndef _WIN32
+#define _finite finite
+#endif
 
 IVP_DOUBLE IVP_Core::calc_virt_mass_worst_case(const IVP_U_Float_Point *core_point) const {
     IVP_U_Float_Point worst_direction;
@@ -823,7 +826,21 @@ void IVP_Core::calc_calc(){
     IVP_ASSERT(get_rot_inertia()->real_length() > P_DOUBLE_EPS);
     IVP_U_Float_Hesse *iri = (IVP_U_Float_Hesse *)get_inv_rot_inertia();
 
-    const IVP_U_Float_Point *ri = get_rot_inertia();
+    // clamp to valid values so we don't end up with nans along the way
+    // weird decompile code...
+    IVP_U_Float_Point* ri = (IVP_U_Float_Point*)get_rot_inertia();
+    for ( int i = 0; i < 3; i++ )
+    {
+        if ( _finite( ri->k[i] ) && ri->k[i] <= 1e18f )
+        {
+            if ( ri->k[i] < -1e18f )
+                ri->k[i] = -1e18f;
+        }
+        else
+        {
+            ri->k[i] = 1e18f;
+        }
+    }
 
     iri->set( 1.0f/ri->k[0],1.0f/ri->k[1], 1.0f/ri->k[2]);
     iri->hesse_val = 1.0f/get_mass();
