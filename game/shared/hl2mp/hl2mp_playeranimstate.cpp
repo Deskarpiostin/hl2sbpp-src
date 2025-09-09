@@ -15,6 +15,8 @@
 #include "c_hl2mp_player.h"
 #else
 #include "hl2mp_player.h"
+#include "iservervehicle.h"
+#include "baseanimating.h"
 #endif
 
 #define HL2MP_RUN_SPEED				320.0f
@@ -102,13 +104,20 @@ void CHL2MPPlayerAnimState::ClearAnimationState( void )
 //-----------------------------------------------------------------------------
 Activity CHL2MPPlayerAnimState::TranslateActivity( Activity actDesired )
 {
+    CHL2MP_Player *pPlayer = GetHL2MPPlayer();
+    if ( pPlayer && pPlayer->IsInAVehicle() )
+    {
+		// @ThePixelMoon: hacky hack until we get normal anims
+        return ACT_HL2MP_IDLE_CROUCH;
+    }
+
 	// Hook into baseclass when / if hl2mp player models get swim animations.
 	Activity translateActivity = actDesired; //BaseClass::TranslateActivity( actDesired );
 
-	if ( GetHL2MPPlayer()->GetActiveWeapon() )
+	if ( pPlayer->GetActiveWeapon() )
 	{
 		bool bDummy = false;
-		translateActivity = GetHL2MPPlayer()->GetActiveWeapon()->ActivityOverride( translateActivity, &bDummy );
+		translateActivity = pPlayer->GetActiveWeapon()->ActivityOverride( translateActivity, &bDummy );
 	}
 	else
 	{
@@ -163,6 +172,62 @@ void CHL2MPPlayerAnimState::Update( float eyeYaw, float eyePitch )
 		ClearAnimationState();
 		return;
 	}
+
+#ifdef GAME_DLL
+	if ( pHL2MPPlayer->IsInAVehicle() )
+	{
+		CBaseAnimating *pVehicle = pHL2MPPlayer->GetVehicle()->GetVehicleEnt()->GetBaseAnimating();
+
+		if ( pVehicle )
+		{
+			Vector seatOrigin;
+			QAngle seatAngles;
+
+			const char *attachNames[] = { "vehicle_driver", "driver", "vehicle_driver_eyes", "seat_driver" };
+
+			int attach = -1;
+			for ( int i = 0; i < ARRAYSIZE(attachNames); ++i )
+			{
+				attach = pVehicle->LookupAttachment( attachNames[i] );
+				if ( attach > 0 )
+					break;
+			}
+
+			if ( attach > 0 && pVehicle->GetAttachment( attach, seatOrigin, seatAngles ) )
+			{
+				// good: we have seatOrigin and seatAngles
+				seatOrigin.z -= 22.0f;
+				seatOrigin.y -= 4.0f;
+			}
+			else
+			{
+				// fallback to vehicle origin/angles
+				seatOrigin = pVehicle->GetAbsOrigin();
+				seatAngles = pVehicle->GetAbsAngles();
+			}
+
+			pHL2MPPlayer->SetAbsOrigin( seatOrigin );
+			QAngle newAngles = pHL2MPPlayer->GetAbsAngles();
+			newAngles[YAW] = seatAngles[YAW];
+			pHL2MPPlayer->SetAbsAngles( newAngles );
+
+			m_flEyeYaw = AngleNormalize( seatAngles[YAW] );
+			m_flGoalFeetYaw = m_flCurrentFeetYaw = m_flEyeYaw;
+
+			if ( m_PoseParameterData.m_iAimYaw >= 0 )
+			{
+				GetBasePlayer()->SetPoseParameter( pStudioHdr, m_PoseParameterData.m_iAimYaw, 0.0f );
+			}
+			if ( m_PoseParameterData.m_iAimPitch >= 0 )
+			{
+				GetBasePlayer()->SetPoseParameter( pStudioHdr, m_PoseParameterData.m_iAimPitch, 0.0f );
+			}
+
+			m_bForceAimYaw = true;
+			RestartMainSequence();
+		}
+	}
+#endif
 
 	// Store the eye angles.
 	m_flEyeYaw = AngleNormalize( eyeYaw );
