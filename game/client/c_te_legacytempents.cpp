@@ -102,7 +102,7 @@ C_LocalTempEntity::C_LocalTempEntity()
 }
 
 
-#if defined( CSTRIKE_DLL ) || defined (SDK_DLL )
+#if defined( CSTRIKE_DLL ) || defined (SDK_DLL ) || defined( HL2SB )
 
 #define TE_RIFLE_SHELL 1024
 #define TE_PISTOL_SHELL 2048
@@ -2220,7 +2220,7 @@ void CTempEnts::PlaySound ( C_LocalTempEntity *pTemp, float damp )
 		}
 		break;
 
-#ifdef CSTRIKE_DLL
+#ifdef CSTRIKE_DLL || defined( HL2SB )
 
 		case TE_PISTOL_SHELL:
 		{
@@ -2441,7 +2441,7 @@ void CTempEnts::LevelInit()
 	m_pHL1ShotgunShell	= (model_t *)engine->LoadModel( "models/shotgunshell.mdl" );
 #endif
 
-#if defined( CSTRIKE_DLL ) || defined ( SDK_DLL )
+#if defined( CSTRIKE_DLL ) || defined ( SDK_DLL ) || defined( HL2SB )
 	m_pCS_9MMShell		= (model_t *)engine->LoadModel( "models/Shells/shell_9mm.mdl" );
 	m_pCS_57Shell		= (model_t *)engine->LoadModel( "models/Shells/shell_57.mdl" );
 	m_pCS_12GaugeShell	= (model_t *)engine->LoadModel( "models/Shells/shell_12gauge.mdl" );
@@ -2478,7 +2478,7 @@ void CTempEnts::Init (void)
 	m_pHL1ShotgunShell	= NULL;
 #endif
 
-#if defined( CSTRIKE_DLL ) || defined ( SDK_DLL )
+#if defined( CSTRIKE_DLL ) || defined ( SDK_DLL ) || defined( HL2SB )
 	m_pCS_9MMShell		= NULL;
 	m_pCS_57Shell		= NULL;
 	m_pCS_12GaugeShell	= NULL;
@@ -3361,7 +3361,7 @@ void CTempEnts::CSEjectBrass( const Vector &vecPosition, const QAngle &angVeloci
 	const model_t *pModel = NULL;
 	int hitsound = TE_BOUNCE_SHELL;
 
-#if defined ( CSTRIKE_DLL ) || defined ( SDK_DLL )
+#if defined ( CSTRIKE_DLL ) || defined ( SDK_DLL ) || defined( HL2SB )
 
 	switch( shellType )
 	{

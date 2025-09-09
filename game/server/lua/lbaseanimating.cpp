@@ -385,11 +385,6 @@ static int CBaseAnimating_TransferDissolveFrom (lua_State *L) {
   return 0;
 }
 
-static int CBaseAnimating_Dissolve (lua_State *L) {
-  luaL_checkanimating(L, 1)->Dissolve( NULL, gpGlobals->curtime, false, ENTITY_DISSOLVE_NORMAL );
-  return 0;
-}
-
 static int CBaseAnimating_UseClientSideAnimation (lua_State *L) {
   luaL_checkanimating(L, 1)->UseClientSideAnimation();
   return 0;
@@ -549,7 +544,6 @@ static const luaL_Reg CBaseAnimatingmeta[] = {
   {"SetSequence", CBaseAnimating_SetSequence},
   {"StudioFrameAdvance", CBaseAnimating_StudioFrameAdvance},
   {"TransferDissolveFrom", CBaseAnimating_TransferDissolveFrom},
-  {"Dissolve", CBaseAnimating_Dissolve},
   {"UseClientSideAnimation", CBaseAnimating_UseClientSideAnimation},
   {"VPhysicsUpdate", CBaseAnimating_VPhysicsUpdate},
   {"__index", CBaseAnimating___index},

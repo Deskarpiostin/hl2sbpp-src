@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -19,6 +19,7 @@
 #include "lbaseanimating.h"
 #endif
 #include "mathlib/lvector.h"
+#include "lshareddefs.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -89,6 +90,12 @@ static int CHL2MP_Player_CalcView (lua_State *L) {
   lua_pushnumber(L, zFar);
   lua_pushnumber(L, fov);
   return 5;
+}
+
+static int CHL2MP_Player_FireBullets (lua_State *L) {
+  // quite a hacky hack, but we do this for the fucking prediction to work normally
+  luaL_checkhl2mpplayer(L, 1)->FireBullets(lua_tofirebulletsinfo(L, 2));
+  return 0;
 }
 
 static int CHL2MP_Player_CanSprint (lua_State *L) {
@@ -219,6 +226,7 @@ static const luaL_Reg CHL2MP_Playermeta[] = {
   {"CalcView", CHL2MP_Player_CalcView},
   {"CanSprint", CHL2MP_Player_CanSprint},
   {"DoAnimationEvent", CHL2MP_Player_DoAnimationEvent},
+  {"FireBullets", CHL2MP_Player_FireBullets},
   {"__index", CHL2MP_Player___index},
   {"__newindex", CHL2MP_Player___newindex},
   {"__eq", CHL2MP_Player___eq},

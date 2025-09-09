@@ -134,16 +134,10 @@ void CClassMap::Add( const char *mapname, const char *classname, int size, DISPA
 #ifdef LUA_SDK
 void CClassMap::RemoveAllScripted( void )
 {
-	int c = m_ClassDict.Count();
-	int i;
-
-	for ( i = 0; i < c; i++ )
+	for ( int i = m_ClassDict.Count() - 1; i >= 0; i-- )
 	{
-		classentry_t *lookup = &m_ClassDict[ i ];
-		if ( !lookup )
-			continue;
-
-		if ( lookup->scripted )
+		classentry_t *lookup = &m_ClassDict[i];
+		if ( lookup && lookup->scripted )
 		{
 			m_ClassDict.RemoveAt( i );
 		}

@@ -18,11 +18,11 @@
 #ifdef CLIENT_DLL
 ConVar c_handmodel("c_handmodel", "default", FCVAR_USERINFO | FCVAR_ARCHIVE | FCVAR_CLIENTDLL);
 
-ConVar handmodel_r("handmodel_r", "0", FCVAR_USERINFO | FCVAR_CLIENTDLL | FCVAR_ARCHIVE);
-ConVar handmodel_g("handmodel_g", "229", FCVAR_USERINFO | FCVAR_CLIENTDLL | FCVAR_ARCHIVE);
-ConVar handmodel_b("handmodel_b", "238", FCVAR_USERINFO | FCVAR_CLIENTDLL | FCVAR_ARCHIVE);
+ConVar playercolor_r("playercolor_r", "0", FCVAR_USERINFO | FCVAR_CLIENTDLL | FCVAR_ARCHIVE);
+ConVar playercolor_g("playercolor_g", "229", FCVAR_USERINFO | FCVAR_CLIENTDLL | FCVAR_ARCHIVE);
+ConVar playercolor_b("playercolor_b", "238", FCVAR_USERINFO | FCVAR_CLIENTDLL | FCVAR_ARCHIVE);
 
-class HandColorProxy : public IMaterialProxy
+class PlayerColorProxy : public IMaterialProxy
 {
 public:
 	virtual bool Init(IMaterial* pMaterial, KeyValues* pKeyValues);
@@ -35,7 +35,7 @@ private:
 	IMaterialVar* m_pResultVar;
 };
 
-bool HandColorProxy::Init(IMaterial* pMaterial, KeyValues* pKeyValues)
+bool PlayerColorProxy::Init(IMaterial* pMaterial, KeyValues* pKeyValues)
 {
 	bool foundVar;
 	m_pResultVar = pMaterial->FindVar("$color2", &foundVar, false);
@@ -43,27 +43,27 @@ bool HandColorProxy::Init(IMaterial* pMaterial, KeyValues* pKeyValues)
 	return foundVar;
 }
 
-void HandColorProxy::OnBind(void* pC_BaseEntity)
+void PlayerColorProxy::OnBind(void* pC_BaseEntity)
 {
 	if (m_pResultVar)
 	{
-		float r = handmodel_r.GetFloat() / 255.0f;
-		float g = handmodel_g.GetFloat() / 255.0f;
-		float b = handmodel_b.GetFloat() / 255.0f;
+		float r = playercolor_r.GetFloat() / 255.0f;
+		float g = playercolor_g.GetFloat() / 255.0f;
+		float b = playercolor_b.GetFloat() / 255.0f;
 
 		m_pResultVar->SetVecValue(r, g, b);
 	}
 }
 
-void HandColorProxy::Release()
+void PlayerColorProxy::Release()
 {}
 
-IMaterial* HandColorProxy::GetMaterial()
+IMaterial* PlayerColorProxy::GetMaterial()
 {
 	return m_pMaterial;
 }
 
-EXPOSE_INTERFACE(HandColorProxy, IMaterialProxy, "HandColor" IMATERIAL_PROXY_INTERFACE_VERSION);
+EXPOSE_INTERFACE(PlayerColorProxy, IMaterialProxy, "PlayerColor" IMATERIAL_PROXY_INTERFACE_VERSION);
 #endif
 
 class CHandViewModel : public CBaseViewModel

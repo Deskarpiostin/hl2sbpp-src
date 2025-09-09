@@ -60,6 +60,15 @@ ConVar tf_weapon_criticals_bucket_bottom( "tf_weapon_criticals_bucket_bottom", "
 ConVar tf_weapon_criticals_bucket_default( "tf_weapon_criticals_bucket_default", "300.0", FCVAR_REPLICATED | FCVAR_CHEAT );
 #endif // TF
 
+// @ThePixelMoon: fuck no, i'm not recompiling all models just for this piece of shit
+ConVar sv_defaultdeployspeed(
+    "sv_defaultdeployspeed",
+    "4.0",
+    FCVAR_REPLICATED | FCVAR_CHEAT,
+    "Controls the global deploy speed multiplier for weapons"
+);
+
+
 CBaseCombatWeapon::CBaseCombatWeapon() : BASECOMBATWEAPON_DERIVED_FROM()
 {
 	// Constructor must call this
@@ -1404,58 +1413,54 @@ bool CBaseCombatWeapon::ReloadOrSwitchWeapons( void )
 //-----------------------------------------------------------------------------
 // Purpose: 
 // Input  : *szViewModel - 
-//			*szWeaponModel - 
-//			iActivity - 
-//			*szAnimExt - 
+//          *szWeaponModel - 
+//          iActivity - 
+//          *szAnimExt - 
 // Output : Returns true on success, false on failure.
 //-----------------------------------------------------------------------------
 bool CBaseCombatWeapon::DefaultDeploy( char *szViewModel, char *szWeaponModel, int iActivity, char *szAnimExt )
 {
-	// Msg( "deploy %s at %f\n", GetClassname(), gpGlobals->curtime );
+    if ( !HasAnyAmmo() && AllowsAutoSwitchFrom() )
+        return false;
 
-	// Weapons that don't autoswitch away when they run out of ammo 
-	// can still be deployed when they have no ammo.
-	if ( !HasAnyAmmo() && AllowsAutoSwitchFrom() )
-		return false;
+    CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
+    if ( pOwner )
+    {
+        if ( !pOwner->IsAlive() )
+            return false;
 
-	CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
-	if ( pOwner )
-	{
-		// Dead men deploy no weapons
-		if ( pOwner->IsAlive() == false )
-			return false;
+        pOwner->SetAnimationExtension( szAnimExt );
 
-		pOwner->SetAnimationExtension( szAnimExt );
+        SetViewModel();
+        SendWeaponAnim( iActivity );
 
-		SetViewModel();
-		SendWeaponAnim( iActivity );
+        float flDeploySpeed = sv_defaultdeployspeed.GetFloat();
+        if ( flDeploySpeed <= 0.0f )
+            flDeploySpeed = 1.0f; // sanity check
 
-		pOwner->SetNextAttack( gpGlobals->curtime + SequenceDuration() );
-	}
+        float flTime = SequenceDuration() / flDeploySpeed;
 
-	// Can't shoot again until we've finished deploying
-	m_flNextPrimaryAttack	= gpGlobals->curtime + SequenceDuration();
-	m_flNextSecondaryAttack	= gpGlobals->curtime + SequenceDuration();
-	m_flHudHintMinDisplayTime = 0;
+        CBaseViewModel *vm = pOwner->GetViewModel();
+        if ( vm )
+            vm->SetPlaybackRate( flDeploySpeed );
 
-	m_bAltFireHudHintDisplayed = false;
-	m_bReloadHudHintDisplayed = false;
-	m_flHudHintPollTime = gpGlobals->curtime + 5.0f;
-	
-	WeaponSound( DEPLOY );
+        pOwner->SetNextAttack( gpGlobals->curtime + flTime );
 
-	SetWeaponVisible( true );
+        m_flNextPrimaryAttack   = gpGlobals->curtime + flTime;
+        m_flNextSecondaryAttack = gpGlobals->curtime + flTime;
+    }
 
-/*
+    m_flHudHintMinDisplayTime = 0;
+    m_bAltFireHudHintDisplayed = false;
+    m_bReloadHudHintDisplayed = false;
+    m_flHudHintPollTime = gpGlobals->curtime + 5.0f;
 
-This code is disabled for now, because moving through the weapons in the carousel 
-selects and deploys each weapon as you pass it. (sjb)
+    WeaponSound( DEPLOY );
+    SetWeaponVisible( true );
 
-*/
+    SetContextThink( NULL, 0, HIDEWEAPON_THINK_CONTEXT );
 
-	SetContextThink( NULL, 0, HIDEWEAPON_THINK_CONTEXT );
-
-	return true;
+    return true;
 }
 
 //-----------------------------------------------------------------------------
