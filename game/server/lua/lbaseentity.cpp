@@ -166,6 +166,42 @@ static int CBaseEntity_GetInputDispatchEffectPosition (lua_State *L) {
   return 2;
 }
 
+static int CBaseEntity_Fire(lua_State *L)
+{
+    CBaseEntity *pEntity = luaL_checkentity(L, 1);
+    if (!pEntity)
+        return luaL_error(L, "Expected valid entity at index 1");
+
+    const char *szInput = luaL_checkstring(L, 2);
+
+    variant_t Value;
+    if (lua_gettop(L) >= 3 && lua_isstring(L, 3))
+    {
+        Value.SetString(MAKE_STRING(lua_tostring(L, 3)));
+    }
+    else
+    {
+        Value.SetString(NULL_STRING);
+    }
+
+    float flDelay = 0.0f;
+    if (lua_gettop(L) >= 4 && lua_isnumber(L, 4))
+        flDelay = (float)lua_tonumber(L, 4);
+
+	CBaseEntity *pActivator = NULL;
+	if (lua_gettop(L) >= 5 && lua_isuserdata(L, 5))
+		pActivator = luaL_checkentity(L, 5);
+
+	CBaseEntity *pCaller = NULL;
+	if (lua_gettop(L) >= 6 && lua_isuserdata(L, 6))
+		pCaller = luaL_checkentity(L, 6);
+
+    bool result = pEntity->AcceptInput(szInput, pActivator, pCaller, Value, 0);
+
+    lua_pushboolean(L, result);
+    return 1;
+}
+
 static int CBaseEntity_EntityText (lua_State *L) {
   luaL_checkentity(L, 1)->EntityText(luaL_checkinteger(L, 2), luaL_checkstring(L, 3), luaL_checknumber(L, 4), luaL_checkinteger(L, 5), luaL_checkinteger(L, 6), luaL_checkinteger(L, 7), luaL_checkinteger(L, 8));
   return 0;
@@ -744,6 +780,7 @@ static const luaL_Reg CBaseEntitymeta[] = {
   {"CreateNoSpawn", CBaseEntity_CreateNoSpawn},
   {"GetDamageType", CBaseEntity_GetDamageType},
   {"GetDamage", CBaseEntity_GetDamage},
+  {"Fire", CBaseEntity_Fire},
   {"SetDamage", CBaseEntity_SetDamage},
   {"BodyTarget", CBaseEntity_BodyTarget},
   {"HeadTarget", CBaseEntity_HeadTarget},

@@ -359,6 +359,14 @@ static int llex (LexState *ls, SemInfo *seminfo) {
           next(ls);
         continue;
       }
+      case '/': {
+        next(ls);
+        if (ls->current != '/') return '/';  /* just a slash */
+        next(ls);
+        while (!currIsNewline(ls) && ls->current != EOZ)
+          next(ls);
+        continue;
+      }
       case '[': {
         int sep = skip_sep(ls);
         if (sep >= 0) {
