@@ -121,6 +121,8 @@ acttable_t	CWeaponShotgun::m_acttable[] =
 
 	{ ACT_MP_JUMP,						ACT_HL2MP_JUMP_SHOTGUN,					false },
 
+	{ ACT_RANGE_ATTACK1, ACT_RANGE_ATTACK_SHOTGUN, true },
+
 	{ ACT_IDLE, ACT_IDLE_SMG1, true },	// FIXME: hook to shotgun unique
 	{ ACT_RELOAD, ACT_RELOAD_SHOTGUN, false },
 	{ ACT_WALK, ACT_WALK_RIFLE, true },

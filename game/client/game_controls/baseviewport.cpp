@@ -775,6 +775,14 @@ int CBaseViewport::GetDeathMessageStartHeight( void )
 
 void CBaseViewport::Paint()
 {
+#ifdef LUA_SDK
+	if ( L )
+	{
+		BEGIN_LUA_CALL_HOOK("PostChildUIPaint");
+    	END_LUA_CALL_HOOK(0, 0);
+	}
+#endif
+
 	if ( cl_leveloverviewmarker.GetInt() > 0 )
 	{
 		int size = cl_leveloverviewmarker.GetInt();
