@@ -890,6 +890,13 @@ CHLClient::CHLClient()
 
 extern IGameSystem *ViewportClientSystem();
 
+#ifdef HL2SB
+ConVar hl2_mounted("hl2_mounted", "0", FCVAR_DEVELOPMENTONLY);
+ConVar portal_mounted("portal_mounted", "0", FCVAR_DEVELOPMENTONLY);
+ConVar css_mounted("css_mounted", "0", FCVAR_DEVELOPMENTONLY);
+ConVar hl1_mounted("hl1_mounted", "0", FCVAR_DEVELOPMENTONLY);
+#endif
+
 //-----------------------------------------------------------------------------
 ISourceVirtualReality *g_pSourceVR = NULL;
 
@@ -1021,6 +1028,11 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
         "garrysmod"
     };
 
+    bool cssMounted    = false;
+    bool hl2Mounted    = false;
+    bool portalMounted = false;
+    bool hl1Mounted    = false;
+
     for (int i = 0; i < ARRAYSIZE(relativeTargets); ++i)
     {
         char candidate[MAX_PATH * 3];
@@ -1048,10 +1060,29 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 				DevMsg("Mounting directory: %s\n", candidate);
 				g_pFullFileSystem->AddSearchPath(candidate, "GAME", PATH_ADD_TO_TAIL);
 			}
+
+            if (Q_stristr(candidate, "cstrike"))
+                cssMounted = true;
+            else if (Q_stristr(candidate, "hl2mp") || Q_stristr(candidate, "episodic") || Q_stristr(candidate, "ep2"))
+                hl2Mounted = true;
+            else if (Q_stristr(candidate, "portal"))
+                portalMounted = true;
+            else if (Q_stristr(candidate, "hl1"))
+                hl1Mounted = true;
         }
         else
             DevMsg("Skipping missing: %s\n", candidate);
     }
+
+    css_mounted.SetValue(cssMounted ? 1 : 0);
+    hl2_mounted.SetValue(hl2Mounted ? 1 : 0);
+    portal_mounted.SetValue(portalMounted ? 1 : 0);
+    hl1_mounted.SetValue(hl1Mounted ? 1 : 0);
+
+    DevMsg("css_mounted set to %d\n", cssMounted ? 1 : 0);
+    DevMsg("hl2_mounted set to %d\n", hl2Mounted ? 1 : 0);
+    DevMsg("portal_mounted set to %d\n", portalMounted ? 1 : 0);
+    DevMsg("hl1_mounted set to %d\n", hl1Mounted ? 1 : 0);
 #endif
 
 #ifdef WORKSHOP_IMPORT_ENABLED

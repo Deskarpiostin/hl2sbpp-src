@@ -23,7 +23,7 @@
 class CHL2MPScriptedWeapon : public CBaseHL2MPCombatWeapon
 {
 public:
-	DECLARE_CLASS( CHL2MPScriptedWeapon, CWeaponHL2MPBase );
+	DECLARE_CLASS( CHL2MPScriptedWeapon, CBaseHL2MPCombatWeapon );
 	DECLARE_DATADESC();
 
 	CHL2MPScriptedWeapon();
@@ -63,6 +63,16 @@ public:
 #endif
 
 	virtual const Vector &GetBulletSpread( void );
+
+	virtual bool HasIronsights( void )
+	{
+		BEGIN_LUA_CALL_WEAPON_METHOD( "HasIronsights" );
+		END_LUA_CALL_WEAPON_METHOD( 0, 1 );
+
+		RETURN_LUA_BOOLEAN();
+
+		return false;
+	}
 
 public:
 

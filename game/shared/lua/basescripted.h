@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -29,6 +29,8 @@ public:
 	~CBaseScripted();
 
 	bool	IsScripted( void ) const { return true; }
+
+	virtual int OnTakeDamage(const CTakeDamageInfo &info);
 	
 	// CBaseEntity overrides.
 public:

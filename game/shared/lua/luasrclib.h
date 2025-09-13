@@ -46,6 +46,9 @@ LUALIB_API int (luaopen_Color) (lua_State *L);
 #define LUA_CONCOMMANDLIBNAME			"ConCommand"
 LUALIB_API int (luaopen_ConCommand) (lua_State *L);
 
+#define LUA_SPAWNMENULIBNAME			"spawnmenu"
+LUALIB_API int (luaopen_sm)( lua_State* L );
+
 #define LUA_CONTENTSLIBNAME				"CONTENTS"
 LUALIB_API int (luaopen_CONTENTS) (lua_State *L);
 

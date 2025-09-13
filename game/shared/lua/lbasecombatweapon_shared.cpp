@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: 
 //
@@ -972,6 +972,44 @@ static int CBaseCombatWeapon___tostring (lua_State *L) {
   return 1;
 }
 
+static int CBaseCombatWeapon_HasIronsights(lua_State *L) {
+    lua_pushboolean(L, luaL_checkweapon(L, 1)->HasIronsights());
+    return 1;
+}
+
+static int CBaseCombatWeapon_IsIronsighted(lua_State *L) {
+    lua_pushboolean(L, luaL_checkweapon(L, 1)->IsIronsighted());
+    return 1;
+}
+
+static int CBaseCombatWeapon_ToggleIronsights(lua_State *L) {
+#ifdef CLIENT_DLL
+    luaL_checkweapon(L, 1)->ToggleIronsights();
+	engine->ServerCmd( "toggle_ironsight" );
+#endif
+    return 0;
+}
+
+static int CBaseCombatWeapon_EnableIronsights(lua_State *L) {
+    luaL_checkweapon(L, 1)->EnableIronsights();
+    return 0;
+}
+
+static int CBaseCombatWeapon_DisableIronsights(lua_State *L) {
+    luaL_checkweapon(L, 1)->DisableIronsights();
+    return 0;
+}
+
+static int CBaseCombatWeapon_SetIronsightTime(lua_State *L) {
+    luaL_checkweapon(L, 1)->SetIronsightTime();
+    return 0;
+}
+
+static int CBaseCombatWeapon_CanUseIronsight(lua_State *L) {
+    lua_pushboolean(L, luaL_checkweapon(L, 1)->CanUseIronsight());
+    return 1;
+}
+
 
 static const luaL_Reg CBaseCombatWeaponmeta[] = {
   {"AbortReload", CBaseCombatWeapon_AbortReload},
@@ -1028,6 +1066,13 @@ static const luaL_Reg CBaseCombatWeaponmeta[] = {
   {"GetRumbleEffect", CBaseCombatWeapon_GetRumbleEffect},
   {"GetSecondaryAmmoCount", CBaseCombatWeapon_GetSecondaryAmmoCount},
   {"GetSecondaryAmmoType", CBaseCombatWeapon_GetSecondaryAmmoType},
+  {"HasIronsights", CBaseCombatWeapon_HasIronsights},
+  {"IsIronsighted", CBaseCombatWeapon_IsIronsighted},
+  {"ToggleIronsights", CBaseCombatWeapon_ToggleIronsights},
+  {"EnableIronsights", CBaseCombatWeapon_EnableIronsights},
+  {"DisableIronsights", CBaseCombatWeapon_DisableIronsights},
+  {"SetIronsightTime", CBaseCombatWeapon_SetIronsightTime},
+  {"CanUseIronsight", CBaseCombatWeapon_CanUseIronsight},
   {"GetSecondaryAttackActivity", CBaseCombatWeapon_GetSecondaryAttackActivity},
   {"GetShootSound", CBaseCombatWeapon_GetShootSound},
   {"GetSlot", CBaseCombatWeapon_GetSlot},

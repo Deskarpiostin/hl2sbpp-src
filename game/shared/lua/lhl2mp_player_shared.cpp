@@ -17,6 +17,7 @@
 #include "lc_baseanimating.h"
 #else
 #include "lbaseanimating.h"
+#include "ilagcompensationmanager.h"
 #endif
 #include "mathlib/lvector.h"
 #include "lshareddefs.h"
@@ -104,7 +105,7 @@ static int CHL2MP_Player_CanSprint (lua_State *L) {
 }
 
 static int CHL2MP_Player_DoAnimationEvent (lua_State *L) {
-//  luaL_checkhl2mpplayer(L, 1)->DoAnimationEvent((PlayerAnimEvent_t)luaL_checkint(L, 2), luaL_optinteger(L, 3, 0));
+  luaL_checkhl2mpplayer(L, 1)->DoAnimationEvent((PlayerAnimEvent_t)luaL_checkint(L, 2), luaL_optinteger(L, 3, 0));
   return 0;
 }
 

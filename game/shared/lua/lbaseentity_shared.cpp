@@ -31,6 +31,7 @@
 #include "ltakedamageinfo.h"
 #include "mathlib/lvector.h"
 #include "lvphysics_interface.h"
+#include "lbasecombatweapon_shared.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -782,6 +783,12 @@ static int CBaseEntity_IsTransparent (lua_State *L) {
 static int CBaseEntity_IsWeapon (lua_State *L) {
   lua_pushboolean(L, luaL_checkentity(L, 1)->IsWeapon());
   return 1;
+}
+
+static int CBaseEntity_ToBaseCombatWeapon (lua_State *L) {
+	CBaseCombatWeapon* pWeapon = dynamic_cast<CBaseCombatWeapon*>(luaL_checkentity(L, 1));
+	lua_pushweapon(L, pWeapon);
+	return 1;
 }
 
 static int CBaseEntity_KeyValue (lua_State *L) {
@@ -1606,6 +1613,7 @@ static const luaL_Reg CBaseEntitymeta[] = {
   {"PhysicsCheckWater", CBaseEntity_PhysicsCheckWater},
   {"PhysicsCheckWaterTransition", CBaseEntity_PhysicsCheckWaterTransition},
   {"PhysicsImpact", CBaseEntity_PhysicsImpact},
+  {"ToBaseCombatWeapon", CBaseEntity_ToBaseCombatWeapon},
   {"PhysicsMarkEntitiesAsTouching", CBaseEntity_PhysicsMarkEntitiesAsTouching},
   {"PhysicsNotifyOtherOfGroundRemoval", CBaseEntity_PhysicsNotifyOtherOfGroundRemoval},
   {"PhysicsNotifyOtherOfUntouch", CBaseEntity_PhysicsNotifyOtherOfUntouch},

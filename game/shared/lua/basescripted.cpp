@@ -16,6 +16,8 @@
 #endif
 #include "lbaseentity_shared.h"
 #include "lvphysics_interface.h"
+#include "ltakedamageinfo.h"
+#include "takedamageinfo.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -98,13 +100,15 @@ CBaseScripted::CBaseScripted( void )
 
 CBaseScripted::~CBaseScripted( void )
 {
-	// Andrew; This is actually done in CBaseEntity. I'm doing it here because
-	// this is the class that initialized the reference.
-#ifdef LUA_SDK
-	lua_unref( L, m_nTableReference );
+    SetTouch( nullptr );
+    SetThink( nullptr );
 
-	// @ThePixelMoon: i hate lua
-	m_nTableReference = LUA_NOREF;
+#ifdef LUA_SDK
+    if ( m_nTableReference != LUA_NOREF )
+    {
+        luaL_unref( L, LUA_REGISTRYINDEX, m_nTableReference );
+        m_nTableReference = LUA_NOREF;
+    }
 #endif
 }
 
@@ -129,6 +133,15 @@ void CBaseScripted::LoadScriptedEntity( void )
 	{
 		lua_pop( L, 1 );
 	}
+}
+
+int CBaseScripted::OnTakeDamage(const CTakeDamageInfo &info)
+{
+	CTakeDamageInfo nonConstInfo = info;
+
+    BEGIN_LUA_CALL_ENTITY_METHOD("OnTakeDamage");
+		lua_pushdamageinfo( L, nonConstInfo );
+    END_LUA_CALL_ENTITY_METHOD(0, 0);
 }
 
 void CBaseScripted::InitScriptedEntity( void )
@@ -238,6 +251,11 @@ void CBaseScripted::Spawn( void )
 #ifndef CLIENT_DLL
 	InitScriptedEntity();
 #endif
+
+#ifdef GAME_DLL
+	SetMaxHealth( 100 );
+#endif
+	SetHealth( 100 );
 }
 
 void CBaseScripted::Precache( void )

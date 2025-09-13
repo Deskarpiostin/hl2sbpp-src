@@ -89,15 +89,13 @@ $Project "Client (HL2SB)"
 		$File "$SRCDIR/public/lua/vstdlib/lrandom.cpp"
 	}
 
-	$Folder "Half-Life 2 Sanbox"
+	$Folder "Half-Life 2 Sandbox"
 	{
 		$File "$SRCDIR/game/shared/hl2sb/weapon_physgun.cpp"
 	}
 
 	$Folder "SMenu"
 	{
-		$File "menu/sm_menu_list.cpp"
-		$File "menu/sm_menu_legacy.cpp"
 		$File "menu/vgui_imagebutton.cpp"
 		$File "menu/creatempdialog.cpp"
 	}

@@ -271,11 +271,12 @@ bool CWeaponShotgun::StartReload(void)
 	if (m_iClip1 >= GetMaxClip1())
 		return false;
 
-
 	int j = MIN(1, pOwner->GetAmmoCount(m_iPrimaryAmmoType));
 
 	if (j <= 0)
 		return false;
+
+	DisableIronsights();
 
 	SendWeaponAnim(ACT_SHOTGUN_RELOAD_START);
 

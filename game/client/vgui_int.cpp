@@ -30,8 +30,7 @@
 #endif
 
 #ifdef HL2SB
-#include "menu/sm_menu_legacy.h"
-#include "menu/sm_menu_list.h"
+#include "hl2sb/spawnmenu.h"
 #include "menu/creatempdialog.h"
 #include "hl2sb/mapload_background.h"
 #endif
@@ -230,7 +229,6 @@ void VGui_CreateGlobalPanels( void )
 	touch_panel->Create( toolParent );
 
 #ifdef HL2SB
-	smenu->Create(gameParent);
 	smlmenu->Create(gameParent);
 	maplist->Create(gameParent);
 #endif
@@ -267,7 +265,6 @@ void VGui_Shutdown()
 	touch_panel->Destroy();
 
 #ifdef HL2SB
-	smenu->Destroy();
 	smlmenu->Destroy();
 	maplist->Destroy();
 #endif

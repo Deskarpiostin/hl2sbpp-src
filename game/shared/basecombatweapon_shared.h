@@ -19,6 +19,9 @@
 #include "weapon_proficiency.h"
 #include "utlmap.h"
 
+#include "luamanager.h"
+#include "lbasecombatweapon_shared.h"
+
 #if defined( CLIENT_DLL )
 #define CBaseCombatWeapon C_BaseCombatWeapon
 #endif
@@ -174,6 +177,21 @@ public:
 	virtual bool			IsScripted( void ) const { return false; }
 	virtual bool			IsWeapon( void ) const { return true; }
 #endif
+
+	Vector					GetIronsightPositionOffset( void ) const;
+	QAngle					GetIronsightAngleOffset( void ) const;
+	float					GetIronsightFOVOffset( void ) const;
+
+	CNetworkVar( bool, m_bIsIronsighted );
+	CNetworkVar( float, m_flIronsightedTime );
+
+	virtual bool			HasIronsights( void ) { return false; }
+	bool					IsIronsighted( void );
+	void					ToggleIronsights( void );
+	void					EnableIronsights( void );
+	void					DisableIronsights( void );
+	void					SetIronsightTime( void );
+	bool 					CanUseIronsight() const;
 
 	virtual void			Spawn( void );
 	virtual void			Precache( void );

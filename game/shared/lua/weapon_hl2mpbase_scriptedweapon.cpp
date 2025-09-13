@@ -8,6 +8,10 @@
 
 #if defined( CLIENT_DLL )
 	#include "c_hl2mp_player.h"
+	#include "hud.h"
+	#include "vgui/ISurface.h"
+	#include "vgui/ILocalize.h"
+	#include <vgui_controls/Controls.h>
 #else
 	#include "hl2mp_player.h"
 #endif
@@ -17,6 +21,7 @@
 #include "ammodef.h"
 #include "luamanager.h"
 #include "lbasecombatweapon_shared.h"
+#include "mathlib/lvector.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -105,7 +110,6 @@ void ResetWeaponFactoryDatabase( void )
 	m_WeaponFactoryDatabase.RemoveAll();
 #endif
 }
-
 
 // acttable_t CHL2MPScriptedWeapon::m_acttable[] = 
 // {
@@ -549,6 +553,58 @@ void CHL2MPScriptedWeapon::InitScriptedWeapon( void )
 	lua_pop( L, 1 );
 
 	lua_getref( L, m_nTableReference );
+	lua_getfield( L, -1, "IronsightPosOffset" );
+	lua_remove( L, -2 );
+	if ( lua_isuserdata( L, -1 ) )
+	{
+		m_pLuaWeaponInfo->vecIronsightPosOffset = luaL_checkvector(L, -1);
+	}
+	else
+	{
+		m_pLuaWeaponInfo->vecIronsightPosOffset = Vector( 0, 0, 0 );
+	}
+	lua_pop( L, 1 );
+
+	lua_getref( L, m_nTableReference );
+	lua_getfield( L, -1, "IronsightAngOffset" );
+	lua_remove( L, -2 );
+	if ( lua_isuserdata( L, -1 ) )
+	{
+		m_pLuaWeaponInfo->angIronsightAngOffset = luaL_checkangle( L, -1 );
+	}
+	else
+	{
+		m_pLuaWeaponInfo->angIronsightAngOffset = QAngle( 0, 0, 0 );
+	}
+	lua_pop( L, 1);
+
+	lua_getref( L, m_nTableReference );
+	lua_getfield( L, -1, "IronsightFOVOffset" );
+	lua_remove( L, -2 );
+	if ( lua_isnumber( L, -1 ) )
+	{
+		m_pLuaWeaponInfo->flIronsightFOVOffset = ( float )lua_tonumber( L, -1 );
+	}
+	else
+	{
+		m_pLuaWeaponInfo->flIronsightFOVOffset = 0.0f;
+	}
+	lua_pop( L, 1 );
+
+	lua_getref( L, m_nTableReference );
+	lua_getfield( L, -1, "CanUseIronsight" );
+	lua_remove( L, -2 );
+	if ( lua_isboolean( L, -1 ) )
+	{
+		m_pLuaWeaponInfo->bCanUseIronsight = lua_toboolean( L, -1 ) != 0;
+	}
+	else
+	{
+		m_pLuaWeaponInfo->bCanUseIronsight = false;
+	}
+	lua_pop(L, 1);
+
+	lua_getref( L, m_nTableReference );
 	lua_getfield( L, -1, "damage" );
 	lua_remove( L, -2 );
 	if ( lua_isnumber( L, -1 ) )
@@ -946,10 +1002,10 @@ void CHL2MPScriptedWeapon::SecondaryAttack( void )
 //-----------------------------------------------------------------------------
 void CHL2MPScriptedWeapon::FireBullets( const FireBulletsInfo_t &info )
 {
-	if(CBasePlayer *pPlayer = ToBasePlayer ( GetOwner() ) )
-	{
-		pPlayer->FireBullets(info);
-	}
+	CHL2MP_Player *pHL2MPPlayer = ToHL2MPPlayer( ToBasePlayer( GetOwner() ) );
+	if (!pHL2MPPlayer) return;
+
+	pHL2MPPlayer->FireBullets( info );
 }
 
 bool CHL2MPScriptedWeapon::Reload( void )

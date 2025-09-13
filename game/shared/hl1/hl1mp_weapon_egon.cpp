@@ -115,8 +115,8 @@ END_NETWORK_TABLE()
 BEGIN_PREDICTION_DATA( CWeaponEgon )
 END_PREDICTION_DATA()
 
-LINK_ENTITY_TO_CLASS( weapon_egon, CWeaponEgon );
-PRECACHE_WEAPON_REGISTER( weapon_egon );
+LINK_ENTITY_TO_CLASS( weapon_egon_hl1, CWeaponEgon );
+PRECACHE_WEAPON_REGISTER( weapon_egon_hl1 );
 
 acttable_t	CWeaponEgon::m_acttable[] = 
 {

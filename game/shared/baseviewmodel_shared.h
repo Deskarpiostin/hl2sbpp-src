@@ -48,6 +48,8 @@ public:
 
 	virtual void					UpdateOnRemove( void );
 
+ 	void		CalcIronsights( Vector &pos, QAngle &ang );
+
 	// Weapon client handling
 	virtual void			SendViewModelMatchingSequence( int sequence );
 	virtual void			SetWeaponModel( const char *pszModelname, CBaseCombatWeapon *weapon );
@@ -197,7 +199,6 @@ private:
 #if defined( CLIENT_DLL )
 	int						m_nOldAnimationParity;
 #endif
-
 
 	typedef CHandle< CBaseCombatWeapon > CBaseCombatWeaponHandle;
 	CNetworkVar( CBaseCombatWeaponHandle, m_hWeapon );

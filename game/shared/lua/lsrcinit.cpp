@@ -29,6 +29,8 @@ static const luaL_Reg luasrclibs[] = {
   {LUA_HL2MPPLAYERLIBNAME, luaopen_CHL2MP_Player},
   {LUA_NAVAREALIBNAME, luaopen_CNavArea},
   {LUA_NAVMESHLIBNAME, luaopen_navmesh},
+#else
+  {LUA_SPAWNMENULIBNAME, luaopen_sm},
 #endif
   {LUA_HL2MPPLAYERLIBNAME, luaopen_CHL2MP_Player_shared},
   {LUA_COLORLIBNAME, luaopen_Color},
