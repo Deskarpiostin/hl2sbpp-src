@@ -178,6 +178,17 @@ extern vgui::IInputInternal *g_InputInternal;
 
 #ifdef HL2SB
 #include "hl2sb/dynamicsky.h"
+
+// start fucking piece of shit
+#include "httplib.h"
+// end fucking piece of shit
+
+#include <vgui_controls/MessageBox.h>
+
+#ifdef _WIN32
+#undef MessageBox
+#undef CreateEvent
+#endif
 #endif
 
 // memdbgon must be the last include file in a .cpp file!!!
@@ -1287,6 +1298,26 @@ bool CHLClient::ReplayPostInit()
 #endif
 }
 
+#ifdef HL2SB
+ //-----------------------------------------------------------------------------
+ // Purpose: version checking
+ //-----------------------------------------------------------------------------
+ const char* GetModVersion()
+ {
+ 	KeyValues* gameInfo = new KeyValues( "Version" );
+ 	if( gameInfo->LoadFromFile( filesystem, "scripts/version.txt", "MOD" ) )
+ 	{
+ 		const char* gameTitle = gameInfo->GetString( "index", "Unknown" );
+ 		return gameTitle;
+ 	}
+ 	else
+ 	{
+ 		return "Unknown";
+ 	}
+ }
+#endif
+
+
 //-----------------------------------------------------------------------------
 // Purpose: Called after client & server DLL are loaded and all systems initialized
 //-----------------------------------------------------------------------------
@@ -1320,6 +1351,46 @@ void CHLClient::PostInit()
         );
 	}
 	// protect end
+
+#ifdef HL2SB
+	std::string githubVersionStr;
+	std::string url = "/hl2sbpp/version.txt";
+
+	httplib::Client cli("http://direct.orange.maksw.pl");
+
+	//cli.set_read_timeout(5, 0);
+
+	httplib::Result res = cli.Get(url.c_str());
+	if (!res)
+	{
+		Warning("how did this happen?\n");
+	}
+	else
+	{
+		if (res && res->status == 200) {
+			githubVersionStr = res->body;
+
+			int githubVersion = std::atof(githubVersionStr.c_str());
+			int modVersion = std::atof(GetModVersion());
+
+			if (githubVersion > modVersion) {
+				vgui::MessageBox* pMessageBox = new vgui::MessageBox(
+					"Game Updater",
+					"You're playing on an outdated version. Please update!"
+				);
+				pMessageBox->DoModal();
+			}
+			else
+			{
+				Msg("Latest version detected, i guess...\n");
+			}
+		}
+		else
+		{
+			Warning("Unable to connect to servers: %d\n", res->status);
+		}
+	}
+#endif
 
 #ifdef HL1MP_CLIENT_DLL
 	if ( s_cl_load_hl1_content.GetBool() && steamapicontext && steamapicontext->SteamApps() )

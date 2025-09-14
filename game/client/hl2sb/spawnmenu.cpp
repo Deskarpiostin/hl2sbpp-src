@@ -8,6 +8,7 @@
 #include "cbase.h"
 #include "spawnmenu.h"
 #include <vgui/IVGui.h>
+#include "fmtstr.h"
 
 using namespace vgui;
 
@@ -43,14 +44,21 @@ void CSMLCommandButton::OnCommand( const char* command ) {
 CSMLCommandButton::~CSMLCommandButton() {}
 
 CSMLPage::CSMLPage( Panel* parent, const char* panelName )
-    : PropertyPage( parent, panelName ) {
+    : PropertyPage( parent, panelName ), m_bInScrollUpdate(false) {
     vgui::ivgui()->AddTickSignal( GetVPanel(), 250 );
+
+    m_pContentPanel = new Panel(this, "ContentPanel");
+
+    m_pScrollBar = new ScrollBar(this, "PageScrollBar", true);
+    m_pScrollBar->SetVisible(false);
+    m_pScrollBar->AddActionSignalTarget(this);
+
+	SetMouseInputEnabled(true);
 }
 
 CSMLPage::~CSMLPage() {
     for( int i = 0; i < m_LayoutItems.Count(); ++i ) {
-        Panel* p = m_LayoutItems[i];
-        delete p;
+        delete m_LayoutItems[i];
     }
     m_LayoutItems.RemoveAll();
 }
@@ -64,19 +72,96 @@ void CSMLPage::OnTick() {
     }
 }
 
-void CSMLPage::PerformLayout() {
-    int x = 5, y = 5, w = 150, h = 18, gap = 2;
-    int c = m_LayoutItems.Count();
-    int tall = GetTall();
+void CSMLPage::OnSliderMoved(int value) {
+    if (!m_pContentPanel || !m_pScrollBar->IsVisible()) return;
 
-    for( int i = 0; i < c; ++i ) {
-        Panel* p = m_LayoutItems[i];
-        p->SetBounds( x, y, w, h );
-        y += (h + gap);
-        if( y >= tall - h ) {
-            x += (w + gap);
-            y = 5;
+    m_pContentPanel->SetPos(0, -value);
+}
+
+void CSMLPage::PerformLayout() {
+    int btnW = 150, btnH = 18, gap = 2;
+    int scrollWide = 15;
+    int numItems = m_LayoutItems.Count();
+    if (numItems == 0) return;
+
+    int availWide = GetWide() - 10;
+    int cols = max(1, availWide / (btnW + gap));
+    int itemsPerCol = (numItems + cols - 1) / cols;
+    int requiredTall = 10 + itemsPerCol * (btnH + gap) - gap;
+
+    bool needScroll = requiredTall > GetTall() - 10;
+    if (needScroll) {
+        availWide -= (scrollWide + gap);
+        cols = max(1, availWide / (btnW + gap));
+        itemsPerCol = (numItems + cols - 1) / cols;
+        requiredTall = 10 + itemsPerCol * (btnH + gap) - gap;
+    }
+
+    m_pScrollBar->SetVisible(needScroll);
+	int viewTall = GetTall() - 10;
+	int contentTall = max(1, requiredTall);
+	if (needScroll) {
+		m_pScrollBar->SetBounds(
+            GetWide() - scrollWide - 5,
+            5,
+            scrollWide,
+            GetTall() - 10
+        );
+        
+		m_pScrollBar->SetRange(0, contentTall - 1);
+		m_pScrollBar->SetRangeWindow(viewTall);
+        m_pScrollBar->InvalidateLayout(true, true);
+	}
+
+    int contentWide = GetWide() - (needScroll ? scrollWide + gap + 5 : 10);
+    m_pContentPanel->SetBounds(0, 0, contentWide, requiredTall);
+
+    int itemIdx = 0;
+    for (int col = 0; col < cols && itemIdx < numItems; ++col) {
+        int x = 5 + col * (btnW + gap);
+        int y = 5;
+        for (int row = 0; row < itemsPerCol && itemIdx < numItems; ++row, ++itemIdx) {
+            Panel* p = m_LayoutItems[itemIdx];
+            p->SetBounds(x, y, btnW, btnH);
+            y += btnH + gap;
         }
+    }
+
+    if (needScroll) {
+        int val = m_pScrollBar->GetValue();
+        m_pContentPanel->SetPos(0, -val);
+    } else {
+        m_pContentPanel->SetPos(0, 0);
+    }
+}
+
+void CSMLPage::OnCommand(const char* command) {
+    if (!Q_stricmp(command, "ScrollBarSliderMoved") || 
+        !Q_stricmp(command, "ScrollBarButtonPressed")) {
+        if (m_pContentPanel && m_pScrollBar->IsVisible()) {
+            InvalidateLayout(false, true); // Trigger layout update
+        }
+    }
+}
+
+bool m_bInScrollUpdate = false;
+
+void CSMLPage::OnMouseWheeled(int delta) {
+    if (m_bInScrollUpdate) return;
+    if (m_pScrollBar && m_pScrollBar->IsVisible()) {
+        m_bInScrollUpdate = true;
+        
+        int currentVal = m_pScrollBar->GetValue();
+        int newVal = currentVal - (delta * 3 * 18);
+        
+        int minVal, maxVal;
+        m_pScrollBar->GetRange(minVal, maxVal);
+        newVal = clamp(newVal, minVal, maxVal);
+        
+        m_pScrollBar->SetValue(newVal);
+        InvalidateLayout(false, true);
+        
+        m_bInScrollUpdate = false;
     }
 }
 
@@ -124,7 +209,7 @@ void CSMLPage::CreateButtonX( CSMLPage* page, const char* label, const char* com
         }
 #endif
 
-        CSMLCommandButton* btn = new CSMLCommandButton( page, label, label, command );
+        CSMLCommandButton* btn = new CSMLCommandButton( page->m_pContentPanel, label, label, command );
         page->m_LayoutItems.AddToTail( btn );
     }
 }
@@ -138,39 +223,40 @@ CSMLMenu::CSMLMenu( vgui::VPANEL* parent, const char* panelName )
     SetWide( ScreenWidth() );
     SetTall( ScreenHeight() );
 
-    KeyValues* kv = new KeyValues( "SMLenu" );
-    if( kv )
-    {
-        if( kv->LoadFromFile( g_pFullFileSystem, "scripts/props.txt" ) )
-        {
-            for( KeyValues* dat = kv->GetFirstSubKey(); dat != nullptr; dat = dat->GetNextKey() )
-            {
-                if( !Q_strcasecmp( dat->GetName(), "width" ) )
-                {
-                    SetWide( dat->GetInt() );
-                }
-                else if( !Q_strcasecmp( dat->GetName(), "height" ) )
-                {
-                    SetTall( dat->GetInt() );
-                }
-                else
-                {
-                    if( !Q_stricmp( dat->GetName(), "Portal" ) && !portal_mounted.GetBool() )
-                        continue;
+	FileFindHandle_t handle;
+	const char* filename = g_pFullFileSystem->FindFirst("settings/*.txt", &handle);
 
-                    if( !Q_stricmp( dat->GetName(), "CSS" ) && !css_mounted.GetBool() )
-                        continue;
+	while (filename)
+	{
+		KeyValues* kv = new KeyValues("SMLenu");
+		if (kv->LoadFromFile(g_pFullFileSystem, CFmtStr("settings/%s", filename)))
+		{
+			for (KeyValues* dat = kv->GetFirstSubKey(); dat != nullptr; dat = dat->GetNextKey())
+			{
+				if (!Q_strcasecmp(dat->GetName(), "width"))
+					SetWide(dat->GetInt());
+				else if (!Q_strcasecmp(dat->GetName(), "height"))
+					SetTall(dat->GetInt());
+				else
+				{
+					// Skip unmounted content
+					if (!Q_stricmp(dat->GetName(), "Portal") && !portal_mounted.GetBool())
+						continue;
+					if (!Q_stricmp(dat->GetName(), "CSS") && !css_mounted.GetBool())
+						continue;
 
-                    CSMLPage* page = new CSMLPage( this, dat->GetName() );
-                    page->Init( dat );
-                    AddPage( page, dat->GetName() );
+					CSMLPage* page = new CSMLPage(this, dat->GetName());
+					page->Init(dat);
+					AddPage(page, dat->GetName());
+					m_PageRegistry.emplace(std::string(dat->GetName()), page);
+				}
+			}
+		}
+		kv->deleteThis();
 
-                    m_PageRegistry.emplace( std::string( dat->GetName() ), page );
-                }
-            }
-        }
-        kv->deleteThis();
-    }
+		filename = g_pFullFileSystem->FindNext(handle);
+	}
+	g_pFullFileSystem->FindClose(handle);
 
     vgui::ivgui()->AddTickSignal( GetVPanel(), 100 );
     GetPropertySheet()->SetTabWidth( 72 );

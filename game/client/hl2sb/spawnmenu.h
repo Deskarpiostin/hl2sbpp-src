@@ -22,6 +22,7 @@
 #include <vgui_controls/MenuButton.h>
 #include <vgui_controls/Menu.h>
 #include <vgui_controls/MenuItem.h>
+#include <vgui_controls/ScrollBar.h>
 #include "filesystem.h"
 #include <map>
 #include <string>
@@ -56,6 +57,7 @@ public:
 };
 
 class CSMLPage : public PropertyPage {
+	DECLARE_CLASS_SIMPLE( CSMLPage, PropertyPage );
 public:
     CSMLPage( Panel* parent, const char* panelName );
     ~CSMLPage() override;
@@ -64,8 +66,16 @@ public:
     void Init( KeyValues* kv );
     static void CreateButtonX( CSMLPage* page, const char* label, const char* command );
 
+	virtual void OnCommand(const char* command) override;
+	virtual void OnMouseWheeled(int delta) override;
+
+	MESSAGE_FUNC_INT( OnSliderMoved, "ScrollBarSliderMoved", position );
+
 private:
+    bool m_bInScrollUpdate;
     CUtlVector<Panel*> m_LayoutItems;
+    Panel* m_pContentPanel;
+    ScrollBar* m_pScrollBar;
 };
 
 class CSMLMenu : public PropertyDialog {
@@ -76,7 +86,7 @@ public:
     CSMLPage* FindOrCreatePage( const char* pageName );
     void OnTick() override;
 
-	void OnClose();
+	virtual void OnClose() override;
 
 public:
     static CSMLMenu* s_Instance;

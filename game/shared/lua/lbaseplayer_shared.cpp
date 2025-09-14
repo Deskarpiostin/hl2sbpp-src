@@ -797,6 +797,13 @@ static int CBasePlayer_WeaponCount (lua_State *L) {
   return 1;
 }
 
+static int CBasePlayer_SetViewEntity (lua_State *L) {
+#ifndef CLIENT_DLL
+	luaL_checkplayer(L, 1)->SetViewEntity(luaL_checkentity(L, 2));
+#endif
+	return 0;
+}
+
 static int CBasePlayer___index (lua_State *L) {
   CBasePlayer *pPlayer = lua_toplayer(L, 1);
   if (pPlayer == NULL) {  /* avoid extra test when d is not 0 */
@@ -955,6 +962,7 @@ static const luaL_Reg CBasePlayermeta[] = {
   {"GetObserverTarget", CBasePlayer_GetObserverTarget},
   {"GetOffset_m_Local", CBasePlayer_GetOffset_m_Local},
   {"GetPlayerLocalData", CBasePlayer_GetPlayerLocalData},
+  {"SetViewEntity", CBasePlayer_SetViewEntity},
   {"GetPlayerMaxs", CBasePlayer_GetPlayerMaxs},
   {"GetPlayerMins", CBasePlayer_GetPlayerMins},
   {"GetPlayerName", CBasePlayer_GetPlayerName},
