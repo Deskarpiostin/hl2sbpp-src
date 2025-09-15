@@ -220,8 +220,20 @@ CSMLMenu::CSMLMenu( vgui::VPANEL* parent, const char* panelName )
     SetPos( 0, 0 );
 
     /* size */
-    SetWide( ScreenWidth() );
-    SetTall( ScreenHeight() );
+    int wide  = ScreenWidth()  / 1.25;
+    int tall  = ScreenHeight() / 1.25;
+
+    SetWide(wide);
+    SetTall(tall);
+
+    /* center */
+    int x = (ScreenWidth()  - wide) / 2;
+    int y = (ScreenHeight() - tall) / 2;
+    SetPos(x, y);
+
+	// ok
+	SetMoveable(false);
+    SetSizeable(false);
 
 	FileFindHandle_t handle;
 	const char* filename = g_pFullFileSystem->FindFirst("settings/*.txt", &handle);
@@ -275,7 +287,8 @@ CSMLMenu::~CSMLMenu() {
 
 void CSMLMenu::OnClose()
 {
-    SetVisible(false);
+	// hacky hack
+    spawn.SetValue("0");
 }
 
 void CSMLMenu::CreateButton( const char* pageName, const char* label, const char* command ) {
@@ -307,8 +320,18 @@ CSMLPage* CSMLMenu::FindOrCreatePage( const char* pageName ) {
 }
 
 void CSMLMenu::OnTick() {
-    SetWide( ScreenWidth() );
-    SetTall( ScreenHeight() );
+    /* size */
+    int wide  = ScreenWidth()  / 1.25;
+    int tall  = ScreenHeight() / 1.25;
+
+    SetWide(wide);
+    SetTall(tall);
+
+    /* center */
+    int x = (ScreenWidth()  - wide) / 2;
+    int y = (ScreenHeight() - tall) / 2;
+    SetPos(x, y);
+
     SetVisible( spawn.GetBool() );
 }
 

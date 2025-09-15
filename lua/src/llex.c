@@ -361,11 +361,32 @@ static int llex (LexState *ls, SemInfo *seminfo) {
       }
       case '/': {
         next(ls);
-        if (ls->current != '/') return '/';  /* just a slash */
-        next(ls);
-        while (!currIsNewline(ls) && ls->current != EOZ)
+        if (ls->current == '/') {
           next(ls);
-        continue;
+          while (!currIsNewline(ls) && ls->current != EOZ)
+            next(ls);
+          continue;
+        }
+        else if (ls->current == '*') {
+          next(ls);
+          for (;;) {
+            if (ls->current == EOZ)
+              luaX_lexerror(ls, "unfinished block comment", TK_EOS);
+            else if (ls->current == '*') {
+              next(ls);
+              if (ls->current == '/') {  /* end of comment */
+                next(ls);
+                break;
+              }
+            }
+            else
+              next(ls);
+          }
+          continue;
+        }
+        else {
+          return '/';  /* just a slash */
+        }
       }
       case '[': {
         int sep = skip_sep(ls);
@@ -396,6 +417,26 @@ static int llex (LexState *ls, SemInfo *seminfo) {
         if (ls->current != '=') return '~';
         else { next(ls); return TK_NE; }
       }
+      case '!': {
+        next(ls);
+        if (ls->current == '=') {
+          next(ls);
+          return TK_NE;
+        }
+        else {
+          return TK_NOT;
+        }
+      }
+      case '&': {
+		next(ls);
+		if (ls->current == '&') { next(ls); return TK_AND; }
+		else return '&';
+	  }
+	  case '|': {
+		next(ls);
+		if (ls->current == '|') { next(ls); return TK_OR; }
+		else return '|';
+	  }
       case '"':
       case '\'': {
         read_string(ls, ls->current, seminfo);

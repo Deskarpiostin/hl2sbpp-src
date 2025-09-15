@@ -64,7 +64,6 @@ $Project "Client (HL2MP)"
 
 		$Folder	"HL2 DLL"
 		{
- 			$File	"episodic\c_vort_charge_token.cpp"
 			$File	"$SRCDIR\game\shared\hl2\basehlcombatweapon_shared.cpp"
 			$File	"hl2\c_antlion_dust.cpp"
 			$File	"hl2\c_ar2_explosion.cpp"
@@ -140,6 +139,19 @@ $Project "Client (HL2MP)"
 			$File	"hl2\shieldproxy.cpp"
 			$File	"hl2\vgui_rootpanel_hl2.cpp"
 		}
+
+		$Folder "Episodic"
+        {
+            $File	"episodic\c_prop_scalable.cpp"
+            $File	"episodic\c_vort_charge_token.cpp"
+            $File	"episodic\c_weapon_hopwire.cpp"
+            $File	"$SRCDIR\game\shared\episodic\npc_advisor_shared.h"
+			$File	"episodic\c_npc_advisor.cpp"
+			$File	"episodic\episodic_screenspaceeffects.cpp"
+			$File	"episodic\episodic_screenspaceeffects.h"
+			$File	"episodic\flesh_internal_material_proxy.cpp"
+            $File	"episodic\c_npc_puppet.cpp"
+        }
 
 		$Folder	"HL2MP"
 		{
