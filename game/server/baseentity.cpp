@@ -3638,14 +3638,6 @@ int CBaseEntity::ShouldTransmit( const CCheckTransmitInfo *pInfo )
 	CBasePlayer *pRecipientPlayer = static_cast<CBasePlayer*>( pRecipientEntity );
 
 
-	// FIXME: Refactor once notion of "team" is moved into HL2 code
-	// Team rules may tell us that we should
-	if ( pRecipientPlayer->GetTeam() ) 
-	{
-		if ( pRecipientPlayer->GetTeam()->ShouldTransmitToPlayer( pRecipientPlayer, this ))
-			return FL_EDICT_ALWAYS;
-	}
-	
 
 /*#ifdef INVASION_DLL
 	// Check test network vis distance stuff. Eventually network LOD will do this.

@@ -79,10 +79,10 @@ public:
 	Vector m_vCrouchTraceMax;	
 };
 
-class CHL2MPRules : public CTeamplayRules
+class CHL2MPRules : public CMultiplayRules
 {
 public:
-	DECLARE_CLASS( CHL2MPRules, CTeamplayRules );
+	DECLARE_CLASS( CHL2MPRules, CMultiplayRules );
 
 #ifdef HL2SB
 private:
@@ -168,7 +168,7 @@ public:
 	void PlayerKilled( CBasePlayer *pVictim, const CTakeDamageInfo &info );
 
 	
-	bool	IsTeamplay( void ) { return m_bTeamPlayEnabled;	}
+	bool	IsTeamplay( void ) { return false;	}
 #ifdef LUA_SDK
 #ifndef CLIENT_DLL
 	bool	FPlayerCanTakeDamage( CBasePlayer *pPlayer, CBaseEntity *pAttacker );

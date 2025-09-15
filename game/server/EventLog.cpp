@@ -86,7 +86,7 @@ bool CEventLog::PrintPlayerEvent( IGameEvent *event )
 			team = pPlayer->GetTeam();
 		}
 
-		UTIL_LogPrintf( "\"%s<%i><%s><%s>\" disconnected (reason \"%s\")\n", name, userid, networkid, team ? team->GetName() : "", reason );
+		UTIL_LogPrintf( "\"%s<%i><%s><%s>\" disconnected (reason \"%s\")\n", name, userid, networkid, "", reason );
 		return true;
 	}
 
@@ -97,28 +97,7 @@ bool CEventLog::PrintPlayerEvent( IGameEvent *event )
 		return false;
 	}
 
-	if ( !Q_strncmp( eventName, "player_team", Q_strlen("player_team") ) )
-	{
-		const bool bDisconnecting = event->GetBool( "disconnect" );
-
-		if ( !bDisconnecting )
-		{
-			const int newTeam = event->GetInt( "team" );
-			const int oldTeam = event->GetInt( "oldteam" );
-			CTeam *team = GetGlobalTeam( newTeam );
-			CTeam *oldteam = GetGlobalTeam( oldTeam );
-			
-			UTIL_LogPrintf( "\"%s<%i><%s><%s>\" joined team \"%s\"\n", 
-			pPlayer->GetPlayerName(),
-			pPlayer->GetUserID(),
-			pPlayer->GetNetworkIDString(),
-			oldteam->GetName(),
-			team->GetName() );
-		}
-
-		return true;
-	}
-	else if ( !Q_strncmp( eventName, "player_death", Q_strlen("player_death") ) )
+	if ( !Q_strncmp( eventName, "player_death", Q_strlen("player_death") ) )
 	{
 		const int attackerid = event->GetInt("attacker" );
 
@@ -142,7 +121,7 @@ bool CEventLog::PrintPlayerEvent( IGameEvent *event )
 							pPlayer->GetPlayerName(),
 							userid,
 							pPlayer->GetNetworkIDString(),
-							team ? team->GetName() : "",
+							"",
 							weapon
 							);
 #else
@@ -150,7 +129,7 @@ bool CEventLog::PrintPlayerEvent( IGameEvent *event )
 							pPlayer->GetPlayerName(),
 							userid,
 							pPlayer->GetNetworkIDString(),
-							team ? team->GetName() : "",
+							"",
 							pAttacker->GetClassname()
 							);
 #endif
@@ -164,11 +143,11 @@ bool CEventLog::PrintPlayerEvent( IGameEvent *event )
 							pAttacker->GetPlayerName(),
 							attackerid,
 							pAttacker->GetNetworkIDString(),
-							attackerTeam ? attackerTeam->GetName() : "",
+							"",
 							pPlayer->GetPlayerName(),
 							userid,
 							pPlayer->GetNetworkIDString(),
-							team ? team->GetName() : "",
+							"",
 							weapon
 							);
 #else
@@ -176,11 +155,11 @@ bool CEventLog::PrintPlayerEvent( IGameEvent *event )
 							pAttacker->GetPlayerName(),
 							attackerid,
 							pAttacker->GetNetworkIDString(),
-							attackerTeam ? attackerTeam->GetName() : "",
+							"",
 							pPlayer->GetPlayerName(),
 							userid,
 							pPlayer->GetNetworkIDString(),
-							team ? team->GetName() : ""
+							""
 							);								
 #endif
 		}
@@ -191,7 +170,7 @@ bool CEventLog::PrintPlayerEvent( IGameEvent *event )
 							pPlayer->GetPlayerName(),
 							userid,
 							pPlayer->GetNetworkIDString(),
-							team ? team->GetName() : ""
+							""
 							);
 		}
 		return true;
@@ -215,7 +194,7 @@ bool CEventLog::PrintPlayerEvent( IGameEvent *event )
 					oldName,
 					userid,
 					pPlayer->GetNetworkIDString(),
-					team ? team->GetName() : "",
+					"",
 					newName
 					);
 		return true;

@@ -145,7 +145,7 @@ int CTeam::GetTeamNumber( void ) const
 //-----------------------------------------------------------------------------
 const char *CTeam::GetName( void )
 {
-	return m_szTeamname;
+	return "None";
 }
 
 

@@ -705,10 +705,10 @@ void CBasePlayer::UpdateOnRemove( void )
 	VPhysicsDestroyObject();
 
 	// Remove him from his current team
-	if ( GetTeam() )
+	/*if ( GetTeam() )
 	{
 		GetTeam()->RemovePlayer( this );
-	}
+	}*/
 
 	// Chain at end to mimic destructor unwind order
 	BaseClass::UpdateOnRemove();

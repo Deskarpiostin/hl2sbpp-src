@@ -255,7 +255,7 @@ CHL2MPRules::~CHL2MPRules( void )
 #ifndef CLIENT_DLL
 	// Note, don't delete each team since they are in the gEntList and will 
 	// automatically be deleted from there, instead.
-	g_Teams.Purge();
+	//g_Teams.Purge();
 #endif
 }
 

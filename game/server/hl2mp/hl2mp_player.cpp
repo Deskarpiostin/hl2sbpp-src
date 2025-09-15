@@ -1197,7 +1197,7 @@ void CHL2MP_Player::Event_Killed( const CTakeDamageInfo &info )
 			iScoreToAdd = -1;
 		}
 
-		GetGlobalTeam( pAttacker->GetTeamNumber() )->AddScore( iScoreToAdd );
+		///GetGlobalTeam( pAttacker->GetTeamNumber() )->AddScore( iScoreToAdd );
 	}
 
 	FlashlightTurnOff();
