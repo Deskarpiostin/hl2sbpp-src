@@ -327,7 +327,7 @@ void CSMLPanelInterface::Create( vgui::VPANEL parent ) {
 
 void CSMLPanelInterface::Destroy() {
     if( SMLPanel ) {
-        SMLPanel->SetParent( nullptr );
+        SMLPanel->SetParent((vgui::Panel*)nullptr);
         delete SMLPanel;
         SMLPanel = nullptr;
         CSMLMenu::s_Instance = nullptr;

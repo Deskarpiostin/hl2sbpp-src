@@ -178,11 +178,11 @@ extern vgui::IInputInternal *g_InputInternal;
 
 #ifdef HL2SB
 #include "hl2sb/dynamicsky.h"
-
-// start fucking piece of shit
+/*
+#ifndef __ANDROID__
 #include "httplib.h"
-// end fucking piece of shit
-
+#endif
+*/
 #include <vgui_controls/MessageBox.h>
 
 #ifdef _WIN32
@@ -1352,6 +1352,7 @@ void CHLClient::PostInit()
 	}
 	// protect end
 
+/*
 #ifdef HL2SB
 	std::string githubVersionStr;
 	std::string url = "/hl2sbpp/version.txt";
@@ -1391,6 +1392,7 @@ void CHLClient::PostInit()
 		}
 	}
 #endif
+*/
 
 #ifdef HL1MP_CLIENT_DLL
 	if ( s_cl_load_hl1_content.GetBool() && steamapicontext && steamapicontext->SteamApps() )
