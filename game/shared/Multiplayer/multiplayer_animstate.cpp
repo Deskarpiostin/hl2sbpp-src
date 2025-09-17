@@ -832,7 +832,9 @@ bool CMultiPlayerAnimState::HandleDucking( Activity &idealActivity )
 //-----------------------------------------------------------------------------
 bool CMultiPlayerAnimState::HandleSwimming( Activity &idealActivity )
 {
-	if ( GetBasePlayer()->GetWaterLevel() >= WL_Waist )
+    CBasePlayer *pPlayer = GetBasePlayer();
+
+	if ( pPlayer->GetWaterLevel() >= WL_Waist )
 	{
 		if ( m_bFirstSwimFrame )
 		{
@@ -841,8 +843,15 @@ bool CMultiPlayerAnimState::HandleSwimming( Activity &idealActivity )
 			m_bFirstSwimFrame = false;
 		}
 
-		//idealActivity = ACT_MP_SWIM;
-		idealActivity = ACT_MP_RUN; // TODO: switch to swim once we have the animations
+		if ( pPlayer->GetAbsVelocity().Length2D() > 0.1f )
+        {
+            idealActivity = ACT_MP_SWIM;
+        }
+        else
+        {
+            idealActivity = ACT_MP_SWIM_IDLE;
+        }
+
 		m_bInSwim = true;
 		return true;
 	}

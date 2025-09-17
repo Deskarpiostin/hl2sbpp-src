@@ -67,7 +67,6 @@ extern bool FindInList( const char **pStrings, const char *pToFind );
 ConVar sv_hl2mp_weapon_respawn_time( "sv_hl2mp_weapon_respawn_time", "20", FCVAR_GAMEDLL | FCVAR_NOTIFY );
 ConVar sv_hl2mp_item_respawn_time( "sv_hl2mp_item_respawn_time", "30", FCVAR_GAMEDLL | FCVAR_NOTIFY );
 ConVar sv_report_client_settings("sv_report_client_settings", "0", FCVAR_GAMEDLL | FCVAR_NOTIFY );
-ConVar mode("mode", "deathmatch");
 extern ConVar sk_plr_health_drop_time;
 extern ConVar sk_plr_grenade_drop_time;
 extern ConVar mp_chattime;
@@ -471,21 +470,6 @@ void CHL2MPRules::Think( void )
 	
 	CGameRules::Think();
 
-	if ( g_fGameOver )   // someone else quit the game already
-	{
-		// check to see if we should change levels now
-		if ( m_flIntermissionEndTime < gpGlobals->curtime )
-		{
-			if ( !m_bChangelevelDone )
-			{
-				ChangeLevel(); // intermission is over
-				m_bChangelevelDone = true;
-			}
-		}
-
-		return;
-	}
-
 //	float flTimeLimit = mp_timelimit.GetFloat() * 60;
 	float flFragLimit = fraglimit.GetFloat();
 	
@@ -556,27 +540,6 @@ void CHL2MPRules::GoToIntermission( void )
 	BEGIN_LUA_CALL_HOOK( "GoToIntermission" );
 	END_LUA_CALL_HOOK( 0, 0 );
 #endif
-
-#ifndef CLIENT_DLL
-	if ( g_fGameOver )
-		return;
-
-	g_fGameOver = true;
-
-	m_flIntermissionEndTime = gpGlobals->curtime + mp_chattime.GetInt();
-
-	for ( int i = 0; i < MAX_PLAYERS; i++ )
-	{
-		CBasePlayer *pPlayer = UTIL_PlayerByIndex( i );
-
-		if ( !pPlayer )
-			continue;
-
-		pPlayer->ShowViewPortPanel( PANEL_SCOREBOARD );
-		pPlayer->AddFlag( FL_FROZEN );
-	}
-#endif
-	
 }
 
 bool CHL2MPRules::CheckGameOver()
@@ -586,19 +549,6 @@ bool CHL2MPRules::CheckGameOver()
 	END_LUA_CALL_HOOK( 0, 1 );
 
 	RETURN_LUA_BOOLEAN();
-#endif
-
-#ifndef CLIENT_DLL
-	if ( g_fGameOver )   // someone else quit the game already
-	{
-		// check to see if we should change levels now
-		if ( m_flIntermissionEndTime < gpGlobals->curtime )
-		{
-			ChangeLevel(); // intermission is over			
-		}
-
-		return true;
-	}
 #endif
 
 	return false;
@@ -1292,7 +1242,7 @@ const char *CHL2MPRules::GetGameDescription( void )
 #if !defined( HL2SB )
 	return "Deathmatch"; 
 #else
-	return "Half-Life 2 Sandbox";
+	return "Half-Life 2: Sandbox++";
 #endif
 //	if( uldm.GetBool() )
 //		return "Ultimate Deathmatch";

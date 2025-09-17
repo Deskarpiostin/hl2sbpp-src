@@ -110,6 +110,9 @@ acttable_t	CWeaponSMG1::m_acttable[] =
 
 	{ ACT_RANGE_ATTACK1,				ACT_RANGE_ATTACK_SMG1,					false },
 
+	{ ACT_MP_SWIM_IDLE,					ACT_HL2MP_SWIM_IDLE_SMG1,				false },
+	{ ACT_MP_SWIM,						ACT_HL2MP_SWIM_SMG1,						false },
+
 	// HL2
 	{ ACT_RELOAD, ACT_RELOAD_SMG1, true },
 	{ ACT_IDLE, ACT_IDLE_SMG1, true },

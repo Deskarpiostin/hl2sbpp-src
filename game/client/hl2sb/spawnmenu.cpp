@@ -79,7 +79,7 @@ void CSMLPage::OnSliderMoved(int value) {
 }
 
 void CSMLPage::PerformLayout() {
-    int btnW = 150, btnH = 18, gap = 2;
+    int btnW = 150, btnH = 38, gap = 2;
     int scrollWide = 15;
     int numItems = m_LayoutItems.Count();
     if (numItems == 0) return;
@@ -209,8 +209,20 @@ void CSMLPage::CreateButtonX( CSMLPage* page, const char* label, const char* com
         }
 #endif
 
-        CSMLCommandButton* btn = new CSMLCommandButton( page->m_pContentPanel, label, label, command );
-        page->m_LayoutItems.AddToTail( btn );
+		for (int i = 0; i < page->m_LayoutItems.Count(); ++i) {
+			CSMLCommandButton* existingBtn = dynamic_cast<CSMLCommandButton*>(page->m_LayoutItems[i]);
+			if (existingBtn) {
+				char existingLabel[4086];
+				existingBtn->GetText(existingLabel, sizeof(existingLabel));
+				if (!Q_stricmp(existingLabel, label)) {
+					DevMsg("Button '%s' already exists. Skipping.\n", label);
+					return;
+				}
+			}
+		}
+
+		CSMLCommandButton* btn = new CSMLCommandButton(page->m_pContentPanel, label, label, command);
+		page->m_LayoutItems.AddToTail(btn);
     }
 }
 
@@ -245,23 +257,16 @@ CSMLMenu::CSMLMenu( vgui::VPANEL* parent, const char* panelName )
 		{
 			for (KeyValues* dat = kv->GetFirstSubKey(); dat != nullptr; dat = dat->GetNextKey())
 			{
-				if (!Q_strcasecmp(dat->GetName(), "width"))
-					SetWide(dat->GetInt());
-				else if (!Q_strcasecmp(dat->GetName(), "height"))
-					SetTall(dat->GetInt());
-				else
-				{
-					// Skip unmounted content
-					if (!Q_stricmp(dat->GetName(), "Portal") && !portal_mounted.GetBool())
-						continue;
-					if (!Q_stricmp(dat->GetName(), "CSS") && !css_mounted.GetBool())
-						continue;
+				// Skip unmounted content
+				if (!Q_stricmp(dat->GetName(), "Portal") && !portal_mounted.GetBool())
+					continue;
+				if (!Q_stricmp(dat->GetName(), "CSS") && !css_mounted.GetBool())
+					continue;
 
-					CSMLPage* page = new CSMLPage(this, dat->GetName());
-					page->Init(dat);
-					AddPage(page, dat->GetName());
-					m_PageRegistry.emplace(std::string(dat->GetName()), page);
-				}
+				CSMLPage* page = new CSMLPage(this, dat->GetName());
+				page->Init(dat);
+				AddPage(page, dat->GetName());
+				m_PageRegistry.emplace(std::string(dat->GetName()), page);
 			}
 		}
 		kv->deleteThis();

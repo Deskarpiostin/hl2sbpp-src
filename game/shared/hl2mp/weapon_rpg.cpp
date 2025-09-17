@@ -1418,6 +1418,9 @@ acttable_t	CWeaponRPG::m_acttable[] =
 
 	{ ACT_MP_JUMP,						ACT_HL2MP_JUMP_RPG,					false },
 
+	{ ACT_MP_SWIM_IDLE,					ACT_HL2MP_SWIM_IDLE_RPG,				false },
+	{ ACT_MP_SWIM,						ACT_HL2MP_SWIM_RPG,						false },
+
 	{ ACT_IDLE_RELAXED, ACT_IDLE_RPG_RELAXED, true }, //
 	{ ACT_IDLE_STIMULATED, ACT_IDLE_ANGRY_RPG, true }, //
 	{ ACT_IDLE_AGITATED, ACT_IDLE_ANGRY_RPG, true }, //

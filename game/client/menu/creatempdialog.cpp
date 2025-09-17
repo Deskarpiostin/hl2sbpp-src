@@ -348,6 +348,8 @@ bool MapList::OnOK( bool applyOnly )
 		// GOD SAVE ME
 		extern CMapLoadBG *pPanelBg;
 		pPanelBg->setServerName( hostnameBuffer );
+		pPanelBg->setGameModeName( gamemodeBuffer );
+		pPanelBg->setMapName( selmap.GetString() );
 
         char szMapCommand[2048];
         if (gamemodeBuffer[0] != '\0' && Q_strcmp(gamemodeBuffer, "Default") != 0)

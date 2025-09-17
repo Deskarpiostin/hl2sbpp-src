@@ -110,6 +110,9 @@ acttable_t	CWeapon_SLAM::m_acttable[] =
 	{ ACT_MP_RELOAD_CROUCH,				ACT_HL2MP_GESTURE_RELOAD_SLAM,			false },
 
 	{ ACT_MP_JUMP,						ACT_HL2MP_JUMP_SLAM,					false },
+
+	{ ACT_MP_SWIM_IDLE,					ACT_HL2MP_SWIM_IDLE_SLAM,				false },
+	{ ACT_MP_SWIM,						ACT_HL2MP_SWIM_SLAM,						false },
 };
 
 IMPLEMENT_ACTTABLE(CWeapon_SLAM);

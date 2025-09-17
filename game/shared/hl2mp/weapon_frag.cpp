@@ -109,6 +109,9 @@ acttable_t	CWeaponFrag::m_acttable[] =
 	{ ACT_MP_RELOAD_CROUCH,				ACT_HL2MP_GESTURE_RELOAD_GRENADE,		false },
 
 	{ ACT_MP_JUMP,						ACT_HL2MP_JUMP_GRENADE,					false },
+
+	{ ACT_MP_SWIM_IDLE,					ACT_HL2MP_SWIM_IDLE_GRENADE,				false },
+	{ ACT_MP_SWIM,						ACT_HL2MP_SWIM_GRENADE,						false },
 };
 
 IMPLEMENT_ACTTABLE(CWeaponFrag);

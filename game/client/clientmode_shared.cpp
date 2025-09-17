@@ -30,6 +30,7 @@
 #include "c_team.h"
 #include "c_rumble.h"
 #include "fmtstr.h"
+#include "weapon_hl2mpbase_scriptedweapon.h"
 #include "achievementmgr.h"
 #include "c_playerresource.h"
 #include "cam_thirdperson.h"
@@ -420,8 +421,9 @@ void ClientModeShared::Init()
 			pPanelBg = new CMapLoadBG( "Background" );
 			pPanelBg->InvalidateLayout( false, true );
 			pPanelBg->SetVisible( false );
-			pPanelBg->MakePopup( false );
+			pPanelBg->MakePopup( true );
 			pGameUI->SetLoadingBackgroundDialog( pPanelBg->GetVPanel() );
+			pPanelBg->MoveToFront();
 
 			ConVarRef hostNameRef("hostname");
 			const char* serverName = hostNameRef.GetString();
@@ -965,10 +967,11 @@ vgui::Panel *ClientModeShared::GetMessagePanel()
 void ClientModeShared::StartMessageMode( int iMessageModeType )
 {
 	// Can only show chat UI in multiplayer!!!
-	if ( gpGlobals->maxClients == 1 )
+	/*if ( gpGlobals->maxClients == 1 )
 	{
 		return;
-	}
+	}*/
+
 	if ( m_pChatElement )
 	{
 		m_pChatElement->StartMessageMode( iMessageModeType );
@@ -1118,6 +1121,33 @@ void ClientModeShared::Layout()
 
 float ClientModeShared::GetViewModelFOV( void )
 {
+#ifdef HL2SB
+	if (GetActiveWeapon())
+	{
+		if (GetActiveWeapon()->IsScripted())
+		{
+			CHL2MPScriptedWeapon *pWeapon = dynamic_cast< CHL2MPScriptedWeapon* >(GetActiveWeapon());
+			return pWeapon->flViewModelFOV;
+		}
+
+		/// aaa im retard
+		// - ItzVladik
+		char szWeap[256];
+		Q_snprintf( szWeap, sizeof(szWeap), "%s", GetActiveWeapon()->GetClassname() );
+		if ( FStrEq( "weapon_rpg_hl1", szWeap )   || FStrEq( "weapon_satchel_hl1", szWeap )  || FStrEq( "weapon_shotgun_hl1", szWeap ) ||
+			 FStrEq( "weapon_357_hl1", szWeap )   || FStrEq( "weapon_crossbow_hl1", szWeap ) || FStrEq( "weapon_egon_hl1", szWeap ) 	   ||
+			 FStrEq( "weapon_gauss_hl1", szWeap ) || FStrEq( "weapon_glock_hl1", szWeap )    || FStrEq( "grenade_hand_hl1", szWeap ) 	   || 
+			 FStrEq( "weapon_hornetgun_hl1", szWeap ) || FStrEq( "weapon_mp5_hl1", szWeap )      || FStrEq("weapon_crowbar_hl1", szWeap )  ||
+			 FStrEq( "weapon_handgrenade_hl1", szWeap ) 	  || FStrEq( "weapon_tripmine_hl1", szWeap) 	 || FStrEq( "weapon_snark_hl1", szWeap ) )
+		{
+			return 84;
+		}
+		else
+		{
+			return v_viewmodel_fov.GetFloat();
+		}
+	}
+#endif
 	return v_viewmodel_fov.GetFloat();
 }
 

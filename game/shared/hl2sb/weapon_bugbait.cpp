@@ -109,19 +109,24 @@ PRECACHE_WEAPON_REGISTER( weapon_bugbait );
 
 acttable_t	CWeaponBugbait::m_acttable[] =
 {
-	{ ACT_MP_STAND_IDLE,				ACT_HL2MP_IDLE_MELEE,					false },
-	{ ACT_MP_CROUCH_IDLE,				ACT_HL2MP_IDLE_CROUCH_MELEE,			false },
+	{ ACT_RANGE_ATTACK1, ACT_RANGE_ATTACK_SLAM, true },
 
-	{ ACT_MP_RUN,						ACT_HL2MP_RUN_MELEE,					false },
-	{ ACT_MP_CROUCHWALK,				ACT_HL2MP_WALK_CROUCH_MELEE,			false },
+	{ ACT_MP_STAND_IDLE,				ACT_HL2MP_IDLE_GRENADE,					false },
+	{ ACT_MP_CROUCH_IDLE,				ACT_HL2MP_IDLE_CROUCH_GRENADE,			false },
 
-	{ ACT_MP_ATTACK_STAND_PRIMARYFIRE,	ACT_HL2MP_GESTURE_RANGE_ATTACK_MELEE,	false },
-	{ ACT_MP_ATTACK_CROUCH_PRIMARYFIRE,	ACT_HL2MP_GESTURE_RANGE_ATTACK_MELEE,	false },
+	{ ACT_MP_RUN,						ACT_HL2MP_RUN_GRENADE,					false },
+	{ ACT_MP_CROUCHWALK,				ACT_HL2MP_WALK_CROUCH_GRENADE,			false },
 
-	{ ACT_MP_RELOAD_STAND,				ACT_HL2MP_GESTURE_RELOAD_MELEE,			false },
-	{ ACT_MP_RELOAD_CROUCH,				ACT_HL2MP_GESTURE_RELOAD_MELEE,			false },
+	{ ACT_MP_ATTACK_STAND_PRIMARYFIRE,	ACT_HL2MP_GESTURE_RANGE_ATTACK_GRENADE,	false },
+	{ ACT_MP_ATTACK_CROUCH_PRIMARYFIRE,	ACT_HL2MP_GESTURE_RANGE_ATTACK_GRENADE,	false },
 
-	{ ACT_MP_JUMP,						ACT_HL2MP_JUMP_MELEE,					false },
+	{ ACT_MP_RELOAD_STAND,				ACT_HL2MP_GESTURE_RELOAD_GRENADE,		false },
+	{ ACT_MP_RELOAD_CROUCH,				ACT_HL2MP_GESTURE_RELOAD_GRENADE,		false },
+
+	{ ACT_MP_JUMP,						ACT_HL2MP_JUMP_GRENADE,					false },
+
+	{ ACT_MP_SWIM_IDLE,					ACT_HL2MP_SWIM_IDLE_GRENADE,				false },
+	{ ACT_MP_SWIM,						ACT_HL2MP_SWIM_GRENADE,						false },
 };
 
 IMPLEMENT_ACTTABLE( CWeaponBugbait );
@@ -388,6 +393,12 @@ void CWeaponBugbait::ItemPostFrame( void )
 			SendWeaponAnim( ACT_VM_THROW );
 			m_flNextPrimaryAttack = gpGlobals->curtime + SequenceDuration();
 			m_bDrawBackFinished = false;
+
+			CHL2MP_Player *pPlayer = ToHL2MPPlayer( ToBasePlayer( pOwner ) );
+			if ( pPlayer )
+			{
+				pPlayer->DoAnimationEvent( PLAYERANIMEVENT_ATTACK_PRIMARY );
+			}
 		}
 	}
 	else

@@ -60,7 +60,17 @@ public:
 #ifdef CLIENT_DLL
 	virtual void	OnDataChanged( DataUpdateType_t updateType );
 	virtual const char *GetScriptedClassname( void );
+
+	virtual bool ShouldPredict( void ) override
+	{
+		return false;
+	}
 #endif
+
+	bool IsPredicted() const override
+	{ 
+		return false;
+	}
 
 	virtual const Vector &GetBulletSpread( void );
 
@@ -93,15 +103,13 @@ public:
 	virtual int				GetSlot( void ) const;
 	virtual bool 			IsSpawnable( void ) const;
 	virtual bool  			DrawAmmo() const;
-#ifdef CLIENT_DLL
-	virtual int 			GetFOV( void ) const;
-#endif
 	virtual int				GetPosition( void ) const;
 	virtual char const		*GetPrintName( void ) const;
 	bool					IsMeleeWeapon() const;
 
 #ifdef HL2SB
 	bool			UseHands;
+	float 			flViewModelFOV;
 #endif
 
 public:

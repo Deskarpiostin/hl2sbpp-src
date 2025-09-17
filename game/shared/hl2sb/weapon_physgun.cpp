@@ -554,6 +554,9 @@ private:
 	int			m_poseActive;                     // Cached index of "active" pose parameter
 	bool		m_sbStaticPoseParamsLoaded;       // Have we loaded the pose parameter?
 
+	bool        m_bCarryingNPC;
+	int         m_savedMoveType;
+
 	DECLARE_ACTTABLE();
 };
 
@@ -620,6 +623,9 @@ acttable_t	CWeaponPhysicsGun::m_acttable[] =
 	{ ACT_MP_RELOAD_CROUCH,				ACT_HL2MP_GESTURE_RELOAD_PHYSGUN,		false },
 
 	{ ACT_MP_JUMP,						ACT_HL2MP_JUMP_PHYSGUN,					false },
+
+	{ ACT_MP_SWIM_IDLE,					ACT_HL2MP_SWIM_IDLE_PHYSGUN,				false },
+	{ ACT_MP_SWIM,						ACT_HL2MP_SWIM_PHYSGUN,						false },
 };
 
 IMPLEMENT_ACTTABLE(CWeaponPhysicsGun);
@@ -655,6 +661,9 @@ BEGIN_DATADESC( CWeaponPhysicsGun )
     DEFINE_FIELD( m_iPhysgunColorR, FIELD_INTEGER ),
     DEFINE_FIELD( m_iPhysgunColorG, FIELD_INTEGER ),
     DEFINE_FIELD( m_iPhysgunColorB, FIELD_INTEGER ),
+
+	DEFINE_FIELD( m_bCarryingNPC,   FIELD_BOOLEAN ),
+	DEFINE_FIELD( m_savedMoveType,  FIELD_INTEGER ),
 
 END_DATADESC()
 
@@ -782,6 +791,8 @@ CWeaponPhysicsGun::CWeaponPhysicsGun()
     m_iPhysgunColorG = 0;
     m_iPhysgunColorB = 0;
 	m_pGrabbedPhys = NULL;
+    m_bCarryingNPC = false;
+    m_savedMoveType = MOVETYPE_NONE;
 }
 
 void CWeaponPhysicsGun::UpdatePhysgunColors( void )
@@ -1240,88 +1251,140 @@ void CWeaponPhysicsGun::EffectDestroy( void )
 	DetachObject();
 }
 
-
 void CWeaponPhysicsGun::UpdateObject( void )
 {
-	CBasePlayer *pPlayer = ToBasePlayer( GetOwner() );
-	Assert( pPlayer );
+    CBasePlayer *pPlayer = ToBasePlayer( GetOwner() );
+    Assert( pPlayer );
 
-	CBaseEntity *pObject = m_hObject;
-	if ( !pObject )
-		return;
+    CBaseEntity *pObject = m_hObject;
+    if ( !pObject )
+        return;
 
-	if ( !m_gravCallback.UpdateObject( pPlayer, pObject ) )
-	{
-		DetachObject();
-		return;
-	}
+#ifndef CLIENT_DLL
+    if ( m_bCarryingNPC && pObject->IsNPC() )
+    {
+        Vector start;
+        Vector forward, right;
+        pPlayer->EyeVectors( &forward, &right, NULL );
+        start = pPlayer->Weapon_ShootPosition();
+
+        Vector newPosition = start + forward * m_distance;
+        QAngle angles = m_gravCallback.TransformAnglesFromPlayerSpace( m_gravCallback.m_targetRotation, pPlayer );
+
+        pObject->SetAbsOrigin( newPosition );
+        pObject->SetAbsAngles( angles );
+
+        pObject->SetAbsVelocity( vec3_origin );
+
+        return;
+    }
+#endif
+
+    if ( !m_gravCallback.UpdateObject( pPlayer, pObject ) )
+    {
+        DetachObject();
+        return;
+    }
 }
 
 void CWeaponPhysicsGun::DetachObject( void )
 {
-	if ( m_hObject )
-	{
+    if ( m_hObject )
+    {
 #ifndef CLIENT_DLL
-		CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
-		Pickup_OnPhysGunDrop( m_hObject, pOwner, DROPPED_BY_CANNON );
+        CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
+        Pickup_OnPhysGunDrop( m_hObject, pOwner, DROPPED_BY_CANNON );
 #endif
 
-		IPhysicsObject *pList[VPHYSICS_MAX_OBJECT_LIST_COUNT];
-		int count = m_hObject->VPhysicsGetObjectList( pList, ARRAYSIZE(pList) );
-		for ( int i = 0; i < count; i++ )
-		{
-			PhysClearGameFlags( pList[i], FVPHYSICS_PLAYER_HELD );
-		}
-		m_gravCallback.DetachEntity();
-		m_hObject = NULL;
-		m_physicsBone = 0;
-		m_pGrabbedPhys = NULL;
+        IPhysicsObject *pList[VPHYSICS_MAX_OBJECT_LIST_COUNT];
+        int count = m_hObject->VPhysicsGetObjectList( pList, ARRAYSIZE(pList) );
+        for ( int i = 0; i < count; i++ )
+        {
+            PhysClearGameFlags( pList[i], FVPHYSICS_PLAYER_HELD );
+        }
 
-		CloseElements();
-	}
+#ifndef CLIENT_DLL
+        if ( m_bCarryingNPC && m_hObject->IsNPC() )
+        {
+            m_hObject->SetMoveType( (MoveType_t)m_savedMoveType );
+            m_bCarryingNPC = false;
+
+            m_hObject->SetAbsVelocity( vec3_origin );
+        }
+#endif
+
+        m_gravCallback.DetachEntity();
+        m_hObject = NULL;
+        m_physicsBone = 0;
+        m_pGrabbedPhys = NULL;
+
+        CloseElements();
+    }
 }
+
 
 void CWeaponPhysicsGun::AttachObject( CBaseEntity *pObject, IPhysicsObject *pPhysics, short physicsbone, const Vector& start, const Vector &end, float distance )
 {
-	CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
-	if( !pOwner )
-		return;
-	m_hObject = pObject;
-	m_physicsBone = physicsbone;
-	m_useDown = false;
-	if ( pPhysics && pObject->GetMoveType() == MOVETYPE_VPHYSICS )
-	{
-		m_distance = distance;
+    CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
+    if( !pOwner )
+        return;
 
-		Vector worldPosition;
-		pPhysics->WorldToLocal( &worldPosition, end );
-		m_worldPosition = worldPosition;
-		m_gravCallback.AttachEntity( pOwner, pObject, pPhysics, physicsbone, end );
+    if ( pPhysics && pObject->GetMoveType() == MOVETYPE_VPHYSICS )
+    {
+        m_hObject = pObject;
+        m_physicsBone = physicsbone;
+        m_useDown = false;
+        m_distance = distance;
 
-		m_originalObjectPosition = end;
+        Vector worldPosition;
+        pPhysics->WorldToLocal( &worldPosition, end );
+        m_worldPosition = worldPosition;
+        m_gravCallback.AttachEntity( pOwner, pObject, pPhysics, physicsbone, end );
+
+        m_originalObjectPosition = end;
         m_pGrabbedPhys = pPhysics;
 
-		pPhysics->Wake();
-		IPhysicsObject *pList[VPHYSICS_MAX_OBJECT_LIST_COUNT];
-		int count = pObject->VPhysicsGetObjectList( pList, ARRAYSIZE(pList) );
-		for ( int i = 0; i < count; i++ )
-		{
-			PhysSetGameFlags( pList[i], FVPHYSICS_PLAYER_HELD );
-		}
+        pPhysics->Wake();
+        IPhysicsObject *pList[VPHYSICS_MAX_OBJECT_LIST_COUNT];
+        int count = pObject->VPhysicsGetObjectList( pList, ARRAYSIZE(pList) );
+        for ( int i = 0; i < count; i++ )
+        {
+            PhysSetGameFlags( pList[i], FVPHYSICS_PLAYER_HELD );
+        }
 
 #ifndef CLIENT_DLL
-		Pickup_OnPhysGunPickup( pObject, pOwner );
-
-		m_targetPosition = end;
+        Pickup_OnPhysGunPickup( pObject, pOwner );
+        m_targetPosition = end;
 #endif
 
-		OpenElements();
-	}
-	else
-	{
-		m_hObject = NULL;
-		m_physicsBone = 0;
-	}
+        OpenElements();
+        return;
+    }
+
+#ifndef CLIENT_DLL
+    if ( pObject && pObject->IsNPC() )
+    {
+        m_hObject = pObject;
+        m_physicsBone = physicsbone;
+        m_useDown = false;
+        m_distance = distance;
+        m_pGrabbedPhys = NULL;
+
+        m_savedMoveType = pObject->GetMoveType();
+        pObject->SetMoveType( MOVETYPE_NONE );
+
+        pObject->SetAbsVelocity( vec3_origin );
+
+        m_originalObjectPosition = end;
+        m_bCarryingNPC = true;
+
+        OpenElements();
+        return;
+    }
+#endif
+
+    m_hObject = NULL;
+    m_physicsBone = 0;
 }
 
 //=========================================================
@@ -1369,9 +1432,9 @@ int CWeaponPhysicsGun::DrawModel( int flags )
 		IMaterial* pMat1 = materials->FindMaterial("sprites/glow04_noz", TEXTURE_GROUP_PARTICLE, true);
 
 		color32 clr = {
-			static_cast<byte>(m_iPhysgunColorR),
-			static_cast<byte>(m_iPhysgunColorG),
-			static_cast<byte>(m_iPhysgunColorB),
+			static_cast<byte>(GetPhysgunColorR()),
+			static_cast<byte>(GetPhysgunColorG()),
+			static_cast<byte>(GetPhysgunColorB()),
 			static_cast<byte>(255)
 		};
 
@@ -1408,9 +1471,9 @@ int CWeaponPhysicsGun::DrawModel( int flags )
 			{
 				dl[i] = effects->CL_AllocDlight(m_iViewModelIndex + i);
 				dl[i]->origin = vecSrc;
-				dl[i]->color.r = m_iPhysgunColorR;
-				dl[i]->color.g = m_iPhysgunColorG;
-				dl[i]->color.b = m_iPhysgunColorB;
+				dl[i]->color.r = GetPhysgunColorR();
+				dl[i]->color.g = GetPhysgunColorG();
+				dl[i]->color.b = GetPhysgunColorB();
 				dl[i]->die = gpGlobals->curtime + 0.1f;
 				dl[i]->radius = random->RandomFloat(400.0f / (i + 1), 450.0f / (i + 1));
 				dl[i]->decay = 1024.0f;
@@ -1501,9 +1564,9 @@ void CWeaponPhysicsGun::ViewModelDrawn( C_BaseViewModel *pBaseViewModel )
     IMaterial* pMat1 = materials->FindMaterial("sprites/glow04_noz", TEXTURE_GROUP_PARTICLE, true);
 
     color32 clr = {
-        static_cast<byte>(m_iPhysgunColorR),
-        static_cast<byte>(m_iPhysgunColorG),
-        static_cast<byte>(m_iPhysgunColorB),
+        static_cast<byte>(GetPhysgunColorR()),
+        static_cast<byte>(GetPhysgunColorG()),
+        static_cast<byte>(GetPhysgunColorB()),
         static_cast<byte>(255)
     };
 
@@ -1540,9 +1603,9 @@ void CWeaponPhysicsGun::ViewModelDrawn( C_BaseViewModel *pBaseViewModel )
 		{
 			dl[i] = effects->CL_AllocDlight(m_iViewModelIndex + i);
 			dl[i]->origin = vecSrc;
-			dl[i]->color.r = m_iPhysgunColorR;
-			dl[i]->color.g = m_iPhysgunColorG;
-			dl[i]->color.b = m_iPhysgunColorB;
+			dl[i]->color.r = GetPhysgunColorR();
+			dl[i]->color.g = GetPhysgunColorG();
+			dl[i]->color.b = GetPhysgunColorB();
 			dl[i]->die = gpGlobals->curtime + 0.1f;
 			dl[i]->radius = random->RandomFloat(400.0f / (i + 1), 450.0f / (i + 1));
 			dl[i]->decay = 1024.0f;
@@ -1650,23 +1713,6 @@ void CWeaponPhysicsGun::ItemPreFrame()
 	{
 		UpdateObject();
 	}
-
-	CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
-	if ( !pOwner )
-		return;
-
-	CBaseViewModel *vm = pOwner->GetViewModel();
-	if ( !vm )
-		return;
-
-	if ( !m_sbStaticPoseParamsLoaded )
-	{
-		m_poseActive = vm->LookupPoseParameter( "active" );
-		m_sbStaticPoseParamsLoaded = true;
-	}
-
-	m_flElementPosition = UTIL_Approach( m_flElementDestination, m_flElementPosition, 0.1f );
-	vm->SetPoseParameter( m_poseActive, m_flElementPosition );
 #endif
 }
 

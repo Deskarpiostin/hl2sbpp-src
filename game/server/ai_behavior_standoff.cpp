@@ -1130,10 +1130,16 @@ void CAI_MappedActivityBehavior_Temporary::UpdateTranslateActivityMap()
 	{
 		if ( !mappings[i].pszWeapon || stricmp( mappings[i].pszWeapon, pszWeaponClass ) == 0 )
 		{
-			if ( HaveSequenceForActivity( mappings[i].translation ) || HaveSequenceForActivity( GetOuter()->Weapon_TranslateActivity( mappings[i].translation ) ) )
+			int trans = mappings[i].translation;
+			int translated = GetOuter()->Weapon_TranslateActivity((Activity)trans);
+
+			if (trans < 0 && translated < 0)
+				continue;
+
+			if (HaveSequenceForActivity((Activity)trans) || HaveSequenceForActivity((Activity)translated))
 			{
 				Assert( m_ActivityMap.Find( MAKE_ACTMAP_KEY( mappings[i].posture, mappings[i].activity ) ) == m_ActivityMap.InvalidIndex() );
-				m_ActivityMap.Insert( MAKE_ACTMAP_KEY( mappings[i].posture, mappings[i].activity ), mappings[i].translation );
+				m_ActivityMap.Insert( MAKE_ACTMAP_KEY( mappings[i].posture, mappings[i].activity ), (Activity)trans );
 			}
 		}
 	}

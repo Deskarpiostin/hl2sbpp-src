@@ -12,8 +12,6 @@
 #include "hud_basechat.h"
 #include <vgui/ILocalize.h>
 
-
-
 DECLARE_HUDELEMENT( CHudChat );
 
 DECLARE_HUD_MESSAGE( CHudChat, SayText );

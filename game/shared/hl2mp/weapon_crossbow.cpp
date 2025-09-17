@@ -488,6 +488,9 @@ acttable_t	CWeaponCrossbow::m_acttable[] =
 	{ ACT_MP_RELOAD_CROUCH,				ACT_HL2MP_GESTURE_RANGE_ATTACK_CROSSBOW,			false },
 
 	{ ACT_MP_JUMP,						ACT_HL2MP_JUMP_CROSSBOW,					false },
+
+	{ ACT_MP_SWIM_IDLE,					ACT_HL2MP_SWIM_IDLE_CROSSBOW,				false },
+	{ ACT_MP_SWIM,						ACT_HL2MP_SWIM_CROSSBOW,				false },
 };
 
 IMPLEMENT_ACTTABLE(CWeaponCrossbow);

@@ -301,17 +301,12 @@ void Host_Say( edict_t *pEdict, const CCommand &args, bool teamonly )
 	int userid = 0;
 	const char *networkID = "Console";
 	const char *playerName = "Console";
-	const char *playerTeam = "Console";
+	const char *playerTeam = "";
 	if ( pPlayer )
 	{
 		userid = pPlayer->GetUserID();
 		networkID = pPlayer->GetNetworkIDString();
 		playerName = pPlayer->GetPlayerName();
-		CTeam *team = pPlayer->GetTeam();
-		if ( team )
-		{
-			playerTeam = team->GetName();
-		}
 	}
 		
 	if ( teamonly )

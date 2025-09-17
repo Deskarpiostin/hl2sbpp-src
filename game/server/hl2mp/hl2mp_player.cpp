@@ -44,7 +44,8 @@ int g_iLastCombineModel = 0;
 CBaseEntity	 *g_pLastCombineSpawn = NULL;
 CBaseEntity	 *g_pLastRebelSpawn = NULL;
 extern CBaseEntity				*g_pLastSpawn;
-ConVar spawnpoint("spawnpoint", "ct");
+
+ConVar spawnpoint("spawnpoint", "ct", "Decide the spawnpoint of the map");
 
 extern ConVar mode;
 

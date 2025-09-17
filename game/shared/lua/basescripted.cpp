@@ -211,6 +211,15 @@ void CBaseScripted::InitScriptedEntity( void )
 #ifdef CLIENT_DLL
 int CBaseScripted::DrawModel( int flags )
 {
+	if (m_nTableReference == LUA_NOREF)
+		return BaseClass::DrawModel( flags );
+
+	lua_rawgeti(L, LUA_REGISTRYINDEX, m_nTableReference);
+	if (!lua_istable(L, -1)) {
+		lua_pop(L, 1);
+		return;
+	}
+
 #ifdef LUA_SDK
 	BEGIN_LUA_CALL_ENTITY_METHOD( "DrawModel" );
 		lua_pushinteger( L, flags );
@@ -225,6 +234,15 @@ int CBaseScripted::DrawModel( int flags )
 void CBaseScripted::OnDataChanged( DataUpdateType_t updateType )
 {
 	BaseClass::OnDataChanged( updateType );
+
+	if (m_nTableReference == LUA_NOREF)
+		return;
+
+	lua_rawgeti(L, LUA_REGISTRYINDEX, m_nTableReference);
+	if (!lua_istable(L, -1)) {
+		lua_pop(L, 1);
+		return;
+	}
 
 	if ( updateType == DATA_UPDATE_CREATED )
 	{
@@ -268,6 +286,15 @@ void CBaseScripted::Precache( void )
 #ifdef CLIENT_DLL
 void CBaseScripted::ClientThink()
 {
+	if (m_nTableReference == LUA_NOREF)
+		return;
+	
+	lua_rawgeti(L, LUA_REGISTRYINDEX, m_nTableReference);
+	if (!lua_istable(L, -1)) {
+		lua_pop(L, 1);
+		return;
+	}
+
 #ifdef LUA_SDK
 	BEGIN_LUA_CALL_ENTITY_METHOD( "ClientThink" );
 	END_LUA_CALL_ENTITY_METHOD( 0, 0 );
@@ -277,6 +304,15 @@ void CBaseScripted::ClientThink()
 
 void CBaseScripted::Think()
 {
+	if (m_nTableReference == LUA_NOREF)
+		return;
+
+	lua_rawgeti(L, LUA_REGISTRYINDEX, m_nTableReference);
+	if (!lua_istable(L, -1)) {
+		lua_pop(L, 1);
+		return;
+	}
+
 #ifdef LUA_SDK
 	BEGIN_LUA_CALL_ENTITY_METHOD( "Think" );
 	END_LUA_CALL_ENTITY_METHOD( 0, 0 );
@@ -285,6 +321,15 @@ void CBaseScripted::Think()
 
 void CBaseScripted::StartTouch( CBaseEntity *pOther )
 {
+	if (m_nTableReference == LUA_NOREF)
+		return;
+
+	lua_rawgeti(L, LUA_REGISTRYINDEX, m_nTableReference);
+	if (!lua_istable(L, -1)) {
+		lua_pop(L, 1);
+		return;
+	}
+
 #ifdef LUA_SDK
 	BEGIN_LUA_CALL_ENTITY_METHOD( "StartTouch" );
 		lua_pushentity( L, pOther );
@@ -294,6 +339,15 @@ void CBaseScripted::StartTouch( CBaseEntity *pOther )
 
 void CBaseScripted::Touch( CBaseEntity *pOther )
 {
+	if (m_nTableReference == LUA_NOREF)
+		return;
+
+	lua_rawgeti(L, LUA_REGISTRYINDEX, m_nTableReference);
+	if (!lua_istable(L, -1)) {
+		lua_pop(L, 1);
+		return;
+	}
+
 #ifdef LUA_SDK
 	BEGIN_LUA_CALL_ENTITY_METHOD( "Touch" );
 		lua_pushentity( L, pOther );
@@ -303,6 +357,15 @@ void CBaseScripted::Touch( CBaseEntity *pOther )
 
 void CBaseScripted::EndTouch( CBaseEntity *pOther )
 {
+	if (m_nTableReference == LUA_NOREF)
+		return;
+
+	lua_rawgeti(L, LUA_REGISTRYINDEX, m_nTableReference);
+	if (!lua_istable(L, -1)) {
+		lua_pop(L, 1);
+		return;
+	}
+
 #ifdef LUA_SDK
 	BEGIN_LUA_CALL_ENTITY_METHOD( "EndTouch" );
 		lua_pushentity( L, pOther );
@@ -313,6 +376,15 @@ void CBaseScripted::EndTouch( CBaseEntity *pOther )
 void CBaseScripted::VPhysicsUpdate( IPhysicsObject *pPhysics )
 {
 	BaseClass::VPhysicsUpdate( pPhysics );
+
+	if (m_nTableReference == LUA_NOREF)
+		return;
+
+	lua_rawgeti(L, LUA_REGISTRYINDEX, m_nTableReference);
+	if (!lua_istable(L, -1)) {
+		lua_pop(L, 1);
+		return;
+	}
 
 #ifdef LUA_SDK
 	BEGIN_LUA_CALL_ENTITY_METHOD( "VPhysicsUpdate" );

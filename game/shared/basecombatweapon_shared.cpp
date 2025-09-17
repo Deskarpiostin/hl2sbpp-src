@@ -2626,7 +2626,9 @@ Activity CBaseCombatWeapon::ActivityOverride( Activity baseAct, bool *pRequired 
 			return (Activity)pTable->weaponAct;
 		}
 	}
-	return baseAct;
+
+	// ok.
+	return ACT_INVALID;
 }
 
 //-----------------------------------------------------------------------------

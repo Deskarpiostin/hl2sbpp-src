@@ -106,10 +106,19 @@ Activity CHL2MPPlayerAnimState::TranslateActivity( Activity actDesired )
 {
     CHL2MP_Player *pPlayer = GetHL2MPPlayer();
     if ( pPlayer && pPlayer->IsInAVehicle() )
-    {
-		// @ThePixelMoon: hacky hack until we get normal anims
-        return ACT_HL2MP_IDLE_CROUCH;
-    }
+        return ACT_HL2MP_SIT;
+
+    if (pPlayer->GetMoveType() == MOVETYPE_NOCLIP)
+        return ACT_GMOD_NOCLIP_LAYER;
+
+#ifdef CLIENT_DLL
+	extern ConVar is_chatting;
+	if (is_chatting.GetBool())
+#else
+	const char *is_chatting = engine->GetClientConVarValue( pPlayer->entindex(), "is_chatting" );
+	if (atoi(is_chatting) == 1)
+#endif
+		return ACT_GMOD_IN_CHAT;
 
 	// Hook into baseclass when / if hl2mp player models get swim animations.
 	Activity translateActivity = actDesired; //BaseClass::TranslateActivity( actDesired );
@@ -118,33 +127,39 @@ Activity CHL2MPPlayerAnimState::TranslateActivity( Activity actDesired )
 	{
 		bool bDummy = false;
 		translateActivity = pPlayer->GetActiveWeapon()->ActivityOverride( translateActivity, &bDummy );
+		if (translateActivity != ACT_INVALID)
+			return translateActivity;
 	}
-	else
-	{
-        switch ( actDesired )
-        {
-        case ACT_MP_STAND_IDLE:
-            translateActivity = ACT_HL2MP_IDLE;
-            break;
-        case ACT_MP_WALK:
-            translateActivity = ACT_HL2MP_RUN;
-            break;
-        case ACT_MP_RUN:
-            translateActivity = ACT_HL2MP_RUN;
-            break;
-        case ACT_MP_CROUCH_IDLE:
-            translateActivity = ACT_HL2MP_IDLE_CROUCH;
-            break;
-		case ACT_MP_CROUCHWALK:
-			translateActivity = ACT_HL2MP_WALK_CROUCH;
-			break;
-        case ACT_MP_JUMP:
-            translateActivity = ACT_HL2MP_JUMP;
-            break;
-        default:
-            break;
-        }
-	}
+
+	switch ( actDesired )
+    {
+    case ACT_MP_STAND_IDLE:
+        translateActivity = ACT_HL2MP_IDLE;
+   	    break;
+    case ACT_MP_WALK:
+        translateActivity = ACT_HL2MP_RUN;
+    	break;
+    case ACT_MP_RUN:
+        translateActivity = ACT_HL2MP_RUN;
+        break;
+    case ACT_MP_CROUCH_IDLE:
+        translateActivity = ACT_HL2MP_IDLE_CROUCH;
+        break;
+	case ACT_MP_CROUCHWALK:
+		translateActivity = ACT_HL2MP_WALK_CROUCH;
+		break;
+    case ACT_MP_JUMP:
+       	translateActivity = ACT_HL2MP_JUMP_FIST;
+        break;
+	case ACT_MP_SWIM:
+		translateActivity = ACT_HL2MP_SWIM;
+        break;
+	case ACT_MP_SWIM_IDLE:
+		translateActivity = ACT_HL2MP_SWIM_IDLE;
+        break;
+    default:
+        break;
+    }
 
 	return translateActivity;
 }

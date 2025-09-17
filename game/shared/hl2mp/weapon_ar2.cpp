@@ -63,6 +63,10 @@ acttable_t	CWeaponAR2::m_acttable[] =
 
 	{ ACT_MP_JUMP,						ACT_HL2MP_JUMP_AR2,					false },
 
+
+	{ ACT_MP_SWIM_IDLE,					ACT_HL2MP_SWIM_IDLE_AR2,				false },
+	{ ACT_MP_SWIM,						ACT_HL2MP_SWIM_AR2,				false },
+
 	{ ACT_RANGE_ATTACK1, ACT_RANGE_ATTACK_SMG1, true },
 
 	{ ACT_RELOAD, ACT_RELOAD_SMG1, true },		// FIXME: hook to AR2 unique
