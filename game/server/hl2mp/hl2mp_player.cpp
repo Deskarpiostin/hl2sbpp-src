@@ -45,7 +45,7 @@ CBaseEntity	 *g_pLastCombineSpawn = NULL;
 CBaseEntity	 *g_pLastRebelSpawn = NULL;
 extern CBaseEntity				*g_pLastSpawn;
 
-ConVar spawnpoint("spawnpoint", "ct", "Decide the spawnpoint of the map");
+ConVar spawnpoint("spawnpoint", "ct");
 
 extern ConVar mode;
 
