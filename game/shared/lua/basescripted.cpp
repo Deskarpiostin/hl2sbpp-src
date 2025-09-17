@@ -217,7 +217,7 @@ int CBaseScripted::DrawModel( int flags )
 	lua_rawgeti(L, LUA_REGISTRYINDEX, m_nTableReference);
 	if (!lua_istable(L, -1)) {
 		lua_pop(L, 1);
-		return;
+		return BaseClass::DrawModel( flags );
 	}
 
 #ifdef LUA_SDK
