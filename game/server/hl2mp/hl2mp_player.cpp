@@ -385,6 +385,9 @@ void CHL2MP_Player::Spawn(void)
 
 	m_bReady = false;
 
+	// oof..
+	m_CurrentHandModel = "";
+
 	//Tony; do the spawn animevent
 	DoAnimationEvent( PLAYERANIMEVENT_SPAWN );
 }
