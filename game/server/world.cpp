@@ -481,9 +481,8 @@ CWorld::~CWorld( )
 	{
 		g_pGameRules->LevelShutdown();
 		delete g_pGameRules;
-		g_pGameRules = NULL;
 	}
-	g_WorldEntity = NULL;
+	g_WorldEntity = nullptr;
 }
 
 

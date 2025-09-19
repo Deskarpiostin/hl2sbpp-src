@@ -33,6 +33,7 @@
 #include "hl2sb/spawnmenu.h"
 #include "menu/creatempdialog.h"
 #include "hl2sb/mapload_background.h"
+#include "hl2sb/vgui/advanced_options.h"
 #endif
 
 #if defined( TF_CLIENT_DLL )
@@ -216,6 +217,7 @@ void VGui_CreateGlobalPanels( void )
 	VPANEL gameToolParent = enginevgui->GetPanel( PANEL_CLIENTDLL_TOOLS );
 	VPANEL toolParent = enginevgui->GetPanel( PANEL_TOOLS );
 	VPANEL gameParent = enginevgui->GetPanel( PANEL_CLIENTDLL );
+	VPANEL GameUiDll = enginevgui->GetPanel( PANEL_GAMEUIDLL );
 #if defined( TRACK_BLOCKING_IO )
 	VPANEL gameDLLPanel = enginevgui->GetPanel( PANEL_GAMEDLL );
 #endif
@@ -229,8 +231,9 @@ void VGui_CreateGlobalPanels( void )
 	touch_panel->Create( toolParent );
 
 #ifdef HL2SB
+	advancedoptpanel->Create(GameUiDll);
 	smlmenu->Create(gameParent);
-	maplist->Create(gameParent);
+	maplist->Create(GameUiDll);
 #endif
 
 #if defined( TRACK_BLOCKING_IO )
@@ -265,6 +268,7 @@ void VGui_Shutdown()
 	touch_panel->Destroy();
 
 #ifdef HL2SB
+	advancedoptpanel->Destroy();
 	smlmenu->Destroy();
 	maplist->Destroy();
 #endif

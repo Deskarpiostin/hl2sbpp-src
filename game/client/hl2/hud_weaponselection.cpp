@@ -873,6 +873,9 @@ void CHudWeaponSelection::DrawLargeWeaponBox(C_BaseCombatWeapon* pWeapon, bool b
 					// currently selected weapon, display brighter
 					col[3] = alpha;
 
+					if (pWeapon->IsScripted())
+						col = Color(255, 255, 255, alpha);
+
 					// draw an active version over the top
 					pWeapon->GetSpriteActive()->DrawSelf(xpos + x_offs, ypos + y_offs, col);
 				}

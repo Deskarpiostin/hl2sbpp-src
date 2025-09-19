@@ -186,12 +186,12 @@ public:
 	CNetworkVar( float, m_flIronsightedTime );
 
 	virtual bool			HasIronsights( void ) { return false; }
-	bool					IsIronsighted( void );
-	void					ToggleIronsights( void );
-	void					EnableIronsights( void );
-	void					DisableIronsights( void );
-	void					SetIronsightTime( void );
-	bool 					CanUseIronsight() const;
+	virtual bool					IsIronsighted( void );
+	virtual void					ToggleIronsights( void );
+	virtual void					EnableIronsights( void );
+	virtual void					DisableIronsights( void );
+	virtual void					SetIronsightTime( void );
+	virtual bool 					CanUseIronsight() const;
 
 	virtual void			Spawn( void );
 	virtual void			Precache( void );

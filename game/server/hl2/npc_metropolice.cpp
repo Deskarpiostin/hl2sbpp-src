@@ -739,6 +739,13 @@ void CNPC_MetroPolice::Spawn( void )
 //-----------------------------------------------------------------------------
 void CNPC_MetroPolice::Weapon_Equip( CBaseCombatWeapon *pWeapon )
 {
+	BaseClass::Weapon_Equip( pWeapon );
+
+	if ( HasSpawnFlags(SF_METROPOLICE_MID_RANGE_ATTACK) && GetActiveWeapon() )
+	{
+		GetActiveWeapon()->m_fMaxRange1 = METROPOLICE_MID_RANGE_ATTACK_RANGE;
+		GetActiveWeapon()->m_fMaxRange2 = METROPOLICE_MID_RANGE_ATTACK_RANGE;
+	}
 }
 
 

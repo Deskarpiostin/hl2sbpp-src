@@ -1628,7 +1628,7 @@ void CBaseCombatWeapon::ToggleIronsights(void) //No possible use Iron Sight duri
 
 	if (m_bInReload == true)
 	{
-			DisableIronsights();
+		DisableIronsights();
 	}
 	else
 	{
@@ -1641,10 +1641,6 @@ void CBaseCombatWeapon::ToggleIronsights(void) //No possible use Iron Sight duri
 
 void CBaseCombatWeapon::EnableIronsights( void )
 {
-#ifdef CLIENT_DLL
-	if( !prediction->IsFirstTimePredicted() )
-		return;
-#endif
 	if( !HasIronsights() || m_bIsIronsighted )
 		return;
 
@@ -1652,36 +1648,26 @@ void CBaseCombatWeapon::EnableIronsights( void )
 		return;
 
 	CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
-
 	if( !pOwner )
 		return;
 
-	if( pOwner->SetFOV( this, pOwner->GetDefaultFOV() + GetIronsightFOVOffset(), 1.0f ) ) //modify the last value to adjust how fast the fov is applied
-	{
-		m_bIsIronsighted = true;
-		SetIronsightTime();
-	}
+	m_bIsIronsighted = true;
+	SetIronsightTime();
+	pOwner->SetFOV( this, pOwner->GetDefaultFOV() + GetIronsightFOVOffset(), 1.0f );
 }
 
 void CBaseCombatWeapon::DisableIronsights( void )
 {
-#ifdef CLIENT_DLL
-	if( !prediction->IsFirstTimePredicted() )
-		return;
-#endif
 	if( !HasIronsights() || !m_bIsIronsighted )
 		return;
 
 	CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
-
 	if( !pOwner )
 		return;
 
-	if( pOwner->SetFOV( this, 0, 0.4f ) ) //modify the last value to adjust how fast the fov is applied
-	{
-		m_bIsIronsighted = false;
-		SetIronsightTime();
-	}
+	m_bIsIronsighted = false;
+	SetIronsightTime();
+	pOwner->SetFOV( this, 0, 0.4f );
 }
 
 void CBaseCombatWeapon::SetIronsightTime( void )
@@ -2628,7 +2614,10 @@ Activity CBaseCombatWeapon::ActivityOverride( Activity baseAct, bool *pRequired 
 	}
 
 	// ok.
-	return ACT_INVALID;
+	if ( GetOwner()->IsNPC() )
+		return baseAct;
+	else
+		return ACT_INVALID;
 }
 
 //-----------------------------------------------------------------------------

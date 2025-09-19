@@ -144,8 +144,15 @@ public:
 
 	virtual bool	CanHearAndReadChatFrom( CBasePlayer *pPlayer );
 
-		
+	CHL2MPPlayerAnimState *GetAnimState() const { return m_PlayerAnimState; }
+	virtual void StartTaunt(Activity aDance);
+	virtual void EndTaunt();
+	virtual bool IsTaunting() const { return m_bTaunting; }
+	virtual Activity GetDanceAct() const { return m_aCurrentTaunt; } 
+
 private:
+    CUtlString m_CurrentHandModel;
+
 
 	CNetworkQAngle( m_angEyeAngles );
 	CHL2MPPlayerAnimState *m_PlayerAnimState;
@@ -157,6 +164,9 @@ private:
 
 	float m_flNextModelChangeTime;
 	float m_flNextTeamChangeTime;
+
+	CNetworkVar(bool, m_bTaunting);
+	CNetworkVar(Activity, m_aCurrentTaunt);
 
 	float m_flSlamProtectTime;	
 

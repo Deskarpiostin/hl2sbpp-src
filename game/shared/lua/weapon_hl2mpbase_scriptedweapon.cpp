@@ -578,6 +578,94 @@ void CHL2MPScriptedWeapon::InitScriptedWeapon( void )
 	}
 	lua_pop( L, 1 );
 
+    lua_getref( L, m_nTableReference );
+    lua_getfield( L, -1, "TextureData" );
+    lua_remove( L, -2 );
+
+    if ( lua_istable( L, -1 ) )
+    {
+        lua_pushnil( L );
+        while ( lua_next( L, -2 ) )
+        {
+            const char *texName = lua_tostring( L, -2 );
+            if ( texName && lua_istable( L, -1 ) )
+            {
+                lua_getfield( L, -1, "file" );
+                const char *file = lua_isstring( L, -1 ) ? lua_tostring( L, -1 ) : NULL;
+                lua_pop( L, 1 );
+
+                lua_getfield( L, -1, "x" );
+                int x = lua_isnumber( L, -1 ) ? (int)lua_tointeger( L, -1 ) : 0;
+                lua_pop( L, 1 );
+
+                lua_getfield( L, -1, "y" );
+                int y = lua_isnumber( L, -1 ) ? (int)lua_tointeger( L, -1 ) : 0;
+                lua_pop( L, 1 );
+
+                lua_getfield( L, -1, "width" );
+                int w = lua_isnumber( L, -1 ) ? (int)lua_tointeger( L, -1 ) : 0;
+                lua_pop( L, 1 );
+
+                lua_getfield( L, -1, "height" );
+                int h = lua_isnumber( L, -1 ) ? (int)lua_tointeger( L, -1 ) : 0;
+                lua_pop( L, 1 );
+	
+#ifdef CLIENT_DLL
+				CHudTexture temp;
+				Q_strncpy( temp.szShortName, texName, sizeof( temp.szShortName ) );
+
+				if ( file )
+				{
+					Q_strncpy( temp.szTextureFile, file, sizeof( temp.szTextureFile ) );
+				}
+				else
+				{
+					temp.szTextureFile[0] = '\0';
+				}
+
+				temp.bRenderUsingFont = false;
+				temp.cCharacterInFont = 0;
+				temp.hFont = 0;
+				temp.bPrecached = false;
+				temp.textureId = -1;
+
+				temp.rc.left   = x;
+				temp.rc.top    = y;
+				temp.rc.right  = x + w;
+				temp.rc.bottom = y + h;
+
+				CHudTexture *pRegistered = gHUD.AddUnsearchableHudIconToList( temp );
+				if ( pRegistered )
+				{
+					pRegistered->Precache();
+					if ( Q_stricmp( texName, "weapon_s" ) == 0 )
+						m_pLuaWeaponInfo->iconActive = pRegistered;
+					else if ( Q_stricmp( texName, "weapon" ) == 0 )
+						m_pLuaWeaponInfo->iconInactive = pRegistered;
+					else if ( Q_stricmp( texName, "weapon_small" ) == 0 )
+						m_pLuaWeaponInfo->iconSmall = pRegistered;
+					else if ( Q_stricmp( texName, "ammo" ) == 0 )
+						m_pLuaWeaponInfo->iconAmmo = pRegistered;
+					else if ( Q_stricmp( texName, "ammo2" ) == 0 )
+						m_pLuaWeaponInfo->iconAmmo2 = pRegistered;
+					else if ( Q_stricmp( texName, "crosshair" ) == 0 )
+						m_pLuaWeaponInfo->iconCrosshair = pRegistered;
+					else if ( Q_stricmp( texName, "autoaim" ) == 0 )
+						m_pLuaWeaponInfo->iconAutoaim = pRegistered;
+				}
+				else
+				{
+					DevMsg( "Failed to register HUD texture %s (file=%s)\n", texName, file ? file : "(null)" );
+				}
+#endif
+            }
+
+            lua_pop( L, 1 );
+        }
+
+    }
+    lua_pop( L, 1 );
+
 	lua_getref( L, m_nTableReference );
 	lua_getfield( L, -1, "IronsightAngOffset" );
 	lua_remove( L, -2 );

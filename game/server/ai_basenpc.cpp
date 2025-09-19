@@ -601,15 +601,6 @@ void CAI_BaseNPC::Event_Killed( const CTakeDamageInfo &info )
 		SetTouch( NULL );
 	}
 
-    // uhhh what
-    if (info.GetAttacker() && info.GetAttacker()->IsPlayer())
-    {
-        CHL2MP_Player* pPlayer = ToHL2MPPlayer(ToBasePlayer(info.GetAttacker()));
-       
-		// TODO: fix this shit
-		//HL2MPRules()->DeathNotice(GetBaseEntity(), info); // @ThePixelMoon: i don't like this.
-    }
-
 	BaseClass::Event_Killed( info );
 
 	if ( m_bFadeCorpse )
@@ -645,6 +636,8 @@ void CAI_BaseNPC::Event_Killed( const CTakeDamageInfo &info )
 			RemoveDeferred();
 		}
 	}
+
+	HL2MPRules()->NPCDeathNotice( GetBaseEntity(), info );
 }
 
 //-----------------------------------------------------------------------------

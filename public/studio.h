@@ -2769,6 +2769,10 @@ public:
 			m_ActivityToSequence.Initialize(this);
 		}
 #endif
+
+		if ( activity < 0 )
+			return -1;
+
 		return m_ActivityToSequence.SelectWeightedSequence( this, activity, curSequence );
 	}
 

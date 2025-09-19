@@ -74,15 +74,8 @@ public:
 
 	virtual const Vector &GetBulletSpread( void );
 
-	virtual bool HasIronsights( void )
-	{
-		BEGIN_LUA_CALL_WEAPON_METHOD( "HasIronsights" );
-		END_LUA_CALL_WEAPON_METHOD( 0, 1 );
-
-		RETURN_LUA_BOOLEAN();
-
-		return false;
-	}
+	virtual bool HasIronsights( void ) override { return true; }
+	virtual bool CanUseIronsight() const override { return m_pLuaWeaponInfo->bCanUseIronsight; }
 
 public:
 

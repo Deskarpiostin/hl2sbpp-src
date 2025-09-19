@@ -178,7 +178,7 @@ void CSMLPage::Init( KeyValues* kv ) {
 
 void CSMLPage::CreateButtonX( CSMLPage* page, const char* label, const char* command ) {
     if( label && command && label[0] && command[0] ) {
-#ifdef OMOD
+#ifdef HL2SB
         if( Q_strlen( label ) > 4 &&
             (!Q_stricmp( label + Q_strlen( label ) - 5, "(EP2)" ) ||
               !Q_stricmp( label + Q_strlen( label ) - 5, "(EP1)" ) ||

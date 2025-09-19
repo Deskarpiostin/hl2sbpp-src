@@ -58,6 +58,10 @@ IMPLEMENT_CLIENTCLASS_DT(C_HL2MP_Player, DT_HL2MP_Player, CHL2MP_Player)
 	RecvPropFloat( RECVINFO( m_flPlayAftershock ) ),
 	RecvPropFloat( RECVINFO( m_flNextAmmoBurn ) ),
 	RecvPropBool( RECVINFO( m_fIsWalking ) ),
+
+	RecvPropBool( RECVINFO( m_bTaunting) ),
+	RecvPropInt( RECVINFO( m_aCurrentTaunt ) ),
+
 END_RECV_TABLE()
 
 BEGIN_PREDICTION_DATA( C_HL2MP_Player )
@@ -89,6 +93,9 @@ C_HL2MP_Player::C_HL2MP_Player() : m_iv_angEyeAngles( "C_HL2MP_Player::m_iv_angE
 	m_PlayerAnimState = CreateHL2MPPlayerAnimState( this );
 
 	m_blinkTimer.Invalidate();
+
+	m_bTaunting = false;
+	m_aCurrentTaunt = ACT_INVALID;
 
 	m_pFlashlightBeam = NULL;
 }

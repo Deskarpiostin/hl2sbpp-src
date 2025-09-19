@@ -983,8 +983,8 @@ static int CBaseCombatWeapon_IsIronsighted(lua_State *L) {
 }
 
 static int CBaseCombatWeapon_ToggleIronsights(lua_State *L) {
-#ifdef CLIENT_DLL
     luaL_checkweapon(L, 1)->ToggleIronsights();
+#ifdef CLIENT_DLL
 	engine->ServerCmd( "toggle_ironsight" );
 #endif
     return 0;

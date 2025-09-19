@@ -52,6 +52,15 @@ const char *BotName[] =
 	"Modea",
 	"Sexsoft",
 	"Arcureid",
+	"YourLocalMoon",
+	"DREADCRAFT",
+	"Nekto",
+	"Ashforever",
+	"ItzVladik",
+	"GCarl",
+	"Kokoleong",
+	"R_4d",
+	"Walten",
 };
 
 typedef struct

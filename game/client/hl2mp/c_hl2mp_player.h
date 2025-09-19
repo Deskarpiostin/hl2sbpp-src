@@ -90,6 +90,11 @@ public:
 	CNetworkVar( float, m_flAmmoStartCharge );
 	CNetworkVar( float, m_flPlayAftershock );
 	CNetworkVar( float, m_flNextAmmoBurn );
+
+	CHL2MPPlayerAnimState *GetAnimState() const { return m_PlayerAnimState; }
+	virtual bool IsTaunting() const { return m_bTaunting; }
+	virtual Activity GetDanceAct() const { return m_aCurrentTaunt; } 
+
 private:
 	
 	C_HL2MP_Player( const C_HL2MP_Player & );
@@ -101,6 +106,9 @@ private:
 	CInterpolatedVar< QAngle >	m_iv_angEyeAngles;
 
 	EHANDLE	m_hRagdoll;
+
+	CNetworkVar(bool, m_bTaunting);
+	CNetworkVar(Activity, m_aCurrentTaunt);
 
 	int	m_headYawPoseParam;
 	int	m_headPitchPoseParam;

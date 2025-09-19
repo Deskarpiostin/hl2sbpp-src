@@ -105,6 +105,13 @@ void CHL2MPPlayerAnimState::ClearAnimationState( void )
 Activity CHL2MPPlayerAnimState::TranslateActivity( Activity actDesired )
 {
     CHL2MP_Player *pPlayer = GetHL2MPPlayer();
+	if (pPlayer->IsTaunting())
+	{
+		Activity danceAct = pPlayer->GetDanceAct();
+		if ( danceAct != ACT_INVALID )
+			return danceAct;
+	}
+	
     if ( pPlayer && pPlayer->IsInAVehicle() )
         return ACT_HL2MP_SIT;
 

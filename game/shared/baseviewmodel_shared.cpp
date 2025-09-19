@@ -394,6 +394,7 @@ void CBaseViewModel::CalcIronsights( Vector &pos, QAngle &ang )
 	float exp = ( pWeapon->IsIronsighted() ) ? 
 		( delta > 1.0f ) ? 1.0f : delta : //normal blending
 		( delta > 1.0f ) ? 0.0f : 1.0f - delta; //reverse interpolation
+    bool irons = pWeapon->IsIronsighted();
 
 	if( exp <= 0.001f ) //fully not ironsighted; save performance
 		return;

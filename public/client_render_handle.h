@@ -20,7 +20,7 @@ class IClientRenderable;
 //-----------------------------------------------------------------------------
 // Handle to an renderable in the client leaf system
 //-----------------------------------------------------------------------------
-typedef unsigned short ClientRenderHandle_t;
+typedef unsigned int ClientRenderHandle_t;
 
 enum
 {

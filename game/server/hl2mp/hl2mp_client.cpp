@@ -131,7 +131,7 @@ const char *GetGameDescription()
 #ifndef HL2SB
 		return "Half-Life 2 Deathmatch";
 #else
-		return "Half-Life 2 Sandbox";
+		return "Half-Life 2: Sandbox++";
 #endif
 }
 

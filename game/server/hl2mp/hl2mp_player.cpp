@@ -128,6 +128,9 @@ IMPLEMENT_SERVERCLASS_ST(CHL2MP_Player, DT_HL2MP_Player)
 	SendPropEHandle( SENDINFO( m_hRagdoll ) ),
 	SendPropInt( SENDINFO( m_iPlayerSoundType), 3 ),
 	
+	SendPropBool( SENDINFO( m_bTaunting) ),
+	SendPropInt( SENDINFO( m_aCurrentTaunt ) ),
+
 END_SEND_TABLE()
 
 BEGIN_DATADESC( CHL2MP_Player )
@@ -139,21 +142,21 @@ END_DATADESC()
 
 const char *g_ppszRandomCitizenModels[] = 
 {
-	"models/player/humans/group03/male_01.mdl",
-	"models/player/humans/group03/male_02.mdl",
-	"models/player/humans/group03/female_01.mdl",
-	"models/player/humans/group03/male_03.mdl",
-	"models/player/humans/group03/female_02.mdl",
-	"models/player/humans/group03/male_04.mdl",
-	"models/player/humans/group03/female_03.mdl",
-	"models/player/humans/group03/male_05.mdl",
-	"models/player/humans/group03/female_04.mdl",
-	"models/player/humans/group03/male_06.mdl",
-	"models/player/humans/group03/female_06.mdl",
-	"models/player/humans/group03/male_07.mdl",
-	"models/player/humans/group03/female_07.mdl",
-	"models/player/humans/group03/male_08.mdl",
-	"models/player/humans/group03/male_09.mdl",
+	"models/player/group03/male_01.mdl",
+	"models/player/group03/male_02.mdl",
+	"models/player/group03/female_01.mdl",
+	"models/player/group03/male_03.mdl",
+	"models/player/group03/female_02.mdl",
+	"models/player/group03/male_04.mdl",
+	"models/player/group03/female_03.mdl",
+	"models/player/group03/male_05.mdl",
+	"models/player/group03/female_04.mdl",
+	"models/player/group03/male_06.mdl",
+	"models/player/group03/female_06.mdl",
+	"models/player/group03/male_07.mdl",
+	"models/player/group03/female_07.mdl",
+	"models/player/group03/male_08.mdl",
+	"models/player/group03/male_09.mdl",
 };
 
 const char *g_ppszRandomCombineModels[] =
@@ -189,6 +192,11 @@ CHL2MP_Player::CHL2MP_Player()
 
     m_bEnterObserver = false;
 	m_bReady = false;
+
+	m_aCurrentTaunt = ACT_INVALID;
+	m_bTaunting = false;
+
+	m_CurrentHandModel = "";
 
 	BaseClass::ChangeTeam( 0 );
 	UseClientSideAnimation();
@@ -374,54 +382,6 @@ void CHL2MP_Player::Spawn(void)
 	m_Local.m_bDucked = false;
 
 	SetPlayerUnderwater(false);
-
-#ifdef HL2SB
-	const char* c_handmodel = engine->GetClientConVarValue( ENTINDEX( edict() ), "c_handmodel" );
-
-	if (strcmp(c_handmodel, "default") == 0)
-	{
-		if (GetPlayerModelType() == PLAYER_SOUNDS_METROPOLICE || GetPlayerModelType() == PLAYER_SOUNDS_COMBINESOLDIER)
-		{
-			GetViewModel(1)->SetModel("models/weapons/c_arms_combine.mdl");
-		}
-		else
-		{
-			GetViewModel(1)->SetModel("models/weapons/c_arms_citizen.mdl");
-		}
-	}
-	else if (strcmp(c_handmodel, "citizen") == 0)
-	{
-		GetViewModel(1)->SetModel("models/weapons/c_arms_citizen.mdl");
-	}
-	else if (strcmp(c_handmodel, "combine") == 0)
-	{
-		GetViewModel(1)->SetModel("models/weapons/c_arms_combine.mdl");
-	}
-	else if (strcmp(c_handmodel, "refugee") == 0)
-	{
-		GetViewModel(1)->SetModel("models/weapons/c_arms_refugee.mdl");
-	}
-	else if (strcmp(c_handmodel, "cstrike") == 0) // needs css mounted
-	{
-		GetViewModel(1)->SetModel("models/weapons/c_arms_cstrike.mdl");
-	}
-	else if (strcmp(c_handmodel, "dod") == 0)
-	{
-		GetViewModel(1)->SetModel("models/weapons/c_arms_dod.mdl");
-	}
-	else
-	{
-		// stick to the default
-		if (GetPlayerModelType() == PLAYER_SOUNDS_METROPOLICE || GetPlayerModelType() == PLAYER_SOUNDS_COMBINESOLDIER)
-		{
-			GetViewModel(1)->SetModel("models/weapons/c_arms_combine.mdl");
-		}
-		else
-		{
-			GetViewModel(1)->SetModel("models/weapons/c_arms_citizen.mdl");
-		}
-	}
-#endif
 
 	m_bReady = false;
 
@@ -666,6 +626,30 @@ void CHL2MP_Player::PostThink( void )
 	angles[PITCH] = 0;
 	SetLocalAngles( angles );
 
+#ifdef HL2SB
+	const char* c_handmodel = engine->GetClientConVarValue( ENTINDEX( edict() ), "c_handmodel" );
+	CUtlString desiredModel;
+
+	if (strcmp(c_handmodel, "citizen") == 0)
+		desiredModel = "models/weapons/c_arms_citizen.mdl";
+	else if (strcmp(c_handmodel, "combine") == 0)
+		desiredModel = "models/weapons/c_arms_combine.mdl";
+	else if (strcmp(c_handmodel, "refugee") == 0)
+		desiredModel = "models/weapons/c_arms_refugee.mdl";
+	else if (strcmp(c_handmodel, "cstrike") == 0) // needs css mounted
+		desiredModel = "models/weapons/c_arms_cstrike.mdl";
+	else if (strcmp(c_handmodel, "dod") == 0)
+		desiredModel = "models/weapons/c_arms_dod.mdl";
+	else // default
+		desiredModel = (m_iModelType == TEAM_COMBINE) ? "models/weapons/c_arms_combine.mdl" : "models/weapons/c_arms_citizen.mdl";
+
+	if (m_CurrentHandModel != desiredModel)
+	{
+		GetViewModel(1)->SetModel(desiredModel.Get());
+		m_CurrentHandModel = desiredModel;
+	}
+#endif
+
 	// Store the eye angles pitch so the client can compute its animation state correctly.
 	m_angEyeAngles = EyeAngles();
 	m_PlayerAnimState->Update( m_angEyeAngles[YAW], m_angEyeAngles[PITCH] );
@@ -857,14 +841,14 @@ void CHL2MP_Player::ChangeTeam( int iTeam )
 
 	m_flNextTeamChangeTime = gpGlobals->curtime + TEAM_CHANGE_INTERVAL;
 
-	if ( HL2MPRules()->IsTeamplay() == true )
-	{
-		SetPlayerTeamModel();
-	}
-	else
-	{
+	//if ( HL2MPRules()->IsTeamplay() == true )
+	//{
+	//	SetPlayerTeamModel();
+	//}
+	//else
+	//{
 		SetPlayerModel();
-	}
+	//}
 
 	if ( iTeam == TEAM_SPECTATOR )
 	{
@@ -1810,3 +1794,73 @@ void CHL2MP_Player::SetupBones( matrix3x4_t *pBoneToWorld, int boneMask )
 		pBoneToWorld,
 		boneMask );
 }
+
+void CHL2MP_Player::StartTaunt(Activity aDance)
+{
+	m_bTaunting = true;
+	AddFlag( FL_FROZEN );
+	m_aCurrentTaunt = aDance;
+
+	engine->ClientCommand( edict(), "thirdperson" );
+	if (GetActiveWeapon())
+		GetActiveWeapon()->Holster();
+
+	float duration = 3.f;
+	switch (aDance)
+	{
+		case ACT_GMOD_TAUNT_MUSCLE:
+			duration = 10.f;
+			break;
+		case ACT_GMOD_TAUNT_DANCE:
+			duration = 4.5f;
+			break;
+		case ACT_GMOD_TAUNT_LAUGH:
+			duration = 2.75f;
+			break;
+		default:
+			duration = 3.f;
+			break;
+	}
+
+    SetThink(&CHL2MP_Player::EndTaunt);
+    SetNextThink(gpGlobals->curtime + duration);
+}
+
+void CHL2MP_Player::EndTaunt()
+{
+	m_bTaunting = false;
+	RemoveFlag( FL_FROZEN );
+	m_aCurrentTaunt = ACT_INVALID;
+
+	engine->ClientCommand( edict(), "firstperson" );
+	if (GetActiveWeapon())
+		GetActiveWeapon()->Deploy();
+}
+
+void CC_PlayAct(const CCommand &args)
+{
+    if (args.ArgC() < 2)
+    {
+        Msg("Usage: act <act_name>\n");
+        return;
+    }
+
+    const char* actName = args[1];
+    Activity act = ACT_INVALID;
+
+    if (FStrEq(actName, "dance")) act = ACT_GMOD_TAUNT_DANCE;
+	else if (FStrEq(actName, "muscle")) act = ACT_GMOD_TAUNT_MUSCLE;
+	else if (FStrEq(actName, "laugh")) act = ACT_GMOD_TAUNT_LAUGH;
+    else
+    {
+        Msg("Unknown act: %s\n", actName);
+        return;
+    }
+
+    CHL2MP_Player* pPlayer = ToHL2MPPlayer( UTIL_GetCommandClient() );
+    if (!pPlayer) return;
+
+	pPlayer->StartTaunt(act);
+}
+
+ConCommand act("act", CC_PlayAct, "Plays a specific animation, don't use this lmao", FCVAR_NONE);

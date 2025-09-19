@@ -94,7 +94,7 @@ void CTargetID::VidInit()
 
 Color CTargetID::GetColorForTargetTeam( int iTeamNumber )
 {
-	return GameResources()->GetTeamColor( iTeamNumber );
+    return Color(0, 255, 255, 255);
 } 
 
 //-----------------------------------------------------------------------------
@@ -158,16 +158,8 @@ void CTargetID::Paint()
 			bShowPlayerName = true;
 			g_pVGuiLocalize->ConvertANSIToUnicode( pPlayer->GetPlayerName(),  wszPlayerName, sizeof(wszPlayerName) );
 			
-			if ( HL2MPRules()->IsTeamplay() == true && pPlayer->InSameTeam(pLocalPlayer) )
-			{
-				printFormatString = "#Playerid_sameteam";
-				bShowHealth = true;
-			}
-			else
-			{
-				printFormatString = "#Playerid_diffteam";
-			}
-		
+			bShowHealth = true;
+			printFormatString = "#Playerid";
 
 			if ( bShowHealth )
 			{
@@ -178,22 +170,7 @@ void CTargetID::Paint()
 
 		if ( printFormatString )
 		{
-			if ( bShowPlayerName && bShowHealth )
-			{
-				g_pVGuiLocalize->ConstructString( sIDString, sizeof(sIDString), g_pVGuiLocalize->Find(printFormatString), 2, wszPlayerName, wszHealthText );
-			}
-			else if ( bShowPlayerName )
-			{
-				g_pVGuiLocalize->ConstructString( sIDString, sizeof(sIDString), g_pVGuiLocalize->Find(printFormatString), 1, wszPlayerName );
-			}
-			else if ( bShowHealth )
-			{
-				g_pVGuiLocalize->ConstructString( sIDString, sizeof(sIDString), g_pVGuiLocalize->Find(printFormatString), 1, wszHealthText );
-			}
-			else
-			{
-				g_pVGuiLocalize->ConstructString( sIDString, sizeof(sIDString), g_pVGuiLocalize->Find(printFormatString), 0 );
-			}
+			g_pVGuiLocalize->ConstructString( sIDString, sizeof(sIDString), g_pVGuiLocalize->Find(printFormatString), 2, wszPlayerName, wszHealthText );
 		}
 
 		if ( sIDString[0] )

@@ -160,7 +160,7 @@ static const char *s_PreserveEnts[] =
 	"", // END Marker
 };
 
-
+ConVar npc_deathnotice("npc_deathnotice", "1", FCVAR_REPLICATED);
 
 #ifdef CLIENT_DLL
 	void RecvProxy_HL2MPRules( const RecvProp *pProp, void **pOut, void *pData, int objectID )
@@ -1064,6 +1064,172 @@ void CHL2MPRules::DeathNotice( CBasePlayer *pVictim, const CTakeDamageInfo &info
 	}
 #endif
 
+}
+
+//=========================================================
+// NPC Deathnotice
+//=========================================================
+void CHL2MPRules::NPCDeathNotice( CBaseEntity *pVictim, const CTakeDamageInfo &info )
+{
+	if ( !npc_deathnotice.GetBool() )
+		return;
+	
+#ifndef CLIENT_DLL
+    if ( !pVictim )
+        return;
+		
+    CBaseEntity *pAttacker = info.GetAttacker();
+
+    IGameEvent *event = gameeventmanager->CreateEvent( "npc_killed", true );
+    if ( !event )
+        return;
+
+    const char *victimName = pVictim->GetClassname() ? pVictim->GetClassname() : "npc";
+
+    const char *attackerName = "world";
+    bool attackerIsPlayer = false;
+
+    if ( pAttacker )
+    {
+        if ( pAttacker->IsPlayer() )
+        {
+            CBasePlayer *pPlayer = ToBasePlayer( pAttacker );
+            if ( pPlayer )
+            {
+                attackerName = pPlayer->GetPlayerName(); // player readable name
+                attackerIsPlayer = true;
+            }
+        }
+        else
+        {
+            attackerName = pAttacker->GetClassname() ? pAttacker->GetClassname() : "npc";
+        }
+    }
+
+    const char *weaponName = "";
+    CBaseEntity *pInflictor = info.GetInflictor();
+    if ( pInflictor )
+    {
+        weaponName = pInflictor->GetClassname() ? pInflictor->GetClassname() : "";
+    }
+
+	// yanderedev moment
+	const char *killer_weapon_name = "world";
+	if ( pAttacker && pAttacker->IsPlayer() )
+	{
+		CBasePlayer *pPlayer = ToBasePlayer( pAttacker );
+		if ( pPlayer )
+		{
+			CBaseCombatWeapon *pWeapon = pPlayer->GetActiveWeapon();
+			if ( pWeapon )
+			{
+				killer_weapon_name = pWeapon->GetClassname();
+
+				if ( strncmp( killer_weapon_name, "weapon_", 7 ) == 0 )
+					killer_weapon_name += 7;
+				else if ( strncmp( killer_weapon_name, "npc_", 4 ) == 0 )
+					killer_weapon_name += 4;
+				else if ( strncmp( killer_weapon_name, "func_", 5 ) == 0 )
+					killer_weapon_name += 5;
+				else if ( strstr( killer_weapon_name, "physics" ) )
+					killer_weapon_name = "physics";
+
+				if ( strcmp( killer_weapon_name, "prop_combine_ball" ) == 0 )
+					killer_weapon_name = "combine_ball";
+				else if ( strcmp( killer_weapon_name, "grenade_ar2" ) == 0 )
+					killer_weapon_name = "smg1_grenade";
+				else if ( strcmp( killer_weapon_name, "satchel" ) == 0 || strcmp( killer_weapon_name, "tripmine" ) == 0 )
+					killer_weapon_name = "slam";
+			}
+		}
+	}
+	else
+	{
+		if ( pAttacker )
+		{
+			CBaseCombatCharacter *pChar = pAttacker->MyCombatCharacterPointer();
+			if ( pChar )
+			{
+				CBaseCombatWeapon *pWeapon = pChar->GetActiveWeapon();
+				if ( pWeapon )
+				{
+					killer_weapon_name = pWeapon->GetClassname();
+					
+					if ( strncmp( killer_weapon_name, "weapon_", 7 ) == 0 )
+						killer_weapon_name += 7;
+					else if ( strncmp( killer_weapon_name, "npc_", 4 ) == 0 )
+						killer_weapon_name += 4;
+					else if ( strncmp( killer_weapon_name, "func_", 5 ) == 0 )
+						killer_weapon_name += 5;
+					else if ( strstr( killer_weapon_name, "physics" ) )
+						killer_weapon_name = "physics";
+
+					if ( strcmp( killer_weapon_name, "prop_combine_ball" ) == 0 )
+						killer_weapon_name = "combine_ball";
+					else if ( strcmp( killer_weapon_name, "grenade_ar2" ) == 0 )
+						killer_weapon_name = "smg1_grenade";
+					else if ( strcmp( killer_weapon_name, "satchel" ) == 0 || strcmp( killer_weapon_name, "tripmine" ) == 0 )
+						killer_weapon_name = "slam";
+				}
+			}
+		}
+	}
+
+	bool bNPCVictimFriendly = (pVictim->Classify() == CLASS_PLAYER_ALLY_VITAL || pVictim->Classify() == CLASS_PLAYER_ALLY
+		|| pVictim->Classify() == CLASS_CITIZEN_PASSIVE || pVictim->Classify() == CLASS_CITIZEN_REBEL ||
+		pVictim->Classify() == CLASS_CITIZEN_REBEL || pVictim->Classify() == CLASS_HACKED_ROLLERMINE ||
+		pVictim->Classify() == CLASS_HUMAN_PASSIVE);
+	
+	bool bNPCKillerFriendly = (pAttacker->Classify() == CLASS_PLAYER_ALLY_VITAL || pAttacker->Classify() == CLASS_PLAYER_ALLY
+		|| pAttacker->Classify() == CLASS_CITIZEN_PASSIVE || pAttacker->Classify() == CLASS_CITIZEN_REBEL ||
+		pAttacker->Classify() == CLASS_CITIZEN_REBEL || pAttacker->Classify() == CLASS_HACKED_ROLLERMINE ||
+		pAttacker->Classify() == CLASS_HUMAN_PASSIVE);
+
+    event->SetString( "victim_name", victimName );
+    event->SetString( "attacker_name", attackerName );
+    event->SetBool( "attacker_isplayer", attackerIsPlayer );
+	event->SetBool( "npc_killer_friendly", bNPCKillerFriendly );
+	event->SetBool( "npc_victim_friendly", bNPCVictimFriendly );
+    if ( weaponName && weaponName[0] )
+        event->SetString( "weapon", weaponName );
+    event->SetString( "weaponname", killer_weapon_name );
+
+    gameeventmanager->FireEvent( event );
+#endif
+}
+
+CBasePlayer* GetDeathScorer( CBaseEntity *pKiller, CBaseEntity *pInflictor )
+{
+    if ( !pKiller )
+        return nullptr;
+
+    if ( pKiller->IsPlayer() )
+        return ToBasePlayer( pKiller );
+
+    if ( pInflictor == pKiller )
+    {
+        if ( pKiller->IsPlayer() )
+            return ToBasePlayer( pKiller );
+        return nullptr; // NPC or world
+    }
+
+    CBaseEntity *pOwner = pInflictor->GetOwnerEntity();
+    if ( pOwner && pOwner->IsPlayer() )
+        return ToBasePlayer( pOwner );
+
+    return nullptr;
+}
+
+const char* GetDamageCustomString( const CTakeDamageInfo &info )
+{
+    switch ( info.GetDamageType() )
+    {
+        case DMG_FALL:    return "fall";
+        case DMG_DROWN:   return "drown";
+        case DMG_BURN:    return "burn";
+        case DMG_CRUSH:   return "crush";
+        default:          return "generic";
+    }
 }
 
 void CHL2MPRules::ClientSettingsChanged( CBasePlayer *pPlayer )

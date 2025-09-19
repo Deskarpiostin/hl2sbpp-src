@@ -86,7 +86,7 @@ void CC_Neofetch( void )
 	Msg("Arch: %s\n", GetProcessorArchName());
 	Msg("Game: %s\n", GetGame());
 #ifdef HL2SB
-	Msg("Half-Life 2: Sandbox Type Version: %s\n", GetTypeVer());
+	Msg("Half-Life 2: Sandbox++ Type Version: %s\n", GetTypeVer());
 #endif
 #ifdef LUA_SDK	
 	Msg("Lua Version: %s\n", GetLuaVersion());
