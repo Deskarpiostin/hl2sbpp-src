@@ -7,7 +7,7 @@
 #include <vgui/IVGui.h>
 #include <vgui_controls/Panel.h>
 #include "filesystem.h"
-#include <png.h>
+#include "libpng/png.h"
 
 struct PngImageData {
     int textureId;
