@@ -879,11 +879,20 @@ int CHL2MPScriptedWeapon::GetMaxClip1( void ) const
 		return BaseClass::GetMaxClip1();
 
 #if defined ( LUA_SDK )
-	lua_getref( L, m_nTableReference );
-	lua_getfield( L, -1, "Primary.ClipSize" );
-	lua_remove( L, -2 );
-
-	RETURN_LUA_INTEGER();
+    lua_getref( L, m_nTableReference );
+    lua_getfield( L, -1, "Primary" );
+    if ( lua_istable( L, -1 ) )
+    {
+        lua_getfield( L, -1, "ClipSize" );
+        if ( lua_isnumber( L, -1 ) )
+        {
+            int v = (int)lua_tointeger( L, -1 );
+            lua_pop( L, 3 );
+            return v;
+        }
+        lua_pop( L, 1 );
+    }
+    lua_pop( L, 2 );
 #endif
 
 	return BaseClass::GetMaxClip1();
@@ -895,11 +904,20 @@ int CHL2MPScriptedWeapon::GetMaxClip2( void ) const
 		return BaseClass::GetMaxClip2();
 
 #if defined ( LUA_SDK )
-	lua_getref( L, m_nTableReference );
-	lua_getfield( L, -1, "Secondary.ClipSize" );
-	lua_remove( L, -2 );
-
-	RETURN_LUA_INTEGER();
+    lua_getref( L, m_nTableReference );
+    lua_getfield( L, -1, "Secondary" );
+    if ( lua_istable( L, -1 ) )
+    {
+        lua_getfield( L, -1, "ClipSize" );
+        if ( lua_isnumber( L, -1 ) )
+        {
+            int v = (int)lua_tointeger( L, -1 );
+            lua_pop( L, 3 );
+            return v;
+        }
+        lua_pop( L, 1 );
+    }
+    lua_pop( L, 2 );
 #endif
 
 	return BaseClass::GetMaxClip2();
@@ -911,11 +929,20 @@ int CHL2MPScriptedWeapon::GetDefaultClip1( void ) const
 		return BaseClass::GetDefaultClip1();
 
 #if defined ( LUA_SDK )
-	lua_getref( L, m_nTableReference );
-	lua_getfield( L, -1, "Primary.DefaultClip" );
-	lua_remove( L, -2 );
-
-	RETURN_LUA_INTEGER();
+    lua_getref( L, m_nTableReference );
+    lua_getfield( L, -1, "Primary" );
+    if ( lua_istable( L, -1 ) )
+    {
+        lua_getfield( L, -1, "DefaultClip" );
+        if ( lua_isnumber( L, -1 ) )
+        {
+            int v = (int)lua_tointeger( L, -1 );
+            lua_pop( L, 3 );
+            return v;
+        }
+        lua_pop( L, 1 );
+    }
+    lua_pop( L, 2 );
 #endif
 
 	return BaseClass::GetDefaultClip1();
@@ -927,11 +954,20 @@ int CHL2MPScriptedWeapon::GetDefaultClip2( void ) const
 		return BaseClass::GetDefaultClip2();
 
 #if defined ( LUA_SDK )
-	lua_getref( L, m_nTableReference );
-	lua_getfield( L, -1, "Secondary.DefaultClip" );
-	lua_remove( L, -2 );
-
-	RETURN_LUA_INTEGER();
+    lua_getref( L, m_nTableReference );
+    lua_getfield( L, -1, "Secondary" );
+    if ( lua_istable( L, -1 ) )
+    {
+        lua_getfield( L, -1, "DefaultClip" );
+        if ( lua_isnumber( L, -1 ) )
+        {
+            int v = (int)lua_tointeger( L, -1 );
+            lua_pop( L, 3 );
+            return v;
+        }
+        lua_pop( L, 1 );
+    }
+    lua_pop( L, 2 );
 #endif
 
 	return BaseClass::GetDefaultClip2();

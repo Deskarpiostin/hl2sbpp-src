@@ -142,6 +142,12 @@ int CBaseScripted::OnTakeDamage(const CTakeDamageInfo &info)
     BEGIN_LUA_CALL_ENTITY_METHOD("OnTakeDamage");
 		lua_pushdamageinfo( L, nonConstInfo );
     END_LUA_CALL_ENTITY_METHOD(0, 0);
+
+#ifdef CLIENT_DLL
+	return 0; // ... what
+#else
+	return BaseClass::OnTakeDamage(info);
+#endif
 }
 
 void CBaseScripted::InitScriptedEntity( void )

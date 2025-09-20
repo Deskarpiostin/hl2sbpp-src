@@ -480,7 +480,7 @@ CWorld::~CWorld( )
 	if ( g_pGameRules )
 	{
 		g_pGameRules->LevelShutdown();
-		delete g_pGameRules;
+		//delete g_pGameRules;
 	}
 	g_WorldEntity = nullptr;
 }

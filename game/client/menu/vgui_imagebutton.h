@@ -10,7 +10,7 @@
 namespace vgui
 {
 
-class ImageButton : public vgui::ImagePanel
+class ImageButton : public ImagePanel
 {
 	typedef vgui::ImagePanel BaseClass;
 

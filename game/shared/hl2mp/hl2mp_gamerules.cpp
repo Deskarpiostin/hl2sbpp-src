@@ -1069,132 +1069,122 @@ void CHL2MPRules::DeathNotice( CBasePlayer *pVictim, const CTakeDamageInfo &info
 //=========================================================
 // NPC Deathnotice
 //=========================================================
-void CHL2MPRules::NPCDeathNotice( CBaseEntity *pVictim, const CTakeDamageInfo &info )
+void CHL2MPRules::NPCDeathNotice(CBaseEntity *pVictim, const CTakeDamageInfo &info)
 {
-	if ( !npc_deathnotice.GetBool() )
+	if (!npc_deathnotice.GetBool() || !pVictim)
 		return;
-	
+
 #ifndef CLIENT_DLL
-    if ( !pVictim )
-        return;
-		
-    CBaseEntity *pAttacker = info.GetAttacker();
+	CBaseEntity *pInflictor = info.GetInflictor();
+	CBaseEntity *pKiller = info.GetAttacker();
 
-    IGameEvent *event = gameeventmanager->CreateEvent( "npc_killed", true );
-    if ( !event )
-        return;
+	bool attackerIsPlayer = false;
+	CBasePlayer *pScorer = nullptr;
 
-    const char *victimName = pVictim->GetClassname() ? pVictim->GetClassname() : "npc";
-
-    const char *attackerName = "world";
-    bool attackerIsPlayer = false;
-
-    if ( pAttacker )
-    {
-        if ( pAttacker->IsPlayer() )
-        {
-            CBasePlayer *pPlayer = ToBasePlayer( pAttacker );
-            if ( pPlayer )
-            {
-                attackerName = pPlayer->GetPlayerName(); // player readable name
-                attackerIsPlayer = true;
-            }
-        }
-        else
-        {
-            attackerName = pAttacker->GetClassname() ? pAttacker->GetClassname() : "npc";
-        }
-    }
-
-    const char *weaponName = "";
-    CBaseEntity *pInflictor = info.GetInflictor();
-    if ( pInflictor )
-    {
-        weaponName = pInflictor->GetClassname() ? pInflictor->GetClassname() : "";
-    }
-
-	// yanderedev moment
-	const char *killer_weapon_name = "world";
-	if ( pAttacker && pAttacker->IsPlayer() )
+	if (pKiller && pKiller->IsPlayer())
 	{
-		CBasePlayer *pPlayer = ToBasePlayer( pAttacker );
-		if ( pPlayer )
+		pScorer = ToBasePlayer(pKiller);
+		attackerIsPlayer = (pScorer != nullptr);
+	}
+
+	const char *killer_weapon_name = "world";
+	const char *killer_class_name = "class C_World";
+	const char *weapon_class_name = nullptr;
+
+	if (info.GetDamageCustom())
+	{
+		killer_weapon_name = GetDamageCustomString(info);
+		if (pKiller)
+			killer_class_name = pKiller->GetClassname();
+		if (pInflictor)
+			weapon_class_name = pInflictor->GetClassname();
+
+		if (pKiller && weapon_class_name && !Q_strcmp(killer_class_name, weapon_class_name))
 		{
-			CBaseCombatWeapon *pWeapon = pPlayer->GetActiveWeapon();
-			if ( pWeapon )
+			CAI_BaseNPC *pNPC = pKiller->MyNPCPointer();
+			if (pNPC && pNPC->GetActiveWeapon())
 			{
-				killer_weapon_name = pWeapon->GetClassname();
-
-				if ( strncmp( killer_weapon_name, "weapon_", 7 ) == 0 )
-					killer_weapon_name += 7;
-				else if ( strncmp( killer_weapon_name, "npc_", 4 ) == 0 )
-					killer_weapon_name += 4;
-				else if ( strncmp( killer_weapon_name, "func_", 5 ) == 0 )
-					killer_weapon_name += 5;
-				else if ( strstr( killer_weapon_name, "physics" ) )
-					killer_weapon_name = "physics";
-
-				if ( strcmp( killer_weapon_name, "prop_combine_ball" ) == 0 )
-					killer_weapon_name = "combine_ball";
-				else if ( strcmp( killer_weapon_name, "grenade_ar2" ) == 0 )
-					killer_weapon_name = "smg1_grenade";
-				else if ( strcmp( killer_weapon_name, "satchel" ) == 0 || strcmp( killer_weapon_name, "tripmine" ) == 0 )
-					killer_weapon_name = "slam";
+				killer_weapon_name = pNPC->GetActiveWeapon()->GetClassname();
+				weapon_class_name = pNPC->GetActiveWeapon()->GetClassname();
 			}
 		}
 	}
 	else
 	{
-		if ( pAttacker )
+		if (pScorer)
 		{
-			CBaseCombatCharacter *pChar = pAttacker->MyCombatCharacterPointer();
-			if ( pChar )
+			if (pInflictor)
 			{
-				CBaseCombatWeapon *pWeapon = pChar->GetActiveWeapon();
-				if ( pWeapon )
-				{
-					killer_weapon_name = pWeapon->GetClassname();
-					
-					if ( strncmp( killer_weapon_name, "weapon_", 7 ) == 0 )
-						killer_weapon_name += 7;
-					else if ( strncmp( killer_weapon_name, "npc_", 4 ) == 0 )
-						killer_weapon_name += 4;
-					else if ( strncmp( killer_weapon_name, "func_", 5 ) == 0 )
-						killer_weapon_name += 5;
-					else if ( strstr( killer_weapon_name, "physics" ) )
-						killer_weapon_name = "physics";
+				if (pInflictor == pScorer && pScorer->GetActiveWeapon())
+					killer_weapon_name = pScorer->GetActiveWeapon()->GetClassname();
+				else
+					killer_weapon_name = pInflictor->GetClassname();
+			}
+		}
+		else if (pInflictor)
+		{
+			killer_weapon_name = pInflictor->GetClassname();
+			killer_class_name = pKiller ? pKiller->GetClassname() : killer_class_name;
+			weapon_class_name = pInflictor->GetClassname();
 
-					if ( strcmp( killer_weapon_name, "prop_combine_ball" ) == 0 )
-						killer_weapon_name = "combine_ball";
-					else if ( strcmp( killer_weapon_name, "grenade_ar2" ) == 0 )
-						killer_weapon_name = "smg1_grenade";
-					else if ( strcmp( killer_weapon_name, "satchel" ) == 0 || strcmp( killer_weapon_name, "tripmine" ) == 0 )
-						killer_weapon_name = "slam";
-				}
+			if (pKiller && !Q_strcmp(killer_class_name, weapon_class_name))
+			{
+				CAI_BaseNPC *pNPC = pKiller->MyNPCPointer();
+				if (pNPC && pNPC->GetActiveWeapon())
+					killer_weapon_name = pNPC->GetActiveWeapon()->GetClassname();
 			}
 		}
 	}
 
+	if (strncmp(killer_weapon_name, "weapon_", 7) == 0)
+		killer_weapon_name += 7;
+	else if (strncmp(killer_weapon_name, "npc_", 4) == 0)
+		killer_weapon_name += 4;
+	else if (strncmp(killer_weapon_name, "func_", 5) == 0)
+		killer_weapon_name += 5;
+	else if (strstr(killer_weapon_name, "physics"))
+		killer_weapon_name = "physics";
+
+	if (!Q_strcmp(killer_weapon_name, "prop_combine_ball"))
+		killer_weapon_name = "combine_ball";
+	else if (!Q_strcmp(killer_weapon_name, "grenade_ar2"))
+		killer_weapon_name = "smg1_grenade";
+	else if (!Q_strcmp(killer_weapon_name, "satchel") || !Q_strcmp(killer_weapon_name, "tripmine"))
+		killer_weapon_name = "slam";
+
 	bool bNPCVictimFriendly = (pVictim->Classify() == CLASS_PLAYER_ALLY_VITAL || pVictim->Classify() == CLASS_PLAYER_ALLY
-		|| pVictim->Classify() == CLASS_CITIZEN_PASSIVE || pVictim->Classify() == CLASS_CITIZEN_REBEL ||
-		pVictim->Classify() == CLASS_CITIZEN_REBEL || pVictim->Classify() == CLASS_HACKED_ROLLERMINE ||
-		pVictim->Classify() == CLASS_HUMAN_PASSIVE);
-	
-	bool bNPCKillerFriendly = (pAttacker->Classify() == CLASS_PLAYER_ALLY_VITAL || pAttacker->Classify() == CLASS_PLAYER_ALLY
-		|| pAttacker->Classify() == CLASS_CITIZEN_PASSIVE || pAttacker->Classify() == CLASS_CITIZEN_REBEL ||
-		pAttacker->Classify() == CLASS_CITIZEN_REBEL || pAttacker->Classify() == CLASS_HACKED_ROLLERMINE ||
-		pAttacker->Classify() == CLASS_HUMAN_PASSIVE);
+		|| pVictim->Classify() == CLASS_CITIZEN_PASSIVE || pVictim->Classify() == CLASS_CITIZEN_REBEL
+		|| pVictim->Classify() == CLASS_HACKED_ROLLERMINE || pVictim->Classify() == CLASS_HUMAN_PASSIVE);
 
-    event->SetString( "victim_name", victimName );
-    event->SetString( "attacker_name", attackerName );
-    event->SetBool( "attacker_isplayer", attackerIsPlayer );
-	event->SetBool( "npc_killer_friendly", bNPCKillerFriendly );
-	event->SetBool( "npc_victim_friendly", bNPCVictimFriendly );
-    if ( weaponName && weaponName[0] )
-        event->SetString( "weapon", weaponName );
-    event->SetString( "weaponname", killer_weapon_name );
+	//if ( pVictim->IsPlayer() )
+	//	bNPCVictimFriendly = true;
 
-    gameeventmanager->FireEvent( event );
+	bool bNPCKillerFriendly = false;
+	if (pKiller)
+		bNPCKillerFriendly = (pKiller->Classify() == CLASS_PLAYER_ALLY_VITAL || pKiller->Classify() == CLASS_PLAYER_ALLY
+			|| pKiller->Classify() == CLASS_CITIZEN_PASSIVE || pKiller->Classify() == CLASS_CITIZEN_REBEL
+			|| pKiller->Classify() == CLASS_HACKED_ROLLERMINE || pKiller->Classify() == CLASS_HUMAN_PASSIVE);
+
+	const char* pVictimName;
+	if ( pVictim->IsPlayer() )
+		pVictimName = ToBasePlayer( pVictim )->GetPlayerName();
+	else
+		pVictimName = pVictim->GetClassname();
+
+	IGameEvent *event = gameeventmanager->CreateEvent("npc_killed");
+	if (!event) return;
+
+	event->SetString("victim_name", pVictimName);
+	event->SetString("attacker_name", attackerIsPlayer ? pScorer->GetPlayerName() : (pKiller ? pKiller->GetClassname() : "world"));
+	event->SetBool("attacker_isplayer", pScorer != nullptr);
+	event->SetBool("npc_killer_friendly", bNPCKillerFriendly);
+	event->SetBool("npc_victim_friendly", bNPCVictimFriendly);
+	event->SetBool("victim_isplayer", pVictim->IsPlayer());
+	event->SetString("weapon", killer_weapon_name);
+	event->SetString("weaponname", killer_weapon_name);
+	event->SetInt("attacker", pScorer ? pScorer->GetUserID() : 0);
+
+	gameeventmanager->FireEvent(event);
 #endif
 }
 

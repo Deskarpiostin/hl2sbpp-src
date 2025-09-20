@@ -14,6 +14,7 @@
 #include "filesystem.h"
 #include "mp_shareddefs.h"
 #include "utlbuffer.h"
+#include "hl2mp_gamerules.h"
 
 #ifdef CLIENT_DLL
 
@@ -751,7 +752,10 @@ ConVarRef suitcharger( "sk_suitcharger" );
 	//=========================================================
 	void CMultiplayRules::PlayerKilled( CBasePlayer *pVictim, const CTakeDamageInfo &info )
 	{
-		DeathNotice( pVictim, info );
+		if ( info.GetAttacker()->IsNPC() )
+			HL2MPRules()->NPCDeathNotice( pVictim, info );
+		else
+			DeathNotice( pVictim, info );
 
 		// Find the killer & the scorer
 		CBaseEntity *pInflictor = info.GetInflictor();

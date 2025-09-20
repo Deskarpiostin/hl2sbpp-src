@@ -1013,9 +1013,12 @@ void CWeaponPhysicsGun::EffectUpdate( void )
 #ifdef GAME_DLL
 		IPhysicsObject* pFreeze = GetPhysObjFromPhysicsBone( pObject, m_physicsBone );
 
-		if ( strcmp( pszPropName, "prop_vehicle_jeep" ) != 0 ) // make sure it's not a jeep
+		if ( pFreeze != nullptr )
 		{
-			pFreeze->EnableMotion( true ); // unfreeze, if possible
+			if ( strcmp( pszPropName, "prop_vehicle_jeep" ) != 0 ) // make sure it's not a jeep
+			{
+				pFreeze->EnableMotion( true ); // unfreeze, if possible
+			}
 		}
 #endif 
 
@@ -1061,7 +1064,10 @@ void CWeaponPhysicsGun::EffectUpdate( void )
 				if ( strcmp( pszPropName, "prop_vehicle_jeep" ) != 0 ) // make sure it's not a jeep
 				{
 #ifdef GAME_DLL
-					pFreeze->EnableMotion( false ); // freeze the object
+					if ( pFreeze != nullptr )
+					{
+						pFreeze->EnableMotion( false ); // freeze the object
+					}
 
 					int nMagnitude   = 2;   // intensity
 					int nTrailLength = 1;   // how long trails last
@@ -1093,7 +1099,10 @@ void CWeaponPhysicsGun::EffectUpdate( void )
 				if ( strcmp( pszPropName, "prop_vehicle_jeep" ) != 0 ) // make sure it's not a jeep
 				{
 #ifdef GAME_DLL
-					pFreeze->EnableMotion( false ); // freeze the object
+					if ( pFreeze != nullptr )
+					{
+						pFreeze->EnableMotion( false ); // freeze the object
+					}
 
 					int nMagnitude   = 2;   // intensity
 					int nTrailLength = 1;   // how long trails last
@@ -1272,7 +1281,7 @@ void CWeaponPhysicsGun::UpdateObject( void )
         QAngle angles = m_gravCallback.TransformAnglesFromPlayerSpace( m_gravCallback.m_targetRotation, pPlayer );
 
         pObject->SetAbsOrigin( newPosition );
-        pObject->SetAbsAngles( angles );
+        pObject->SetAbsAngles( vec3_angle );
 
         pObject->SetAbsVelocity( vec3_origin );
 
@@ -1501,7 +1510,21 @@ int CWeaponPhysicsGun::DrawModel( int flags )
 		}
 		else
 		{
-			pObject->EntityToWorldSpace( m_worldPosition, &points[2] );
+			trace_t tr;
+			TraceLine( &tr );
+			
+			C_BaseAnimating *pModel = dynamic_cast<C_BaseAnimating*>(pObject);
+			if (pModel)
+			{
+				if (!pModel->m_pRagdoll)
+					pObject->EntityToWorldSpace(m_worldPosition, &points[2]);
+				else
+					m_pGrabbedPhys->LocalToWorld(&points[2], m_worldPosition);
+			}
+			else
+			{
+				points[2] = tr.endpos;
+			}
 		}
 
 		Vector forward, right, up;
@@ -1634,11 +1657,21 @@ void CWeaponPhysicsGun::ViewModelDrawn( C_BaseViewModel *pBaseViewModel )
 	}
 	else
 	{
-   		C_BaseAnimating *pModel = dynamic_cast< C_BaseAnimating * >( pObject );
-		if ( !pModel->m_pRagdoll )
-			pObject->EntityToWorldSpace( m_worldPosition, &points[ 2 ] );
+		trace_t tr;
+		TraceLine( &tr );
+		
+		C_BaseAnimating *pModel = dynamic_cast<C_BaseAnimating*>(pObject);
+		if (pModel)
+		{
+			if (!pModel->m_pRagdoll)
+				pObject->EntityToWorldSpace(m_worldPosition, &points[2]);
+			else
+				m_pGrabbedPhys->LocalToWorld(&points[2], m_worldPosition);
+		}
 		else
-			m_pGrabbedPhys->LocalToWorld( &points[2], m_worldPosition );
+		{
+			points[2] = tr.endpos;
+		}
 	}
 
 	Vector forward, right, up;

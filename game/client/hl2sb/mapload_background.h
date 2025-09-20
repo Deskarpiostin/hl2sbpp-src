@@ -17,6 +17,26 @@
 #include <vgui_controls/Label.h>
 #include "ienginevgui.h"
 #include "filesystem.h"
+#include "menu/pngbutton.h"
+
+class PngImagePanel : public PngButton
+{
+public:
+    PngImagePanel(vgui::Panel *parent, const char *panelName, const char* normalImage)
+        : PngButton(parent, panelName, normalImage)
+    {
+        m_bIgnoreInput = true;
+    }
+
+protected:
+    virtual void OnCursorEntered() OVERRIDE {}
+    virtual void OnCursorExited() OVERRIDE {}
+    virtual void OnMousePressed(vgui::MouseCode code) OVERRIDE {}
+    virtual void OnMouseReleased(vgui::MouseCode code) OVERRIDE {}
+
+private:
+    bool m_bIgnoreInput;
+};
 
 //-----------------------------------------------------------------------------
 // Purpose: 
@@ -44,15 +64,23 @@ public:
 		m_pMapName->SetText( mapName);
 
 		char imageName[ MAX_PATH ];
-		Q_snprintf( imageName, sizeof( imageName ), "thumb/%s", mapName );
+		Q_snprintf( imageName, sizeof( imageName ), "maps/thumb/%s.png", mapName );
 
-		char imageNameB[ MAX_PATH ];
-		Q_snprintf( imageNameB, sizeof( imageNameB ), "materials/vgui/thumb/%s.vmt", mapName );
-
-		if ( g_pFullFileSystem->FileExists( imageNameB, "MOD" ) )
-			m_pMapIcon->SetImage( imageName );
+		if ( g_pFullFileSystem->FileExists( imageName, "MOD" ) )
+		{
+			m_pMapIcon->DeletePanel();
+			m_pMapIcon = new PngImagePanel( this, "PNGPanel", imageName );
+		}
 		else
-			m_pMapIcon->SetImage( "img/noicon" );
+		{
+			m_pMapIcon->DeletePanel();
+			m_pMapIcon = new PngImagePanel( this, "PNGPanel", "maps/thumb/placeholder.png" );
+		}
+
+		m_pMapIcon->SetBounds(
+			10, 10,
+			110, 110
+		);
 	}
 
 	virtual void OnThink();
@@ -62,7 +90,7 @@ protected:
 
 private:
 	vgui::ImagePanel *m_pBackground;
-	vgui::ImagePanel *m_pMapIcon;
+	PngImagePanel 	 *m_pMapIcon;
 	vgui::ImagePanel *m_pGradient;
 	vgui::ImagePanel *m_pGameLogo;
     vgui::Label		 *m_pMapName;

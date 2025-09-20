@@ -139,12 +139,7 @@ void CAdvancedOptionsMultiplayer::PopulatePlayerModels()
                 else if (Q_stristr(file, ".mdl"))
                 {
                     m_PMPaths.push_back(fullPath);
-
-                    std::string relativePath = fullPath;
-					if (relativePath.find("models/player/") == 0)
-						relativePath = relativePath.substr(strlen("models/player/"));
-
-					m_pPMSelector->AddItem(relativePath.c_str(), nullptr);
+					m_pPMSelector->AddItem(fullPath.c_str(), nullptr);
                 }
             }
             file = g_pFullFileSystem->FindNext(fh);
@@ -154,34 +149,85 @@ void CAdvancedOptionsMultiplayer::PopulatePlayerModels()
     }
 
     ConVar* pm = cvar->FindVar("cl_playermodel");
-    if (pm && !m_PMPaths.empty())
-    {
-        const char* cur = pm->GetString();
-        char fixedCur[MAX_PATH];
-        Q_strncpy(fixedCur, cur, sizeof(fixedCur));
-        V_FixSlashes(fixedCur);
-        Q_strlower(fixedCur);
+	if (pm && !m_PMPaths.empty())
+	{
+		char curBuf[MAX_PATH];
+		Q_strncpy(curBuf, pm->GetString(), sizeof(curBuf));
+		V_FixSlashes(curBuf);
+		Q_strlower(curBuf);
 
-        for (int i = 0; i < (int)m_PMPaths.size(); ++i)
-        {
-            char fixedPath[MAX_PATH];
-            Q_strncpy(fixedPath, m_PMPaths[i].c_str(), sizeof(fixedPath));
-            V_FixSlashes(fixedPath);
-            Q_strlower(fixedPath);
+		auto normalize = [](const char* in, char* out, int outSize) {
+			Q_strncpy(out, in, outSize);
+			V_FixSlashes(out);
+			Q_strlower(out);
+		};
 
-            if (!Q_stricmp(fixedPath, fixedCur))
-            {
-                m_pPMSelector->ActivateItem(i);
-                m_iLastPMIndex = i;
-                if (m_pPMModel)
-                {
-                    m_pPMModel->SetMDL(m_PMPaths[i].c_str());
-                    m_pPMModel->LookAtMDL();
-                }
-                break;
-            }
-        }
-    }
+		auto ends_with = [](const char* str, const char* suffix) -> bool {
+			if (!str || !suffix) return false;
+			int slen = Q_strlen(str);
+			int suflen = Q_strlen(suffix);
+			if (suflen > slen) return false;
+			return (Q_stricmp(str + slen - suflen, suffix) == 0);
+		};
+
+		int foundIndex = -1;
+		for (int i = 0; i < (int)m_PMPaths.size(); ++i)
+		{
+			char normalizedPath[MAX_PATH];
+			normalize(m_PMPaths[i].c_str(), normalizedPath, sizeof(normalizedPath));
+			if (!Q_stricmp(normalizedPath, curBuf))
+			{
+				foundIndex = i;
+				break;
+			}
+		}
+
+		if (foundIndex == -1)
+		{
+			for (int i = 0; i < (int)m_PMPaths.size(); ++i)
+			{
+				char normalizedPath[MAX_PATH];
+				normalize(m_PMPaths[i].c_str(), normalizedPath, sizeof(normalizedPath));
+
+				if (ends_with(normalizedPath, curBuf) || ends_with(curBuf, normalizedPath))
+				{
+					foundIndex = i;
+					break;
+				}
+
+				const char* lastSlash = Q_strrchr(normalizedPath, '/');
+				const char* baseName = lastSlash ? lastSlash + 1 : normalizedPath;
+				if (!Q_stricmp(baseName, curBuf) || ends_with(curBuf, baseName))
+				{
+					foundIndex = i;
+					break;
+				}
+			}
+		}
+
+		if (foundIndex != -1)
+		{
+			m_pPMSelector->ActivateItem(foundIndex);
+			m_iLastPMIndex = foundIndex;
+
+			if (m_pPMModel)
+			{
+				m_pPMModel->SetMDL(m_PMPaths[foundIndex].c_str());
+				m_pPMModel->LookAtMDL();
+			}
+		}
+		else
+		{
+			int curSel = m_pPMSelector->GetActiveItem();
+			m_iLastPMIndex = (curSel >= 0) ? curSel : 0;
+
+			if (m_pPMModel)
+			{
+				m_pPMModel->SetMDL(pm->GetString());
+				m_pPMModel->LookAtMDL();
+			}
+		}
+	}
 }
 
 void CAdvancedOptionsMultiplayer::OnTextChanged( KeyValues *pKeyValues )

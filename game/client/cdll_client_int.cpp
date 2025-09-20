@@ -911,6 +911,8 @@ ConVar hl1_mounted("hl1_mounted", "0", FCVAR_DEVELOPMENTONLY);
 //-----------------------------------------------------------------------------
 ISourceVirtualReality *g_pSourceVR = NULL;
 
+void SwapMapCommand();
+
 // Purpose: Called when the DLL is first loaded.
 // Input  : engineFactory - 
 // Output : int
@@ -1351,6 +1353,8 @@ void CHLClient::PostInit()
         );
 	}
 	// protect end
+
+	SwapMapCommand();
 
 /*
 #ifdef HL2SB

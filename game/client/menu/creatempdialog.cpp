@@ -10,11 +10,233 @@
 #include <vgui/IVGui.h>
 #include "hl2sb/mapload_background.h"
 #include "filesystem.h"
+#include "tier1/utlvector.h"
 
 using namespace vgui;
 
 ConVar selmap("selmap", "", FCVAR_DEVELOPMENTONLY);
 ConVar mpdialog("mpdialog", "0");
+
+CUtlVector<const char*> hardcodedMaps;
+const char* hl2_maps[] = {
+    // Point Insertion
+    "d1_trainstation_01", "d1_trainstation_02", "d1_trainstation_03", "d1_trainstation_04",
+    "d1_trainstation_05", "d1_trainstation_06",
+
+    // Route Kanal
+    "d1_canals_01", "d1_canals_01a", "d1_canals_02", "d1_canals_03", "d1_canals_05",
+    "d1_canals_06", "d1_canals_07", "d1_canals_08", "d1_canals_09", "d1_canals_10",
+    "d1_canals_11", "d1_canals_12", "d1_canals_13",
+
+    // Black Mesa East
+    "d1_eli_01", "d1_eli_02",
+
+    // We Don't Go to Ravenholm...
+    "d1_town_01", "d1_town_01a", "d1_town_02", "d1_town_03", "d1_town_02a", "d1_town_04", "d1_town_05",
+
+    // Highway 17
+    "d2_coast_01", "d2_coast_03", "d2_coast_04", "d2_coast_05", "d2_coast_07", "d2_coast_08",
+
+    // Sandtraps
+    "d2_coast_09", "d2_coast_10", "d2_coast_11", "d2_coast_12", "d2_prison_01",
+
+    // Nova Prospekt
+    "d2_prison_02", "d2_prison_03", "d2_prison_04", "d2_prison_05",
+
+    // Entanglement
+    "d2_prison_06", "d2_prison_07", "d2_prison_08", "d3_c17_01", "d3_c17_02", "d3_c17_03", "d3_c17_04",
+    "d3_c17_05", "d3_c17_06", "d3_c17_07", "d3_c17_08", "d3_c17_09", "d3_c17_10a", "d3_c17_10b",
+    "d3_c17_11", "d3_c17_12", "d3_c17_12b", "d3_c17_13",
+
+    // Our Benefactors
+    "d3_citadel_01", "d3_citadel_02", "d3_citadel_03", "d3_citadel_04", "d3_citadel_05",
+
+    // Dark Energy
+    "d3_breen_01"
+};
+
+const char* css_maps[] = {
+    "de_dust", "de_dust2", "de_inferno", "de_nuke", "de_train", "de_aztec",
+    "de_mirage", "de_prodigy", "de_chateau",
+    "de_overpass", "cs_office", "cs_assault", "cs_compound",
+    "cs_havana", "cs_italy", "cs_militia", "cs_parkhouse"
+};
+
+const char* portal_maps[] = {
+    "testchmb_a_00", "testchmb_a_01", "testchmb_a_02", "testchmb_a_03",
+    "testchmb_a_04", "testchmb_a_05", "testchmb_a_06", "testchmb_a_07",
+    "testchmb_a_08", "testchmb_a_09", "testchmb_a_10", "testchmb_a_11",
+    "testchmb_a_12", "testchmb_a_13", "testchmb_a_14", "testchmb_a_15",
+    "testchmb_a_16", "testchmb_a_17", "testchmb_a_18", "testchmb_a_19",
+	"escape_00", "escape_01", "escape_02"
+};
+
+const char* hl1_maps[] = {
+    "c0a0",
+    "c0a0a",
+    "c0a0b",
+    "c0a0c",
+    "c0a0d",
+    "c0a0e",
+    
+    "c1a0",
+    "c1a0d",
+    "c1a0a",
+    "c1a0b",
+    "c1a0e",
+    
+    "c1a1a",
+    "c1a1f",
+    "c1a1b",
+    "c1a1c",
+    "c1a1d",
+    
+    "c1a2",
+    "c1a2a",
+    "c1a2b",
+    "c1a2c",
+    "c1a2d",
+    
+    "c1a3",
+    "c1a3a",
+    "c1a3b",
+    "c1a3c",
+    "c1a3d",
+    
+    "c1a4",
+    "c1a4k",
+    "c1a4b",
+    "c1a4f",
+    "c1a4d",
+    "c1a4e",
+    "c1a4i",
+    "c1a4g",
+    "c1a4j",
+    
+    "c2a1",
+    "c2a1a",
+    "c2a1b",
+    
+    "c2a2",
+    "c2a2a",
+    "c2a2b1",
+    "c2a2b2",
+    "c2a2c",
+    "c2a2d",
+    "c2a2e",
+    "c2a2f",
+    "c2a2g",
+    "c2a2h",
+    
+    "c2a3",
+    "c2a3a",
+    "c2a3b",
+    "c2a3c",
+    "c2a3d",
+    "c2a3e",
+    
+    "c2a4",
+    "c2a4a",
+    "c2a4b",
+    "c2a4c",
+    
+    "c2a4d",
+    "c2a4e",
+    "c2a4f",
+    "c2a4g",
+    
+    "c2a5",
+    "c2a5w",
+    "c2a5x",
+    "c2a5a",
+    "c2a5b",
+    "c2a5c",
+    "c2a5d",
+    "c2a5e",
+    "c2a5f",
+    "c2a5g",
+    
+    "c3a1",
+    "c3a1a",
+    "c3a1b",
+    
+    "c3a2e",
+    "c3a2",
+    "c3a2a",
+    "c3a2b",
+    "c3a2c",
+    "c3a2d",
+    "c3a2f",
+    
+    "c4a1",
+    
+    "c4a2",
+    "c4a2a",
+    "c4a2b",
+    
+    "c4a1a",
+    "c4a1b",
+    "c4a1c",
+    "c4a1d",
+    "c4a1e",
+    "c4a1f",
+    
+    "c4a3",
+    
+    "c5a1",
+    
+    "t0a0",
+    "t0a0a",
+    "t0a0b",
+    "t0a0b1",
+    "t0a0b2",
+    "t0a0c",
+    "t0a0d"
+};
+
+extern ConVar hl2_mounted;
+extern ConVar portal_mounted;
+extern ConVar css_mounted;
+extern ConVar hl1_mounted;
+
+GameMapsPanel::GameMapsPanel(vgui::Panel *parent, const char *pName) : MapListPanel(parent, pName)
+{
+    SetBounds(0, 0, 800, 640);
+
+	if (hl2_mounted.GetBool())
+		for (int i = 0; i < ARRAYSIZE(hl2_maps); i++)
+			hardcodedMaps.AddToTail(hl2_maps[i]);
+
+	if (css_mounted.GetBool())
+		for (int i = 0; i < ARRAYSIZE(css_maps); i++)
+			hardcodedMaps.AddToTail(css_maps[i]);
+
+	if (portal_mounted.GetBool())
+		for (int i = 0; i < ARRAYSIZE(portal_maps); i++)
+			hardcodedMaps.AddToTail(portal_maps[i]);
+
+	if (hl1_mounted.GetBool())
+		for (int i = 0; i < ARRAYSIZE(hl1_maps); i++)
+			hardcodedMaps.AddToTail(hl1_maps[i]);
+
+    for (int i = 0; i < hardcodedMaps.Count(); i++)
+    {
+		char pngPath[260];
+		Q_snprintf(pngPath, sizeof(pngPath), "maps/thumb/%s.png", hardcodedMaps[i]);
+
+        char command[128];
+        Q_snprintf(command, sizeof(command), "select %s", hardcodedMaps[i]);
+
+        if (filesystem->FileExists(pngPath))
+        {
+			AddButton(this, pngPath, command, hardcodedMaps[i]);
+		}
+        else
+            AddButton(this, "maps/thumb/placeholder.png", command, hardcodedMaps[i]);
+    }
+
+    PerformLayout();
+}
 
 ServerSettingsPanel::ServerSettingsPanel(vgui::Panel *parent, const char *pName) : BaseClass(parent, pName)
 {
@@ -165,48 +387,12 @@ void MapListPanel::PerformLayout()
 
 void MapListPanel::AddButton( MapListPanel *panel, const char *image, const char *command, const char *mapName )
 {
-	ImageButton *img = new ImageButton( panel, image, image, NULL, NULL, command );
-	layoutItems.AddToTail( img );
-	panel->AddItem( NULL, img );
-	img->SetFgColor( Color( 180, 180, 180, 255 ) ); // unselected
-	BaseTooltip *pTooltip = img->GetTooltip();
-	pTooltip->SetText( mapName );
-}
-
-void MapListPanel::CreateVMTIfMissing(const char* vtfFullPath)
-{
-    char vmtPath[260];
-    Q_strncpy(vmtPath, vtfFullPath, sizeof(vmtPath));
-    Q_StripExtension(vmtPath, vmtPath, sizeof(vmtPath));
-    Q_strncat(vmtPath, ".vmt", sizeof(vmtPath));
-
-    if (filesystem->FileExists(vmtPath))
-        return;
-
-    const char* relativePath = vtfFullPath;
-    if (Q_strnicmp(vtfFullPath, "materials/", 10) == 0)
-        relativePath += 10;
-    Q_StripExtension(relativePath, const_cast<char*>(relativePath), 260);
-
-    char vmtContent[1024];
-    Q_snprintf(vmtContent, sizeof(vmtContent),
-        "\"UnlitGeneric\"\n"
-        "{\n"
-        "\t\"$basetexture\" \"%s\"\n"
-        "\t\"$translucent\" \"1\"\n"
-        "\t\"$ignorez\" \"1\"\n"
-        "\t\"$vertexcolor\" \"1\"\n"
-        "\t\"$vertexalpha\" \"1\"\n"
-        "}\n",
-        relativePath
-    );
-	
-    FileHandle_t f = filesystem->Open(vmtPath, "w");
-    if (f)
-    {
-        filesystem->Write(vmtContent, Q_strlen(vmtContent), f);
-        filesystem->Close(f);
-    }
+    PngButton *btn = new PngButton(panel, mapName, image, image, image, command);
+    layoutItems.AddToTail(btn);
+    panel->AddItem(NULL, btn);
+    btn->SetFgColor(Color(180, 180, 180, 255));
+    BaseTooltip *pTooltip = btn->GetTooltip();
+    pTooltip->SetText(mapName);
 }
 
 void MapList::OnCancel()
@@ -221,45 +407,34 @@ void MapList::OnClose()
 
 void MapListPanel::LoadMaps(MapListPanel* panel)
 {
-    if (m_bMapsLoaded) return;
+    if (m_bMapsLoaded) 
+        return;
     m_bMapsLoaded = true;
 
-	layoutItems.RemoveAll();
-	
-	int mapCount = 0;
+    layoutItems.RemoveAll();
+
     FileFindHandle_t findhandle;
-    for (const char* pMap = filesystem->FindFirstEx("maps/*.bsp", "MOD", &findhandle); pMap && *pMap; pMap = filesystem->FindNext(findhandle))
+    for (const char* pMap = filesystem->FindFirstEx("maps/*.bsp", "MOD", &findhandle); 
+         pMap && *pMap; 
+         pMap = filesystem->FindNext(findhandle))
     {
-		mapCount++;
-        char file[ MAX_PATH ];
-        Q_FileBase(pMap, file, sizeof(file));
+        char mapName[MAX_PATH];
+        Q_FileBase(pMap, mapName, sizeof(mapName));
 
-        char vtfFull[ MAX_PATH ];
-        Q_snprintf(vtfFull, sizeof(vtfFull), "materials/vgui/thumb/%s.vtf", file);
-        char vtfMaterial[ MAX_PATH ];
-        Q_snprintf(vtfMaterial, sizeof(vtfMaterial), "vgui/thumb/%s", file);
-		char vtf_without_ex[ MAX_PATH ];
-		Q_snprintf( vtf_without_ex, sizeof( vtf_without_ex ), "thumb/%s", file );
+        char pngPath[MAX_PATH];
+        Q_snprintf(pngPath, sizeof(pngPath), "maps/thumb/%s.png", mapName);
 
-        if (filesystem->FileExists(vtfFull))
+        char imageCommand[MAX_PATH];
+        Q_snprintf(imageCommand, sizeof(imageCommand), "select %s", mapName);
+
+        if (!filesystem->FileExists(pngPath))
         {
-            CreateVMTIfMissing(vtfFull);
-
-            char imageCommand[ MAX_PATH ];
-            Q_snprintf(imageCommand, sizeof(imageCommand), "select %s", pMap);
-
-            AddButton(panel, vtf_without_ex, imageCommand, file);
+            Q_strncpy(pngPath, "maps/thumb/placeholder.png", sizeof(pngPath));
         }
-		else
-		{
-			Q_snprintf(vtf_without_ex, sizeof(vtf_without_ex), "thumb/placeholder");
 
-			char imageCommand[ MAX_PATH ];
-            Q_snprintf(imageCommand, sizeof(imageCommand), "select %s", pMap);
-
-            AddButton(panel, vtf_without_ex, imageCommand, file);
-		}
+        AddButton(panel, pngPath, imageCommand, mapName);
     }
+
     filesystem->FindClose(findhandle);
 }
 
@@ -280,7 +455,7 @@ void MapListPanel::OnCommand( const char *command )
 
         for ( int i = 0; i < layoutItems.Count(); i++ )
         {
-            ImageButton* btn = dynamic_cast< ImageButton* >( layoutItems[ i ] );
+            PngButton* btn = dynamic_cast< PngButton* >( layoutItems[ i ] );
             if ( !btn ) continue;
 
             if ( Q_strcmp( btn->GetCommand(), command ) == 0 )
@@ -305,8 +480,10 @@ MapList::MapList( vgui::VPANEL *parent, const char *pName ) : BaseClass( NULL, "
 
 	MapListPanel *maplist = new MapListPanel( this, NULL );
 	ServerSettingsPanel *info = new ServerSettingsPanel( this, NULL );
+	GameMapsPanel *gamemaps = new GameMapsPanel( this, NULL );
 	maplist->LoadMaps( maplist );
 	AddPage( maplist, "Maps" );
+	AddPage ( gamemaps, "Game Maps" );
 	AddPage( info, "Server Settings");
 
 	vgui::ivgui()->AddTickSignal(GetVPanel(), 100);
@@ -328,7 +505,7 @@ bool MapList::OnOK( bool applyOnly )
 		const char* hostname = "My Server";
 		const char* password = "";
 
-		ServerSettingsPanel* infoPanel = dynamic_cast<ServerSettingsPanel*>(GetPropertySheet()->GetPage(1));
+		ServerSettingsPanel* infoPanel = dynamic_cast<ServerSettingsPanel*>(GetPropertySheet()->GetPage(2));
 
 		char maxPlayersBuffer[2048];
 		infoPanel->m_pMaxPlayers->GetText(maxPlayersBuffer, sizeof(maxPlayersBuffer));
@@ -343,19 +520,12 @@ bool MapList::OnOK( bool applyOnly )
 		char gamemodeBuffer[2048] = "";
 		if (infoPanel->m_pGamemodeCombo)
 			infoPanel->m_pGamemodeCombo->GetText(gamemodeBuffer, sizeof(gamemodeBuffer));
-		
-		// EDIT: PLEASE MOVE THIS I DON'T WANT THIS TO BE HERE
-		// GOD SAVE ME
-		extern CMapLoadBG *pPanelBg;
-		pPanelBg->setServerName( hostnameBuffer );
-		pPanelBg->setGameModeName( gamemodeBuffer );
-		pPanelBg->setMapName( selmap.GetString() );
 
         char szMapCommand[2048];
         if (gamemodeBuffer[0] != '\0' && Q_strcmp(gamemodeBuffer, "Default") != 0)
         {
             Q_snprintf(szMapCommand, sizeof(szMapCommand),
-                "disconnect\nwait\nwait\nsv_lan 1\nmaxplayers %i\nsv_password \"%s\"\nhostname \"%s\"\nprogress_enable\ngamemode \"%s\"\nmap %s\n",
+                "disconnect\nwait\nwait\nsv_lan 1\nmaxplayers %i\nsv_password \"%s\"\nhostname \"%s\"\ngamemode \"%s\"\nmap %s\n",
                 maxPlayers,
                 password,
                 hostnameBuffer,

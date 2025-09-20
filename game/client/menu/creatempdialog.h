@@ -11,6 +11,7 @@
 #include <vgui_controls/ComboBox.h>
 #include <vgui_controls/Label.h>
 #include "vgui_imagebutton.h"
+#include "pngbutton.h"
 
 using namespace vgui;
 
@@ -24,13 +25,18 @@ public:
 	virtual void AddButton( MapListPanel *panel, const char *image, const char *command, const char *mapName );
 	virtual void LoadMaps( MapListPanel *panel );
 	virtual void OnCommand( const char *command );
-	void CreateVMTIfMissing(const char* vtfPath);
 
 private:
 	CUtlVector< vgui::Panel * >		layoutItems;
 
-	ImageButton *m_pSelectedButton;
+	PngButton *m_pSelectedButton;
 	bool m_bMapsLoaded;
+};
+
+class GameMapsPanel : public MapListPanel
+{
+public:
+    GameMapsPanel(vgui::Panel *parent, const char *pName);
 };
 
 class ServerSettingsPanel : public vgui::PanelListPanel

@@ -44,6 +44,7 @@ struct DeathNoticeItem
     bool        bVictimIsNPC;
 	bool		bNPCInflictorIsFriendly;
 	bool		bNPCVictimIsFriendly;
+	bool		bVictimIsPlayer;
 };
 
 //-----------------------------------------------------------------------------
@@ -156,8 +157,11 @@ void CHudDeathNotice::Paint()
 	for ( int i = 0; i < iCount; i++ )
 	{
 		CHudTexture *icon = m_DeathNotices[i].iconDeath;
+		if ( m_DeathNotices[i].iSuicide )
+			icon = m_iconD_skull;
+
 		if ( !icon )
-			continue;
+			icon = m_iconD_skull;
 
 		wchar_t victim[ 256 ];
 		wchar_t killer[ 256 ];
@@ -296,6 +300,7 @@ void CHudDeathNotice::FireGameEvent( IGameEvent * event )
 		bool attacker_is_player   = event->GetBool( "attacker_isplayer", false );
 		bool npc_killer_friendly = event->GetBool( "npc_killer_friendly", false );
 		bool npc_victim_friendly = event->GetBool( "npc_victim_friendly", false );
+		bool victim_isplayer	 = event->GetBool( "victim_isplayer", false );
 
 		if ( !attacker_name ) attacker_name = "";
 		if ( !victim_name )   victim_name = "";
@@ -320,10 +325,11 @@ void CHudDeathNotice::FireGameEvent( IGameEvent * event )
 		deathMsg.Victim.iEntIndex = victim;
 		Q_strncpy( deathMsg.Killer.szName, killer_name, MAX_PLAYER_NAME_LENGTH );
 		Q_strncpy( deathMsg.Victim.szName, victim_name, MAX_PLAYER_NAME_LENGTH );
-		deathMsg.bVictimIsNPC = true;
+		deathMsg.bVictimIsNPC = !victim_isplayer;
     	deathMsg.bKillerIsNPC = !attacker_is_player;
 		deathMsg.bNPCInflictorIsFriendly = npc_killer_friendly;
 		deathMsg.bNPCVictimIsFriendly = npc_victim_friendly;
+		deathMsg.bVictimIsPlayer	  = victim_isplayer;
 
 		deathMsg.flDisplayTime = gpGlobals->curtime + hud_deathnotice_time.GetFloat();
 
@@ -348,18 +354,30 @@ void CHudDeathNotice::FireGameEvent( IGameEvent * event )
 		}
 		m_DeathNotices.AddToTail( deathMsg );
 
+		char sDeathMsg[512];
+
 		if ( deathMsg.iSuicide )
 		{
-			Msg( "%s suicided.\n", deathMsg.Victim.szName );
-		}
-		else if ( attacker_name[0] == '\0' || FStrEq( attacker_name, "world" ) )
-		{
-			Msg( "%s died.\n", deathMsg.Victim.szName );
+			if ( !strcmp( fullkilledwith, "d_worldspawn" ) )
+			{
+				Q_snprintf( sDeathMsg, sizeof( sDeathMsg ), "%s died.\n", deathMsg.Victim.szName );
+			}
+			else	//d_world
+			{
+				Q_snprintf( sDeathMsg, sizeof( sDeathMsg ), "%s suicided.\n", deathMsg.Victim.szName );
+			}
 		}
 		else
 		{
-			Msg( "%s killed %s.\n", deathMsg.Killer.szName, deathMsg.Victim.szName );
+			Q_snprintf( sDeathMsg, sizeof( sDeathMsg ), "%s killed %s", deathMsg.Killer.szName, deathMsg.Victim.szName );
+
+			if ( fullkilledwith && *fullkilledwith && (*fullkilledwith > 13 ) )
+			{
+				Q_strncat( sDeathMsg, VarArgs( " with %s.\n", fullkilledwith+6 ), sizeof( sDeathMsg ), COPY_ALL_CHARACTERS );
+			}
 		}
+
+		Msg( "%s", sDeathMsg );
 
 		return;
 	}

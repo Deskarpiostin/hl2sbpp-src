@@ -586,17 +586,17 @@ void CHL2MP_Player::SetPlayerModel( void )
 
 void CHL2MP_Player::SetupPlayerSoundsByModel( const char *pModelName )
 {
-	if ( Q_stristr( pModelName, "models/player/human") )
-	{
-		m_iPlayerSoundType = (int)PLAYER_SOUNDS_CITIZEN;
-	}
-	else if ( Q_stristr(pModelName, "police" ) )
+	if ( Q_stristr(pModelName, "police" ) )
 	{
 		m_iPlayerSoundType = (int)PLAYER_SOUNDS_METROPOLICE;
 	}
 	else if ( Q_stristr(pModelName, "combine" ) )
 	{
 		m_iPlayerSoundType = (int)PLAYER_SOUNDS_COMBINESOLDIER;
+	}
+	else
+	{
+		m_iPlayerSoundType = (int)PLAYER_SOUNDS_CITIZEN;
 	}
 }
 
@@ -644,7 +644,11 @@ void CHL2MP_Player::PostThink( void )
 	else if (strcmp(c_handmodel, "dod") == 0)
 		desiredModel = "models/weapons/c_arms_dod.mdl";
 	else // default
-		desiredModel = (m_iModelType == TEAM_COMBINE) ? "models/weapons/c_arms_combine.mdl" : "models/weapons/c_arms_citizen.mdl";
+		desiredModel = 
+			(m_iPlayerSoundType == PLAYER_SOUNDS_COMBINESOLDIER || 
+			m_iPlayerSoundType == PLAYER_SOUNDS_METROPOLICE)
+			? "models/weapons/c_arms_combine.mdl"
+			: "models/weapons/c_arms_citizen.mdl";
 
 	if (m_CurrentHandModel != desiredModel)
 	{
