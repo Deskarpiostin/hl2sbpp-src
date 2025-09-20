@@ -87,92 +87,95 @@ bool PngButton::LoadPngImage(const char* filename, PngImageData& imageData) {
         Warning("PngButton: Failed to open file %s\n", filename);
         return false;
     }
-    
+
     int fileSize = filesystem->Size(file);
     CUtlBuffer buffer;
     buffer.EnsureCapacity(fileSize);
-    
+
     int bytesRead = filesystem->Read(buffer.Base(), fileSize, file);
     filesystem->Close(file);
-    
+
     if (bytesRead != fileSize) {
         Warning("PngButton: Failed to read file %s completely\n", filename);
         return false;
     }
-    
+
     buffer.SeekPut(CUtlBuffer::SEEK_HEAD, bytesRead);
-    
+
+    // check PNG signature
     if (fileSize < 8 || png_sig_cmp((png_const_bytep)buffer.Base(), 0, 8)) {
         Warning("PngButton: File %s is not a valid PNG\n", filename);
         return false;
     }
-    
+
     png_structp png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-    if (!png_ptr) {
-        return false;
-    }
-    
+    if (!png_ptr) return false;
+
     png_infop info_ptr = png_create_info_struct(png_ptr);
     if (!info_ptr) {
         png_destroy_read_struct(&png_ptr, NULL, NULL);
         return false;
     }
-    
+
     if (setjmp(png_jmpbuf(png_ptr))) {
         png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
         return false;
     }
-    
+
     PngBufferData bufferData;
     bufferData.buffer = (const unsigned char*)buffer.Base();
     bufferData.size = fileSize;
     bufferData.offset = 8; // skip signature
-    
+
     png_set_read_fn(png_ptr, &bufferData, PngReadFromBuffer);
     png_set_sig_bytes(png_ptr, 8);
     png_read_info(png_ptr, info_ptr);
-    
+
     int width = png_get_image_width(png_ptr, info_ptr);
     int height = png_get_image_height(png_ptr, info_ptr);
     png_byte color_type = png_get_color_type(png_ptr, info_ptr);
     png_byte bit_depth = png_get_bit_depth(png_ptr, info_ptr);
-    
+
+    // normalize formats
     if (bit_depth == 16) png_set_strip_16(png_ptr);
     if (color_type == PNG_COLOR_TYPE_PALETTE) png_set_palette_to_rgb(png_ptr);
     if (color_type == PNG_COLOR_TYPE_GRAY && bit_depth < 8) png_set_expand_gray_1_2_4_to_8(png_ptr);
     if (png_get_valid(png_ptr, info_ptr, PNG_INFO_tRNS)) png_set_tRNS_to_alpha(png_ptr);
     if (color_type == PNG_COLOR_TYPE_RGB || color_type == PNG_COLOR_TYPE_GRAY || color_type == PNG_COLOR_TYPE_PALETTE)
-        png_set_filler(png_ptr, 0xFF, PNG_FILLER_AFTER);
+        png_set_filler(png_ptr, 0xFF, PNG_FILLER_AFTER); // force alpha
     if (color_type == PNG_COLOR_TYPE_GRAY || color_type == PNG_COLOR_TYPE_GRAY_ALPHA)
         png_set_gray_to_rgb(png_ptr);
-    
+
     png_read_update_info(png_ptr, info_ptr);
-    
-    size_t row_bytes = png_get_rowbytes(png_ptr, info_ptr);
-    unsigned char* imageBuffer = new unsigned char[height * row_bytes];
-    
+
+    // Force stride to width*4
+    const size_t stride = width * 4;
+    unsigned char* imageBuffer = new unsigned char[height * stride];
+
     png_bytep* row_pointers = new png_bytep[height];
     for (int y = 0; y < height; y++) {
-        row_pointers[y] = imageBuffer + y * row_bytes;
+        row_pointers[y] = imageBuffer + y * stride;
     }
-    
+
     png_read_image(png_ptr, row_pointers);
     png_read_end(png_ptr, NULL);
-    
+
     int textureId = CreateTextureFromPngData(imageBuffer, width, height);
-    
+
     delete[] row_pointers;
     delete[] imageBuffer;
     png_destroy_read_struct(&png_ptr, &info_ptr, NULL);
-    
+
     if (textureId != -1) {
         imageData.textureId = textureId;
         imageData.width = width;
         imageData.height = height;
         imageData.isValid = true;
+        //Msg("PngButton: Loaded %s (%dx%d) -> texture %d\n", filename, width, height, textureId);
         return true;
     }
-    
+
+    DevWarning("PngButton: Failed to create texture for %s\n", filename);
     return false;
 }
 
@@ -180,7 +183,7 @@ int PngButton::CreateTextureFromPngData(unsigned char* data, int width, int heig
     int textureId = surface()->CreateNewTextureID(true);
     surface()->DrawSetTextureRGBA(textureId, data, width, height, false, false);
     
-    return textureId;
+    return textureId; 
 }
 
 void PngButton::SetCurrentImage(PngImageData* image) {
