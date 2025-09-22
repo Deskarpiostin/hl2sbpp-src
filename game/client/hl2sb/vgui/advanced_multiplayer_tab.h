@@ -29,6 +29,14 @@ struct ColorPreset
     int r, g, b;
 };
 
+struct HandModelInfo
+{
+    std::string key;
+    std::string model;
+    int skin;
+    std::string name;
+};
+
 class CColorPickerForwardPanel : public vgui::Panel
 {
     DECLARE_CLASS_SIMPLE( CColorPickerForwardPanel, vgui::Panel );
@@ -105,8 +113,8 @@ private:
 	vgui::Label *m_pPlayerPresetsLabel;
 	vgui::Label *m_pWeaponPresetsLabel;
 
-	vgui::ComboBox* m_pHandModelSelector;
-	CUtlVector<CUtlString> m_HandModelPaths;
+    vgui::ComboBox* m_pHandModelSelector;
+    std::vector<HandModelInfo> m_HandModels;
 
 	const char* m_pszCurrentPM;
 };

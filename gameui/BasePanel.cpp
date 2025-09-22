@@ -1093,6 +1093,21 @@ void CBasePanel::PaintBackground()
 		surface()->DrawSetColor(0, 0, 0, m_flBackgroundFillAlpha);
 		surface()->DrawFilledRect(0, 0, swide, stall);
 	}
+
+	// hacky hack
+	int wide,tall;
+	surface()->GetScreenSize( wide, tall );
+
+	int gradientWidth = wide / 1.5;
+	int gradientHeight = tall;
+
+	surface()->DrawSetColor(0, 0, 0, 255);
+	surface()->DrawFilledRectFade(
+		0, 0,
+		gradientWidth, gradientHeight,
+		255, 0,
+		true
+	);
 }
 
 //-----------------------------------------------------------------------------
@@ -1430,12 +1445,11 @@ void CBasePanel::DrawBackgroundImage()
 	if ( m_BackgroundTextureIDs.Count() == 0 )
 		return;
 
-	const float switchInterval = 10.0f;                          // local: seconds per bg
+	const float switchInterval = 10.0f;
 
 	int count = m_BackgroundTextureIDs.Count();
 	int iNextBackground = (m_iCurrentBackground + 1) % count;
 
-	// init next switch if needed
 	if ( m_flNextBackgroundSwitch <= 0.0f )
 		m_flNextBackgroundSwitch = frametime + switchInterval;
 
@@ -1443,18 +1457,12 @@ void CBasePanel::DrawBackgroundImage()
 	float fadeDuration = (m_flFadeDuration > 0.001f) ? m_flFadeDuration : 4.0f;
 	float fadeStart = switchTime - fadeDuration;
 
-	// If we've hit the switch instant, advance now and schedule next (prevents flicker)
-	if ( frametime >= switchTime )
+	while (frametime >= m_flNextBackgroundSwitch)
 	{
-		if ( count > 0 )
-			m_iCurrentBackground = (m_iCurrentBackground + 1) % count;
-
-		m_flNextBackgroundSwitch = switchTime + switchInterval;
-		switchTime = m_flNextBackgroundSwitch;
-		fadeStart = switchTime - fadeDuration;
+		m_iCurrentBackground = (m_iCurrentBackground + 1) % count;
+		m_flNextBackgroundSwitch += switchInterval;
 	}
 
-	// compute fade (0..1) via smoothstep
 	float fade = 0.0f;
 	if ( frametime >= fadeStart && fadeDuration > 0.0f )
 	{
@@ -1463,39 +1471,32 @@ void CBasePanel::DrawBackgroundImage()
 		fade = t * t * (3.0f - 2.0f * t);
 	}
 
-	// compute zoom so it grows then zooms OUT during the fade window
 	float lastSwitchTime = m_flNextBackgroundSwitch - switchInterval;
-	float growEnd = fadeStart;                                 // time when growth stops (peak)
+	float growEnd = fadeStart;
 	float growDur = growEnd - lastSwitchTime;
-	if ( growDur < 0.001f ) growDur = 0.001f;                  // avoid div-by-zero
+	if ( growDur < 0.001f ) growDur = 0.001f;
 
 	float zoom = 1.0f;
-	float peakZoom = 1.0f + m_flZoomAmount;                    // max zoom reached just before fade
+	float peakZoom = 1.0f + m_flZoomAmount;
 	if ( frametime < fadeStart )
 	{
-		// growth phase: ramp from 1.0 -> peakZoom over growDur
 		float pg = (frametime - lastSwitchTime) / growDur;
 		pg = clamp(pg, 0.0f, 1.0f);
-		// slight ease for nicer feel (optional)
-		float pg_eased = pg * pg * (3.0f - 2.0f * pg);
+		float pg_eased = pg * pg * pg * (pg * (pg * 6 - 15) + 10);
 		zoom = 1.0f + ( (peakZoom - 1.0f) * pg_eased );
 	}
 	else
 	{
-		// fade phase: ramp from peakZoom -> 1.0 as fade goes 0->1
 		float tf = (frametime - fadeStart) / fadeDuration;
 		tf = clamp(tf, 0.0f, 1.0f);
-		// linear reversal (you can use eased tf if desired)
 		zoom = peakZoom * (1.0f - tf) + 1.0f * tf;
 	}
 
-	// compute drawing rect with current zoom
 	int wZoomed = (int)(wide * zoom);
 	int hZoomed = (int)(tall * zoom);
 	int xOff = (wide - wZoomed) / 2;
 	int yOff = (tall - hZoomed) / 2;
 
-	// draw current background (fades out as fade increases)
 	int texIDCurr = m_BackgroundTextureIDs[m_iCurrentBackground];
 	if ( texIDCurr >= 0 )
 	{
@@ -1505,7 +1506,6 @@ void CBasePanel::DrawBackgroundImage()
 		surface()->DrawTexturedRect(xOff, yOff, xOff + wZoomed, yOff + hZoomed);
 	}
 
-	// draw next background on top during fade (fades in)
 	if ( fade > 0.0f && count > 1 )
 	{
 		int texIDNext = m_BackgroundTextureIDs[iNextBackground];
@@ -1933,43 +1933,290 @@ void CBasePanel::ApplySchemeSettings(IScheme *pScheme)
 
 	m_BackdropColor = pScheme->GetColor("mainmenu.backdrop", Color(0, 0, 0, 128));
 
-	// bg
+	LoadBackgroundImages();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Load background images
+//-----------------------------------------------------------------------------
+void CBasePanel::LoadBackgroundImages()
+{
 	m_BackgroundFiles.RemoveAll();
 	m_BackgroundTextureIDs.RemoveAll();
-
-	FileFindHandle_t findHandle;
-	const char *pFilename = g_pFullFileSystem->FindFirstEx("materials/console/bg_*.vtf", "MOD", &findHandle);
-
-	while (pFilename)
+	
+	const char* searchPatterns[] = {
+		"backgrounds/*.vtf",
+		"backgrounds/*.png", 
+		"backgrounds/*.jpg",
+		"backgrounds/*.jpeg"
+	};
+	
+	for (int patternIdx = 0; patternIdx < ARRAYSIZE(searchPatterns); patternIdx++)
 	{
-		// strip extension (.vtf) and "materials/"
-		char baseName[MAX_PATH];
-		Q_StripExtension(pFilename, baseName, sizeof(baseName));
-
-		// prepend "console/" manually
-		char path[MAX_PATH];
-		Q_snprintf(path, sizeof(path), "console/%s", baseName);
-
-		m_BackgroundFiles.AddToTail(path);
-
-		pFilename = g_pFullFileSystem->FindNext(findHandle);
+		FileFindHandle_t findHandle;
+		const char *pFilename = g_pFullFileSystem->FindFirstEx(searchPatterns[patternIdx], "MOD", &findHandle);
+		
+		while (pFilename)
+		{
+			char fullPath[MAX_PATH];
+			Q_snprintf(fullPath, sizeof(fullPath), "backgrounds/%s", pFilename);
+			
+			int texID = -1;
+			const char* ext = Q_GetFileExtension(pFilename);
+			
+			if (!Q_stricmp(ext, "vtf"))
+			{
+				char baseName[MAX_PATH];
+				Q_StripExtension(fullPath, baseName, sizeof(baseName));
+				texID = surface()->CreateNewTextureID();
+				surface()->DrawSetTextureFile(texID, baseName, false, false);
+			}
+			else if (!Q_stricmp(ext, "png") || !Q_stricmp(ext, "jpg") || !Q_stricmp(ext, "jpeg"))
+			{
+				texID = LoadImageAsTexture(fullPath);
+			}
+			
+			if (texID != -1)
+			{
+				m_BackgroundFiles.AddToTail(fullPath);
+				m_BackgroundTextureIDs.AddToTail(texID);
+				DevMsg("Loaded background: %s (ID: %d)\n", fullPath, texID);
+			}
+			else
+			{
+				Warning("Failed to load background image: %s\n", fullPath);
+			}
+			
+			pFilename = g_pFullFileSystem->FindNext(findHandle);
+		}
+		
+		g_pFullFileSystem->FindClose(findHandle);
 	}
-	g_pFullFileSystem->FindClose(findHandle);
-
-	for (int i = 0; i < m_BackgroundFiles.Count(); i++)
-	{
-    	DevMsg("Loaded background: %s\n", m_BackgroundFiles[i].Get());
-
-		int texID = surface()->CreateNewTextureID();
-		surface()->DrawSetTextureFile(texID, m_BackgroundFiles[i], false, false);
-		m_BackgroundTextureIDs.AddToTail(texID);
-	}
-
+	
 	m_iCurrentBackground = 0;
 	m_flNextBackgroundSwitch = engine->Time() + 10.0f;
-	// end bg
+	
+	DevMsg("Loaded %d background images total\n", m_BackgroundTextureIDs.Count());
+}
 
+int CBasePanel::LoadImageAsTexture(const char* imagePath)
+{
+    FileHandle_t file = g_pFullFileSystem->Open(imagePath, "rb", "MOD");
+    if (!file) {
+        Warning("Could not open image file: %s\n", imagePath);
+        return -1;
+    }
+    int fileSize = g_pFullFileSystem->Size(file);
+    unsigned char* fileData = (unsigned char*)malloc(fileSize);
+    g_pFullFileSystem->Read(fileData, fileSize, file);
+    g_pFullFileSystem->Close(file);
 
+    int width = 0, height = 0, channels = 0;
+    unsigned char* imageData = nullptr;
+    const char* ext = Q_GetFileExtension(imagePath);
+
+    if (!Q_stricmp(ext, "png")) {
+        imageData = LoadPNGFromMemory(fileData, fileSize, width, height, channels);
+    } else if (!Q_stricmp(ext, "jpg") || !Q_stricmp(ext, "jpeg")) {
+        imageData = LoadJPEGFromMemory(fileData, fileSize, width, height, channels);
+    } else {
+        Warning("Unsupported image extension: %s\n", imagePath);
+    }
+    free(fileData);
+
+    if (!imageData || width <= 0 || height <= 0) {
+        Warning("Failed to decode image: %s\n", imagePath);
+        if (imageData) free(imageData);
+        return -1;
+    }
+
+    if (channels != 4) {
+        unsigned char* rgba = (unsigned char*)malloc(width * height * 4);
+        for (int i = 0; i < width * height; ++i) {
+            int srcIdx = i * channels;
+            int dstIdx = i * 4;
+            rgba[dstIdx + 0] = imageData[srcIdx + 0];
+            rgba[dstIdx + 1] = imageData[srcIdx + 1];
+            rgba[dstIdx + 2] = imageData[srcIdx + 2];
+            rgba[dstIdx + 3] = (channels == 3) ? 255 : imageData[srcIdx + 3];
+        }
+        free(imageData);
+        imageData = rgba;
+        channels = 4;
+    }
+
+    int newWidth = GetNextPowerOfTwo(width);
+    int newHeight = GetNextPowerOfTwo(height);
+    if (newWidth > 2048) newWidth = 2048;
+    if (newHeight > 2048) newHeight = 2048;
+
+    unsigned char* finalData = imageData;
+    if (newWidth != width || newHeight != height) {
+        finalData = ResizeImage(imageData, width, height, newWidth, newHeight);
+        free(imageData);
+        width = newWidth;
+        height = newHeight;
+    }
+
+    int texID = surface()->CreateNewTextureID(true);
+    surface()->DrawSetTextureRGBA(texID, finalData, width, height, 1, false);
+
+    free(finalData);
+    return texID;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Get next power of 2 for a given number
+//-----------------------------------------------------------------------------
+int CBasePanel::GetNextPowerOfTwo(int value)
+{
+	int power = 1;
+	while (power < value)
+		power *= 2;
+	return power;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Resize RGBA image using simple bilinear filtering
+//-----------------------------------------------------------------------------
+unsigned char* CBasePanel::ResizeImage(unsigned char* src, int srcW, int srcH, int dstW, int dstH)
+{
+	unsigned char* dst = (unsigned char*)malloc(dstW * dstH * 4);
+	
+	float xRatio = (float)srcW / dstW;
+	float yRatio = (float)srcH / dstH;
+	
+	for (int y = 0; y < dstH; y++)
+	{
+		for (int x = 0; x < dstW; x++)
+		{
+			int srcX = (int)(x * xRatio);
+			int srcY = (int)(y * yRatio);
+			
+			if (srcX >= srcW) srcX = srcW - 1;
+			if (srcY >= srcH) srcY = srcH - 1;
+			
+			int srcIdx = (srcY * srcW + srcX) * 4;
+			int dstIdx = (y * dstW + x) * 4;
+			
+			dst[dstIdx + 0] = src[srcIdx + 0]; // R
+			dst[dstIdx + 1] = src[srcIdx + 1]; // G
+			dst[dstIdx + 2] = src[srcIdx + 2]; // B
+			dst[dstIdx + 3] = src[srcIdx + 3]; // A
+		}
+	}
+	
+	return dst;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Load PNG from memory using libpng
+//-----------------------------------------------------------------------------
+unsigned char* CBasePanel::LoadPNGFromMemory(unsigned char* data, int dataSize, int& width, int& height, int& channels)
+{
+	png_structp png = png_create_read_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
+	if (!png)
+		return nullptr;
+	
+	png_infop info = png_create_info_struct(png);
+	if (!info)
+	{
+		png_destroy_read_struct(&png, nullptr, nullptr);
+		return nullptr;
+	}
+	
+	if (setjmp(png_jmpbuf(png)))
+	{
+		png_destroy_read_struct(&png, &info, nullptr);
+		return nullptr;
+	}
+	
+	struct PNGMemoryReader
+	{
+		unsigned char* data;
+		size_t size;
+		size_t pos;
+	} reader = { data, (size_t)dataSize, 0 };
+	
+	png_set_read_fn(png, &reader, [](png_structp png, png_bytep outBytes, png_size_t byteCount) {
+		PNGMemoryReader* reader = (PNGMemoryReader*)png_get_io_ptr(png);
+		if (reader->pos + byteCount > reader->size)
+			byteCount = reader->size - reader->pos;
+		memcpy(outBytes, reader->data + reader->pos, byteCount);
+		reader->pos += byteCount;
+	});
+	
+	png_read_info(png, info);
+	
+	width = png_get_image_width(png, info);
+	height = png_get_image_height(png, info);
+	png_byte color_type = png_get_color_type(png, info);
+	png_byte bit_depth = png_get_bit_depth(png, info);
+	
+	if (bit_depth == 16)
+		png_set_strip_16(png);
+	
+	if (color_type == PNG_COLOR_TYPE_PALETTE)
+		png_set_palette_to_rgb(png);
+	
+	if (color_type == PNG_COLOR_TYPE_GRAY && bit_depth < 8)
+		png_set_expand_gray_1_2_4_to_8(png);
+	
+	if (png_get_valid(png, info, PNG_INFO_tRNS))
+		png_set_tRNS_to_alpha(png);
+	
+	png_read_update_info(png, info);
+	
+	channels = png_get_channels(png, info);
+	int rowBytes = png_get_rowbytes(png, info);
+	
+	unsigned char* imageData = (unsigned char*)malloc(rowBytes * height);
+	png_bytep* rowPointers = (png_bytep*)malloc(sizeof(png_bytep) * height);
+	
+	for (int y = 0; y < height; y++)
+		rowPointers[y] = imageData + y * rowBytes;
+	
+	png_read_image(png, rowPointers);
+	
+	free(rowPointers);
+	png_destroy_read_struct(&png, &info, nullptr);
+	
+	return imageData;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Load JPEG from memory using libjpeg
+//-----------------------------------------------------------------------------
+unsigned char* CBasePanel::LoadJPEGFromMemory(unsigned char* data, int dataSize, int& width, int& height, int& channels)
+{
+	struct jpeg_decompress_struct cinfo;
+	struct jpeg_error_mgr jerr;
+	
+	cinfo.err = jpeg_std_error(&jerr);
+	jpeg_create_decompress(&cinfo);
+	
+	// Set up memory reading
+	jpeg_mem_src(&cinfo, data, dataSize);
+	
+	jpeg_read_header(&cinfo, TRUE);
+	jpeg_start_decompress(&cinfo);
+	
+	width = cinfo.output_width;
+	height = cinfo.output_height;
+	channels = cinfo.output_components;
+	
+	unsigned char* imageData = (unsigned char*)malloc(width * height * channels);
+	
+	while (cinfo.output_scanline < cinfo.output_height)
+	{
+		unsigned char* rowPtr = imageData + (cinfo.output_scanline * width * channels);
+		jpeg_read_scanlines(&cinfo, &rowPtr, 1);
+	}
+	
+	jpeg_finish_decompress(&cinfo);
+	jpeg_destroy_decompress(&cinfo);
+	
+	return imageData;
 }
 
 //-----------------------------------------------------------------------------

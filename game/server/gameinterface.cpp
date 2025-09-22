@@ -1041,6 +1041,7 @@ bool CServerGameDLL::LevelInit( const char *pMapName, char const *pMapEntities, 
 	luasrc_dofolder( L, LUA_PATH_MODULES );
 	luasrc_dofolder( L, LUA_PATH_GAME_SHARED );
 	luasrc_dofolder( L, LUA_PATH_GAME_SERVER );
+	luasrc_dofolder( L, "lua/am_i_trippinrun" );
 
 	luasrc_LoadWeapons();
 	luasrc_LoadEntities();

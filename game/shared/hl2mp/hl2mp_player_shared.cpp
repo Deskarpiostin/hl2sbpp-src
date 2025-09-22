@@ -30,16 +30,10 @@
 
 extern ConVar sv_footsteps;
 
-const char *g_ppszPlayerSoundPrefixNames[PLAYER_SOUNDS_MAX] =
-{
-	"NPC_Citizen",
-	"NPC_CombineS",
-	"NPC_MetroPolice",
-};
-
 const char *CHL2MP_Player::GetPlayerModelSoundPrefix( void )
 {
-	return g_ppszPlayerSoundPrefixNames[m_iPlayerSoundType];
+	// uhh...
+	return "Player";
 }
 
 //-----------------------------------------------------------------------------

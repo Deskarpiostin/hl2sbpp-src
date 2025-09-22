@@ -231,6 +231,7 @@ void CHL2MP_Player::Precache( void )
 	PrecacheModel("models/weapons/c_arms_refugee.mdl");
 	PrecacheModel("models/weapons/c_arms_cstrike.mdl");
 	PrecacheModel("models/weapons/c_arms_dod.mdl");
+	PrecacheModel("models/weapons/c_arms_chell.mdl");
 #endif
 
 	//Precache Citizen models
@@ -629,31 +630,31 @@ void CHL2MP_Player::PostThink( void )
 	angles[PITCH] = 0;
 	SetLocalAngles( angles );
 
-#ifdef HL2SB
-	const char* c_handmodel = engine->GetClientConVarValue( ENTINDEX( edict() ), "c_handmodel" );
+#if defined(LUA_SDK)
 	CUtlString desiredModel;
+	int desiredSkin = 0;
+	const char* c_handmodel = engine->GetClientConVarValue( ENTINDEX( edict() ), "c_handmodel" );
 
-	if (strcmp(c_handmodel, "citizen") == 0)
-		desiredModel = "models/weapons/c_arms_citizen.mdl";
-	else if (strcmp(c_handmodel, "combine") == 0)
-		desiredModel = "models/weapons/c_arms_combine.mdl";
-	else if (strcmp(c_handmodel, "refugee") == 0)
-		desiredModel = "models/weapons/c_arms_refugee.mdl";
-	else if (strcmp(c_handmodel, "cstrike") == 0) // needs css mounted
-		desiredModel = "models/weapons/c_arms_cstrike.mdl";
-	else if (strcmp(c_handmodel, "dod") == 0)
-		desiredModel = "models/weapons/c_arms_dod.mdl";
-	else // default
-		desiredModel = 
-			(m_iPlayerSoundType == PLAYER_SOUNDS_COMBINESOLDIER || 
-			m_iPlayerSoundType == PLAYER_SOUNDS_METROPOLICE)
-			? "models/weapons/c_arms_combine.mdl"
-			: "models/weapons/c_arms_citizen.mdl";
+	BEGIN_LUA_CALL_HOOK("GetPlayerHandModel")
+		lua_pushhl2mpplayer(L, this);
+		lua_pushstring(L, c_handmodel);
+		lua_pushinteger(L, m_iPlayerSoundType);
+	END_LUA_CALL_HOOK(3, 2);
+
+	desiredModel = lua_tostring(L, -2);
+	desiredSkin = (int)lua_tointeger(L, -1);
+
+	lua_pop(L, 2);
 
 	if (m_CurrentHandModel != desiredModel)
 	{
-		GetViewModel(1)->SetModel(desiredModel.Get());
-		m_CurrentHandModel = desiredModel;
+		CBaseViewModel *pHandModel = GetViewModel(1);
+		if ( pHandModel )
+		{	
+			pHandModel->SetModel(desiredModel.Get());
+			pHandModel->m_nSkin = desiredSkin;
+			m_CurrentHandModel = desiredModel;
+		}
 	}
 #endif
 
@@ -1230,7 +1231,7 @@ void CHL2MP_Player::DeathSound( const CTakeDamageInfo &info )
 
 	char szStepSound[128];
 
-	Q_snprintf( szStepSound, sizeof( szStepSound ), "%s.Die", GetPlayerModelSoundPrefix() );
+	Q_snprintf( szStepSound, sizeof( szStepSound ), "%s.Death", GetPlayerModelSoundPrefix() );
 
 	const char *pModelName = STRING( GetModelName() );
 

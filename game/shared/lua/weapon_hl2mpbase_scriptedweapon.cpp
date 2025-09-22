@@ -22,6 +22,7 @@
 #include "luamanager.h"
 #include "lbasecombatweapon_shared.h"
 #include "mathlib/lvector.h"
+#include "lhl2mp_player_shared.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -253,7 +254,7 @@ void CHL2MPScriptedWeapon::InitScriptedWeapon( void )
 #endif
 	// Printable name
 	lua_getref( L, m_nTableReference );
-	lua_getfield( L, -1, "printname" );
+	lua_getfield( L, -1, "PrintName" );
 	lua_remove( L, -2 );
 	if ( lua_isstring( L, -1 ) )
 	{
@@ -266,7 +267,7 @@ void CHL2MPScriptedWeapon::InitScriptedWeapon( void )
 	lua_pop( L, 1 );
 	// View model & world model
 	lua_getref( L, m_nTableReference );
-	lua_getfield( L, -1, "viewmodel" );
+	lua_getfield( L, -1, "ViewModel" );
 	lua_remove( L, -2 );
 	if ( lua_isstring( L, -1 ) )
 	{
@@ -274,7 +275,7 @@ void CHL2MPScriptedWeapon::InitScriptedWeapon( void )
 	}
 	lua_pop( L, 1 );
 	lua_getref( L, m_nTableReference );
-	lua_getfield( L, -1, "playermodel" );
+	lua_getfield( L, -1, "WorldModel" );
 	lua_remove( L, -2 );
 	if ( lua_isstring( L, -1 ) )
 	{
@@ -282,7 +283,7 @@ void CHL2MPScriptedWeapon::InitScriptedWeapon( void )
 	}
 	lua_pop( L, 1 );
 	lua_getref( L, m_nTableReference );
-	lua_getfield( L, -1, "anim_prefix" );
+	lua_getfield( L, -1, "AnimPrefix" );
 	lua_remove( L, -2 );
 	if ( lua_isstring( L, -1 ) )
 	{
@@ -290,7 +291,7 @@ void CHL2MPScriptedWeapon::InitScriptedWeapon( void )
 	}
 	lua_pop( L, 1 );
 	lua_getref( L, m_nTableReference );
-	lua_getfield( L, -1, "bucket" );
+	lua_getfield( L, -1, "Slot" );
 	lua_remove( L, -2 );
 	if ( lua_isnumber( L, -1 ) )
 	{
@@ -302,7 +303,7 @@ void CHL2MPScriptedWeapon::InitScriptedWeapon( void )
 	}
 	lua_pop( L, 1 );
 	lua_getref( L, m_nTableReference );
-	lua_getfield( L, -1, "bucket_position" );
+	lua_getfield( L, -1, "SlotPos" );
 	lua_remove( L, -2 );
 	if ( lua_isnumber( L, -1 ) )
 	{
@@ -322,7 +323,7 @@ void CHL2MPScriptedWeapon::InitScriptedWeapon( void )
 #endif
 	{
 		lua_getref( L, m_nTableReference );
-		lua_getfield( L, -1, "bucket_360" );
+		lua_getfield( L, -1, "Slot_360" );
 		lua_remove( L, -2 );
 		if ( lua_isnumber( L, -1 ) )
 		{
@@ -330,7 +331,7 @@ void CHL2MPScriptedWeapon::InitScriptedWeapon( void )
 		}
 		lua_pop( L, 1 );
 		lua_getref( L, m_nTableReference );
-		lua_getfield( L, -1, "bucket_position_360" );
+		lua_getfield( L, -1, "SlotPos_360" );
 		lua_remove( L, -2 );
 		if ( lua_isnumber( L, -1 ) )
 		{
@@ -338,31 +339,37 @@ void CHL2MPScriptedWeapon::InitScriptedWeapon( void )
 		}
 		lua_pop( L, 1 );
 	}
-	lua_getref( L, m_nTableReference );
-	lua_getfield( L, -1, "clip_size" );
-	lua_remove( L, -2 );
-	if ( lua_isnumber( L, -1 ) )
+	lua_getref(L, m_nTableReference);
+	lua_getfield(L, -1, "Primary");
+	lua_remove(L, -2);
+	if (lua_istable(L, -1))
 	{
-		m_pLuaWeaponInfo->iMaxClip1 = lua_tonumber( L, -1 );					// Max primary clips gun can hold (assume they don't use clips by default)
+		lua_getfield(L, -1, "ClipSize");
+		m_pLuaWeaponInfo->iMaxClip1 = lua_isnumber(L, -1) ? (int)lua_tointeger(L, -1) : WEAPON_NOCLIP;
+		lua_pop(L, 1);
+
+		lua_getfield(L, -1, "DefaultClip");
+		m_pLuaWeaponInfo->iDefaultClip1 = lua_isnumber(L, -1) ? (int)lua_tointeger(L, -1) : m_pLuaWeaponInfo->iMaxClip1;
+		lua_pop(L, 1);
+
+		lua_getfield(L, -1, "Automatic");
+		// TODO: add
+		lua_pop(L, 1);
+
+		lua_getfield(L, -1, "Ammo");
+		if (lua_isstring(L, -1))
+		{
+			const char* ammo = lua_tostring(L, -1);
+			if (Q_stricmp(ammo, "none") == 0)
+				Q_strncpy(m_pLuaWeaponInfo->szAmmo1, "", sizeof(m_pLuaWeaponInfo->szAmmo1));
+			else
+				Q_strncpy(m_pLuaWeaponInfo->szAmmo1, ammo, sizeof(m_pLuaWeaponInfo->szAmmo1));
+			m_pLuaWeaponInfo->iAmmoType = GetAmmoDef()->Index(m_pLuaWeaponInfo->szAmmo1);
+		}
+		lua_pop(L, 1);
 	}
-	else
-	{
-		m_pLuaWeaponInfo->iMaxClip1 = WEAPON_NOCLIP;
-	}
-	lua_pop( L, 1 );
-	lua_getref( L, m_nTableReference );
-	lua_getfield( L, -1, "clip2_size" );
-	lua_remove( L, -2 );
-	if ( lua_isnumber( L, -1 ) )
-	{
-		m_pLuaWeaponInfo->iMaxClip2 = lua_tonumber( L, -1 );					// Max secondary clips gun can hold (assume they don't use clips by default)
-	}
-	else
-	{
-		m_pLuaWeaponInfo->iMaxClip2 = WEAPON_NOCLIP;
-	}
-#ifdef HL2SB
 	lua_pop(L, 1);
+#ifdef HL2SB
 	lua_getref(L, m_nTableReference);
 	lua_getfield(L, -1, "UseHands");
 	lua_remove(L, -2);
@@ -377,31 +384,7 @@ void CHL2MPScriptedWeapon::InitScriptedWeapon( void )
 #endif
 	lua_pop( L, 1 );
 	lua_getref( L, m_nTableReference );
-	lua_getfield( L, -1, "default_clip" );
-	lua_remove( L, -2 );
-	if ( lua_isnumber( L, -1 ) )
-	{
-		m_pLuaWeaponInfo->iDefaultClip1 = lua_tonumber( L, -1 );		// amount of primary ammo placed in the primary clip when it's picked up
-	}
-	else
-	{
-		m_pLuaWeaponInfo->iDefaultClip1 = m_pLuaWeaponInfo->iMaxClip1;
-	}
-	lua_pop( L, 1 );
-	lua_getref( L, m_nTableReference );
-	lua_getfield( L, -1, "default_clip2" );
-	lua_remove( L, -2 );
-	if ( lua_isnumber( L, -1 ) )
-	{
-		m_pLuaWeaponInfo->iDefaultClip2 = lua_tonumber( L, -1 );		// amount of secondary ammo placed in the secondary clip when it's picked up
-	}
-	else
-	{
-		m_pLuaWeaponInfo->iDefaultClip2 = m_pLuaWeaponInfo->iMaxClip2;
-	}
-	lua_pop( L, 1 );
-	lua_getref( L, m_nTableReference );
-	lua_getfield( L, -1, "weight" );
+	lua_getfield( L, -1, "Weight" );
 	lua_remove( L, -2 );
 	if ( lua_isnumber( L, -1 ) )
 	{
@@ -414,7 +397,7 @@ void CHL2MPScriptedWeapon::InitScriptedWeapon( void )
 	lua_pop( L, 1 );
 
 	lua_getref( L, m_nTableReference );
-	lua_getfield( L, -1, "rumble" );
+	lua_getfield( L, -1, "Rumble" );
 	lua_remove( L, -2 );
 	if ( lua_isnumber( L, -1 ) )
 	{
@@ -427,7 +410,7 @@ void CHL2MPScriptedWeapon::InitScriptedWeapon( void )
 	lua_pop( L, 1 );
 	
 	lua_getref( L, m_nTableReference );
-	lua_getfield( L, -1, "showusagehint" );
+	lua_getfield( L, -1, "ShowUsageHint" );
 	lua_remove( L, -2 );
 	if ( lua_isboolean( L, -1 ) )
 	{
@@ -499,35 +482,36 @@ void CHL2MPScriptedWeapon::InitScriptedWeapon( void )
 	}
 	lua_pop( L, 1 );
 
-	// Primary ammo used
-	lua_getref( L, m_nTableReference );
-	lua_getfield( L, -1, "primary_ammo" );
-	lua_remove( L, -2 );
-	if ( lua_isstring( L, -1 ) )
+	lua_getref(L, m_nTableReference);
+	lua_getfield(L, -1, "Secondary");
+	lua_remove(L, -2);
+	if (lua_istable(L, -1))
 	{
-		const char *pAmmo = lua_tostring( L, -1 );
-		if ( strcmp("None", pAmmo) == 0 )
-			Q_strncpy( m_pLuaWeaponInfo->szAmmo1, "", sizeof( m_pLuaWeaponInfo->szAmmo1 ) );
-		else
-			Q_strncpy( m_pLuaWeaponInfo->szAmmo1, pAmmo, sizeof( m_pLuaWeaponInfo->szAmmo1 )  );
-		m_pLuaWeaponInfo->iAmmoType = GetAmmoDef()->Index( m_pLuaWeaponInfo->szAmmo1 );
+		lua_getfield(L, -1, "ClipSize");
+		m_pLuaWeaponInfo->iMaxClip2 = lua_isnumber(L, -1) ? (int)lua_tointeger(L, -1) : WEAPON_NOCLIP;
+		lua_pop(L, 1);
+
+		lua_getfield(L, -1, "DefaultClip");
+		m_pLuaWeaponInfo->iDefaultClip2 = lua_isnumber(L, -1) ? (int)lua_tointeger(L, -1) : m_pLuaWeaponInfo->iMaxClip2;
+		lua_pop(L, 1);
+
+		lua_getfield(L, -1, "Automatic");
+		// TODO: add
+		lua_pop(L, 1);
+
+		lua_getfield(L, -1, "Ammo");
+		if (lua_isstring(L, -1))
+		{
+			const char* ammo = lua_tostring(L, -1);
+			if (Q_stricmp(ammo, "none") == 0)
+				Q_strncpy(m_pLuaWeaponInfo->szAmmo2, "", sizeof(m_pLuaWeaponInfo->szAmmo2));
+			else
+				Q_strncpy(m_pLuaWeaponInfo->szAmmo2, ammo, sizeof(m_pLuaWeaponInfo->szAmmo2));
+			m_pLuaWeaponInfo->iAmmo2Type = GetAmmoDef()->Index(m_pLuaWeaponInfo->szAmmo2);
+		}
+		lua_pop(L, 1);
 	}
-	lua_pop( L, 1 );
-	
-	// Secondary ammo used
-	lua_getref( L, m_nTableReference );
-	lua_getfield( L, -1, "secondary_ammo" );
-	lua_remove( L, -2 );
-	if ( lua_isstring( L, -1 ) )
-	{
-		const char *pAmmo = lua_tostring( L, -1 );
-		if ( strcmp("None", pAmmo) == 0)
-			Q_strncpy( m_pLuaWeaponInfo->szAmmo2, "", sizeof( m_pLuaWeaponInfo->szAmmo2 ) );
-		else
-			Q_strncpy( m_pLuaWeaponInfo->szAmmo2, pAmmo, sizeof( m_pLuaWeaponInfo->szAmmo2 )  );
-		m_pLuaWeaponInfo->iAmmo2Type = GetAmmoDef()->Index( m_pLuaWeaponInfo->szAmmo2 );
-	}
-	lua_pop( L, 1 );
+	lua_pop(L, 1);
 
 	// Now read the weapon sounds
 	memset( m_pLuaWeaponInfo->aShootSounds, 0, sizeof( m_pLuaWeaponInfo->aShootSounds ) );
@@ -706,7 +690,7 @@ void CHL2MPScriptedWeapon::InitScriptedWeapon( void )
 	lua_pop(L, 1);
 
 	lua_getref( L, m_nTableReference );
-	lua_getfield( L, -1, "damage" );
+	lua_getfield( L, -1, "Damage" );
 	lua_remove( L, -2 );
 	if ( lua_isnumber( L, -1 ) )
 	{
@@ -848,7 +832,7 @@ const char *CHL2MPScriptedWeapon::GetAnimPrefix( void ) const
 
 #if defined ( LUA_SDK )
 	lua_getref( L, m_nTableReference );
-	lua_getfield( L, -1, "anim_prefix" );
+	lua_getfield( L, -1, "AnimPrefix" );
 	lua_remove( L, -2 );
 
 	RETURN_LUA_STRING();
@@ -1103,7 +1087,7 @@ int CHL2MPScriptedWeapon::GetWeaponFlags( void ) const
 
 #if defined ( LUA_SDK )
 	lua_getref( L, m_nTableReference );
-	lua_getfield( L, -1, "item_flags" );
+	lua_getfield( L, -1, "ItemFlags" );
 	lua_remove( L, -2 );
 	RETURN_LUA_INTEGER();
 #endif
@@ -1211,7 +1195,16 @@ bool CHL2MPScriptedWeapon::Deploy( void )
 #ifdef HL2SB
 	if (!UseHands)
 	{
-		ToHL2MPPlayer(GetOwner())->GetViewModel(1)->SetModel(""); // none
+		CHL2MP_Player *pPlayer = ToHL2MPPlayer( GetOwner() );
+		if ( pPlayer )
+		{
+			CBaseViewModel *pHandModel = pPlayer->GetViewModel(1);
+			if ( pHandModel )
+			{	
+				pHandModel->SetModel("");
+				pHandModel->m_nSkin = 0;
+			}
+		}
 	}
 #endif
 
@@ -1254,50 +1247,35 @@ bool CHL2MPScriptedWeapon::Holster( CBaseCombatWeapon *pSwitchingTo )
 	if ( !UseHands )
 	{
 #ifndef CLIENT_DLL
-		const char* c_handmodel = engine->GetClientConVarValue( ENTINDEX( edict() ), "c_handmodel" );
+	CHL2MP_Player *pPlayer = ToHL2MPPlayer(GetOwner());
+	if ( pPlayer )
+	{
+		CUtlString desiredModel;
+		int desiredSkin = 0;
+		const char* c_handmodel = engine->GetClientConVarValue( ENTINDEX( pPlayer->edict() ), "c_handmodel" );
 
-		if (strcmp(c_handmodel, "default") == 0) {
-			if (ToHL2MPPlayer(GetOwner())->GetPlayerModelType() == PLAYER_SOUNDS_METROPOLICE || ToHL2MPPlayer(GetOwner())->GetPlayerModelType() == PLAYER_SOUNDS_COMBINESOLDIER)
-			{
-				ToHL2MPPlayer(GetOwner())->GetViewModel(1)->SetModel("models/weapons/c_arms_combine.mdl");
-			}
-			else
-			{
-				ToHL2MPPlayer(GetOwner())->GetViewModel(1)->SetModel("models/weapons/c_arms_citizen.mdl");
-			}
-		}
-		else if (strcmp(c_handmodel, "citizen") == 0)
+		BEGIN_LUA_CALL_HOOK("GetPlayerHandModel")
+			lua_pushhl2mpplayer(L, pPlayer);
+			lua_pushstring(L, c_handmodel);
+			lua_pushinteger(L, pPlayer->GetPlayerModelType());
+		END_LUA_CALL_HOOK(3, 2);
+
+		desiredModel = lua_tostring(L, -2);
+		desiredSkin = (int)lua_tointeger(L, -1);
+
+		lua_pop(L, 2);
+
+		if (pPlayer->m_CurrentHandModel != desiredModel)
 		{
-			ToHL2MPPlayer(GetOwner())->GetViewModel(1)->SetModel("models/weapons/c_arms_citizen.mdl");
-		}
-		else if (strcmp(c_handmodel, "combine") == 0)
-		{
-			ToHL2MPPlayer(GetOwner())->GetViewModel(1)->SetModel("models/weapons/c_arms_combine.mdl");
-		}
-		else if (strcmp(c_handmodel, "refugee") == 0)
-		{
-			ToHL2MPPlayer(GetOwner())->GetViewModel(1)->SetModel("models/weapons/c_arms_refugee.mdl");
-		}
-		else if (strcmp(c_handmodel, "cstrike") == 0)
-		{
-			ToHL2MPPlayer(GetOwner())->GetViewModel(1)->SetModel("models/weapons/c_arms_cstrike.mdl");
-		}
-		else if (strcmp(c_handmodel, "dod") == 0)
-		{
-			ToHL2MPPlayer(GetOwner())->GetViewModel(1)->SetModel("models/weapons/c_arms_dod.mdl");
-		}
-		else
-		{
-			// stick to the default
-			if (ToHL2MPPlayer(GetOwner())->GetPlayerModelType() == PLAYER_SOUNDS_METROPOLICE || ToHL2MPPlayer(GetOwner())->GetPlayerModelType() == PLAYER_SOUNDS_COMBINESOLDIER)
-			{
-				ToHL2MPPlayer(GetOwner())->GetViewModel(1)->SetModel("models/weapons/c_arms_combine.mdl");
-			}
-			else
-			{
-				ToHL2MPPlayer(GetOwner())->GetViewModel(1)->SetModel("models/weapons/c_arms_citizen.mdl");
+			CBaseViewModel *pHandModel = pPlayer->GetViewModel(1);
+			if ( pHandModel )
+			{	
+				pHandModel->SetModel(desiredModel.Get());
+				pHandModel->m_nSkin = desiredSkin;
+				pPlayer->m_CurrentHandModel = desiredModel;
 			}
 		}
+	}
 #endif
 	}
 #endif

@@ -21,6 +21,8 @@
 #ifdef GLOWS_ENABLE
 #include "props.h"
 #endif
+#else
+#include "c_props.h"
 #endif
 #include "vphysics/constraints.h"
 #include "physics.h"
@@ -104,7 +106,7 @@ static IPhysicsObject *GetPhysObjFromPhysicsBone( CBaseEntity *pEntity, short ph
     }
 
     // Use dynamic_cast so we only touch CBaseAnimating members if the entity really is one.
-    CBaseAnimating *pModel = dynamic_cast< CBaseAnimating * >( pEntity );
+    CBaseAnimating *pModel = pEntity->GetBaseAnimating();
     if ( pModel != NULL )
     {
         IPhysicsObject *pPhysicsObject = NULL;
@@ -709,11 +711,30 @@ void PlayerWeaponColorProxy::OnBind(void* pC_BaseEntity)
             currentB = pWeapon->GetPhysgunColorB();
 		} else
 		{
-			// ThePixelMoon: sometimes, it just goes blue for a moment. for the player to not notice,
-			// we're going to make it fully black instead.
-			currentR = 0;
-			currentG = 0;
-			currentB = 0;
+			CBasePlayer* pPlayer = C_BasePlayer::GetLocalPlayer();
+			if (!pPlayer)
+				return;
+
+			CBaseCombatWeapon* pWeapon = pPlayer->GetActiveWeapon();
+			if (!pWeapon)
+				return;
+
+			const char* szClass = pWeapon->GetClassname();
+			if (szClass && strcmp(szClass, "weapon_physcannon") == 0)
+			{
+				// quite a hacky hack but fuck it
+				currentR = 150;
+				currentG = 255;
+				currentB = 255;
+			}
+			else
+			{
+				// ThePixelMoon: sometimes, it just goes blue for a moment. for the player to not notice,
+				// we're going to make it fully black instead.
+				currentR = 0;
+				currentG = 0;
+				currentB = 0;
+			}
 		}
 
 		float targetRed = currentR + 50.0f;
@@ -842,7 +863,7 @@ void CWeaponPhysicsGun::CloseElements( void )
 	m_flElementDestination = 0.0f;
 	m_bOpen = false;
 
-	SendWeaponAnim( ACT_VM_IDLE );
+	//SendWeaponAnim( ACT_VM_IDLE );
 }
 
 //-----------------------------------------------------------------------------
@@ -1023,7 +1044,7 @@ void CWeaponPhysicsGun::EffectUpdate( void )
 #endif 
 
 #if defined( GLOWS_ENABLE ) && defined( GAME_DLL )
-		CBaseAnimating* pAnimating = dynamic_cast<CBaseAnimating*>(pObject);
+		CBaseAnimating* pAnimating = pObject->GetBaseAnimating();
 		if (pAnimating) {
 			if ( !physgun_halo_override.GetBool() )
 			{
@@ -1252,9 +1273,14 @@ void CWeaponPhysicsGun::EffectDestroy( void )
 	SoundStop();
 
 #if defined( GLOWS_ENABLE ) && defined( GAME_DLL )
-	CBaseAnimating* pAnimating = dynamic_cast<CBaseAnimating*>(pObject);
-	if (pAnimating != nullptr)
-		pAnimating->RemoveGlowEffect();
+	if (pObject)
+	{
+		CBaseAnimating* pAnimating = pObject->GetBaseAnimating();
+		if (pAnimating)
+		{
+			pAnimating->RemoveGlowEffect();
+		}
+	}
 #endif
 
 	DetachObject();
@@ -1513,7 +1539,7 @@ int CWeaponPhysicsGun::DrawModel( int flags )
 			trace_t tr;
 			TraceLine( &tr );
 			
-			C_BaseAnimating *pModel = dynamic_cast<C_BaseAnimating*>(pObject);
+			C_BaseAnimating *pModel = pObject->GetBaseAnimating();;
 			if (pModel)
 			{
 				if (!pModel->m_pRagdoll)
@@ -1660,7 +1686,7 @@ void CWeaponPhysicsGun::ViewModelDrawn( C_BaseViewModel *pBaseViewModel )
 		trace_t tr;
 		TraceLine( &tr );
 		
-		C_BaseAnimating *pModel = dynamic_cast<C_BaseAnimating*>(pObject);
+		C_BaseAnimating *pModel = pObject->GetBaseAnimating();;
 		if (pModel)
 		{
 			if (!pModel->m_pRagdoll)
@@ -1808,7 +1834,7 @@ void CWeaponPhysicsGun::ItemPostFrame( void )
 				EffectDestroy();
 				SoundDestroy();
 			}
-			WeaponIdle( );
+			//WeaponIdle( );
 			return;
 		}
 		PrimaryAttack();
@@ -1820,7 +1846,7 @@ void CWeaponPhysicsGun::ItemPostFrame( void )
 			EffectDestroy();
 			SoundDestroy();
 		}
-		WeaponIdle( );
+		//WeaponIdle( );
 		return;
 	}
 	if ( pOwner->m_afButtonPressed & IN_RELOAD )

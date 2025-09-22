@@ -21,6 +21,9 @@
 
 #include "ixboxsystem.h"
 
+#include "libpng/png.h"
+#include "jpeglib/jpeglib.h"
+
 #if !defined( _X360 )
 #include "xbox/xboxstubs.h"
 #endif
@@ -198,9 +201,16 @@ public:
 	int m_iCurrentBackground = 0;
 	float m_flNextBackgroundSwitch = 0.0f;
 	float m_flFadeDuration = 2.0f;
-	float m_flZoomAmount = 0.05f;
+	float m_flZoomAmount = 0.15f;
 	float m_flCurrentZoom = 0.0f;
 	float m_flZoomSpeed = 0.001f;
+
+    void LoadBackgroundImages();
+    int LoadImageAsTexture(const char* imagePath);
+    unsigned char* LoadPNGFromMemory(unsigned char* data, int dataSize, int& width, int& height, int& channels);
+    unsigned char* LoadJPEGFromMemory(unsigned char* data, int dataSize, int& width, int& height, int& channels);
+    int GetNextPowerOfTwo(int value);
+    unsigned char* ResizeImage(unsigned char* src, int srcW, int srcH, int dstW, int dstH);
 	// end bg
 
 public:

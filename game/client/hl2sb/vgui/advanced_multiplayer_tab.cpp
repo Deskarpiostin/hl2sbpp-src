@@ -9,6 +9,7 @@
 #include <vgui/ISurface.h>
 #include "filesystem.h"
 #include "fmtstr.h"
+#include "luamanager.h"
 
 using namespace vgui;
 
@@ -22,6 +23,125 @@ ColorPreset GlobalPresets[] = {
     { "Yellow", 255, 255, 0 },
     { "Orange", 255, 128, 0 }
 };
+
+// Put this in your .cpp (replace your previous version).
+static void LoadHandModelsFromLua(std::vector<HandModelInfo> &out)
+{
+    out.clear();
+
+    // Choose a Lua state: prefer LGameUI on client, otherwise use L if available.
+    lua_State* Lstate = nullptr;
+    Lstate = (LGameUI ? LGameUI : L);
+
+    // Get global HandModels table
+    lua_getglobal(Lstate, "HandModels");
+    if (!lua_istable(Lstate, -1))
+    {
+        lua_pop(Lstate, 1);
+        return;
+    }
+
+    // Iterate HandModels: for each top-level key
+    lua_pushnil(Lstate); // first key
+    while (lua_next(Lstate, -2) != 0)
+    {
+        // Stack: -1 = value, -2 = key, -3 = HandModels table
+        // Get a safe string for the key (handles non-string keys)
+        const char* topKey = nullptr;
+        if (lua_type(Lstate, -2) == LUA_TSTRING)
+        {
+            topKey = lua_tostring(Lstate, -2);
+        }
+        else
+        {
+            // convert key to string representation, then pop the temporary string
+            lua_tostring(Lstate, -2); // pushes string version of key
+            topKey = lua_tostring(Lstate, -1);
+            lua_pop(Lstate, 1); // remove tostring result
+        }
+
+        if (topKey && lua_istable(Lstate, -1))
+        {
+            // Check if this entry is a direct model (has "model" field)
+            lua_getfield(Lstate, -1, "model");
+            bool hasModel = lua_isstring(Lstate, -1);
+            lua_pop(Lstate, 1);
+
+            if (hasModel)
+            {
+                HandModelInfo info;
+                info.key = topKey;
+
+                lua_getfield(Lstate, -1, "model");
+                info.model = lua_isstring(Lstate, -1) ? lua_tostring(Lstate, -1) : "";
+                lua_pop(Lstate, 1);
+
+                lua_getfield(Lstate, -1, "skin");
+                info.skin = lua_isnumber(Lstate, -1) ? (int)lua_tointeger(Lstate, -1) : 0;
+                lua_pop(Lstate, 1);
+
+                lua_getfield(Lstate, -1, "name");
+                info.name = lua_isstring(Lstate, -1) ? lua_tostring(Lstate, -1) : std::string(topKey);
+                lua_pop(Lstate, 1);
+
+                out.push_back(info);
+            }
+            else
+            {
+                // Nested table (like default = { combine = {...}, citizen = {...} })
+                lua_pushnil(Lstate); // first subkey
+                while (lua_next(Lstate, -2) != 0)
+                {
+                    // -1 = subvalue table, -2 = subkey
+                    const char* subKey = nullptr;
+                    if (lua_type(Lstate, -2) == LUA_TSTRING)
+                        subKey = lua_tostring(Lstate, -2);
+                    else
+                    {
+                        lua_tostring(Lstate, -2);
+                        subKey = lua_tostring(Lstate, -1);
+                        lua_pop(Lstate, 1);
+                    }
+
+                    if (subKey && lua_istable(Lstate, -1))
+                    {
+                        HandModelInfo info;
+                        // For issuing c_handmodel we prefer the actual subkey (e.g. "combine")
+                        info.key = subKey;
+
+                        lua_getfield(Lstate, -1, "model");
+                        info.model = lua_isstring(Lstate, -1) ? lua_tostring(Lstate, -1) : "";
+                        lua_pop(Lstate, 1);
+
+                        lua_getfield(Lstate, -1, "skin");
+                        info.skin = lua_isnumber(Lstate, -1) ? (int)lua_tointeger(Lstate, -1) : 0;
+                        lua_pop(Lstate, 1);
+
+                        lua_getfield(Lstate, -1, "name");
+                        std::string subName = lua_isstring(Lstate, -1) ? lua_tostring(Lstate, -1) : std::string(subKey);
+                        lua_pop(Lstate, 1);
+
+                        // Label like "Default - Combine"
+                        info.name = std::string(topKey) + " - " + subName;
+
+                        out.push_back(info);
+                    }
+
+                    // pop subvalue, keep subkey for lua_next
+                    lua_pop(Lstate, 1);
+                }
+            }
+        }
+
+        // pop value, keep key for next iteration
+        lua_pop(Lstate, 1);
+    }
+
+    // pop HandModels table
+    lua_pop(Lstate, 1);
+
+    // IMPORTANT: do NOT call lua_close on Lstate (it's a global/shared engine state).
+}
 
 static void ApplyColorToConvarsByTarget( int target, int r, int g, int b )
 {
@@ -264,17 +384,13 @@ void CAdvancedOptionsMultiplayer::OnTick()
         }
     }
 
-	sel = m_pHandModelSelector->GetActiveItem();
-	if (sel >= 0 && sel < m_HandModelPaths.Count())
-	{
-		const char* handConVars[] = { "citizen", "combine", "refugee", "cstrike", "dod", "default" };
-		if (sel < ARRAYSIZE(handConVars))
-		{
-			char cmd[256];
-			Q_snprintf(cmd, sizeof(cmd), "c_handmodel %s", handConVars[sel]);
-			engine->ClientCmd_Unrestricted(cmd);
-		}
-	}
+    sel = m_pHandModelSelector->GetActiveItem();
+    if (sel >= 0 && sel < (int)m_HandModels.size())
+    {
+        char cmd[256];
+        Q_snprintf(cmd, sizeof(cmd), "c_handmodel %s", m_HandModels[sel].key.c_str());
+        engine->ClientCmd_Unrestricted(cmd);
+    }
 }
 
 void CAdvancedOptionsMultiplayer::OnCommand( const char *command )
@@ -430,35 +546,57 @@ void CAdvancedOptionsMultiplayer::PerformLayout()
         );
     }
     
-	m_HandModelPaths.RemoveAll();
-	m_pHandModelSelector->DeleteAllItems();
+    // --------- populate m_HandModelSelector from Lua (fallback to static) ----------
+    m_pHandModelSelector->DeleteAllItems();
+    m_HandModels.clear();
 
-	struct HandModelEntry { const char* name; const char* path; };
-	HandModelEntry models[] = {
-		{ "Citizen", "models/weapons/c_arms_citizen.mdl" },
-		{ "Combine", "models/weapons/c_arms_combine.mdl" },
-		{ "Refugee", "models/weapons/c_arms_refugee.mdl" },
-		{ "CS:S", "models/weapons/c_arms_cstrike.mdl" },
-		{ "DoD", "models/weapons/c_arms_dod.mdl" },
-		{ "Default", "" },
-	};
+    // try to load from lua/handmodels.lua
+    LoadHandModelsFromLua(m_HandModels);
 
-	for (int i = 0; i < ARRAYSIZE(models); i++)
-	{
-		m_HandModelPaths.AddToTail(models[i].path);
-		m_pHandModelSelector->AddItem(models[i].name, nullptr);
-	}
+    if (m_HandModels.empty())
+    {
+        // fallback to original static list
+        struct HandModelEntry { const char* key; const char* path; const char* name; int skin; };
+        HandModelEntry models[] = {
+            { "citizen",     "models/weapons/c_arms_citizen.mdl", "Citizen", 0 },
+            { "combine",     "models/weapons/c_arms_combine.mdl", "Combine", 0 },
+            { "refugee",     "models/weapons/c_arms_refugee.mdl", "Refugee", 0 },
+            { "cstrike",     "models/weapons/c_arms_cstrike.mdl", "CS:S", 0 },
+            { "dod",         "models/weapons/c_arms_dod.mdl", "DOD:S", 0 },
+            { "darkcitizen", "models/weapons/c_arms_citizen.mdl", "Dark Citizen", 1 },
+            { "zombie",      "models/weapons/c_arms_citizen.mdl", "Zombie", 2 },
+            { "default",     "", "Default", 0 }
+        };
 
-	const char* c_handmodel = cvar->FindVar("c_handmodel")->GetString();
-	int selIndex = 0;
-	if (strcmp(c_handmodel, "citizen") == 0) selIndex = 0;
-	else if (strcmp(c_handmodel, "combine") == 0) selIndex = 1;
-	else if (strcmp(c_handmodel, "refugee") == 0) selIndex = 2;
-	else if (strcmp(c_handmodel, "cstrike") == 0) selIndex = 3;
-	else if (strcmp(c_handmodel, "dod") == 0) selIndex = 4;
-	else if (strcmp(c_handmodel, "default") == 0) selIndex = 5;
+        for (int i = 0; i < ARRAYSIZE(models); ++i)
+        {
+            HandModelInfo info;
+            info.key = models[i].key;
+            info.model = models[i].path;
+            info.skin = models[i].skin;
+            info.name = models[i].name;
+            m_HandModels.push_back(info);
+        }
+    }
 
-	m_pHandModelSelector->ActivateItem(selIndex);
+    // fill the combo box with friendly names
+    for (size_t i = 0; i < m_HandModels.size(); ++i)
+    {
+        m_pHandModelSelector->AddItem(m_HandModels[i].name.c_str(), nullptr);
+    }
+
+    // determine selection index from cvar
+    const char* c_handmodel = cvar->FindVar("c_handmodel")->GetString();
+    int selIndex = 0;
+    for (size_t i = 0; i < m_HandModels.size(); ++i)
+    {
+        if (Q_stricmp(c_handmodel, m_HandModels[i].key.c_str()) == 0)
+        {
+            selIndex = (int)i;
+            break;
+        }
+    }
+    m_pHandModelSelector->ActivateItem(selIndex);
 
 	int handX = 10;
 	int handY = comboY + comboH + 80;

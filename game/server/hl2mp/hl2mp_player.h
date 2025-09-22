@@ -148,11 +148,11 @@ public:
 	virtual void StartTaunt(Activity aDance);
 	virtual void EndTaunt();
 	virtual bool IsTaunting() const { return m_bTaunting; }
-	virtual Activity GetDanceAct() const { return m_aCurrentTaunt; } 
+	virtual Activity GetDanceAct() const { return m_aCurrentTaunt; }
 
-private:
+public:
     CUtlString m_CurrentHandModel;
-
+private:
 
 	CNetworkQAngle( m_angEyeAngles );
 	CHL2MPPlayerAnimState *m_PlayerAnimState;

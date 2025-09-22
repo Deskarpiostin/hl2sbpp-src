@@ -231,7 +231,6 @@ void VGui_CreateGlobalPanels( void )
 	touch_panel->Create( toolParent );
 
 #ifdef HL2SB
-	advancedoptpanel->Create(GameUiDll);
 	smlmenu->Create(gameParent);
 	maplist->Create(GameUiDll);
 #endif
@@ -249,6 +248,8 @@ void VGui_CreateGlobalPanels( void )
 #ifdef SIXENSE
 	g_pSixenseInput->CreateGUI( gameToolParent );
 #endif
+
+	advancedoptpanel->Create(GameUiDll);
 }
 
 void VGui_Shutdown()

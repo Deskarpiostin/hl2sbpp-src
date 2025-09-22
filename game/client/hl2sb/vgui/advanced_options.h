@@ -40,7 +40,7 @@ protected:
 
 	virtual void OnClose();
 
-private:
+public:
     vgui::PropertySheet *m_pTabSheet;
 	CAdvancedOptionsMultiplayer *m_pMultiplayerPage;
 	CAdvancedOptionsGameplay	*m_pGameplayPage;
