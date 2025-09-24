@@ -17,13 +17,13 @@
 #include <vgui_controls/Label.h>
 #include "ienginevgui.h"
 #include "filesystem.h"
-#include "menu/pngbutton.h"
+#include "menu/imageextbutton.h"
 
-class PngImagePanel : public PngButton
+class PngImagePanel : public ImageExtButton
 {
 public:
     PngImagePanel(vgui::Panel *parent, const char *panelName, const char* normalImage)
-        : PngButton(parent, panelName, normalImage)
+        : ImageExtButton(parent, panelName, normalImage)
     {
         m_bIgnoreInput = true;
     }
@@ -59,23 +59,29 @@ public:
 		m_pGameMode->SetText( gameModeName );
 	}
 
-	void setMapName( const char *mapName )
+	void setMapName(const char* mapName)
 	{
-		m_pMapName->SetText( mapName);
+		m_pMapName->SetText(mapName);
 
-		char imageName[ MAX_PATH ];
-		Q_snprintf( imageName, sizeof( imageName ), "maps/thumb/%s.png", mapName );
+		char imageName[MAX_PATH] = "";
 
-		if ( g_pFullFileSystem->FileExists( imageName, "MOD" ) )
+		FileFindHandle_t findhandle;
+		char searchPattern[MAX_PATH];
+		Q_snprintf(searchPattern, sizeof(searchPattern), "maps/thumb/%s.*", mapName);
+
+		const char* foundFile = g_pFullFileSystem->FindFirstEx(searchPattern, "MOD", &findhandle);
+		if (foundFile && *foundFile)
 		{
-			m_pMapIcon->DeletePanel();
-			m_pMapIcon = new PngImagePanel( this, "PNGPanel", imageName );
+			Q_snprintf(imageName, sizeof(imageName), "maps/thumb/%s", foundFile);
+			g_pFullFileSystem->FindClose(findhandle);
 		}
 		else
 		{
-			m_pMapIcon->DeletePanel();
-			m_pMapIcon = new PngImagePanel( this, "PNGPanel", "maps/thumb/placeholder.png" );
+			Q_strncpy(imageName, "maps/thumb/placeholder.png", sizeof(imageName));
 		}
+
+		m_pMapIcon->DeletePanel();
+		m_pMapIcon = new PngImagePanel(this, "PNGPanel", imageName);
 
 		m_pMapIcon->SetBounds(
 			10, 10,

@@ -30,6 +30,9 @@
 #include "VGuiMatSurface/IMatSystemSurface.h"
 #include "tier0/memalloc.h"
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
 using namespace vgui;
 
 #include "GameConsole.h"
@@ -2044,20 +2047,12 @@ int CBasePanel::LoadImageAsTexture(const char* imagePath)
         int fileSize = buf.TellPut();
         unsigned char* fileData = (unsigned char*)buf.Base();
 
-        const char* ext = Q_GetFileExtension(imagePath);
-        if (ext && !Q_stricmp(ext, "png"))
-        {
-            imageData = LoadPNGFromMemory(fileData, fileSize, width, height, channels);
-        }
-        else if (ext && (!Q_stricmp(ext, "jpg") || !Q_stricmp(ext, "jpeg")))
-        {
-            imageData = LoadJPEGFromMemory(fileData, fileSize, width, height, channels);
-        }
-        else
-        {
-            Warning("Unsupported image extension: %s\n", imagePath);
-            return -1;
-        }
+		imageData = LoadImageFromMemory(fileData, fileSize, width, height, channels);
+		if (!imageData)
+		{
+			Warning("Unsupported or corrupt image: %s\n", imagePath);
+			return -1;
+		}
     }
 
     if (!imageData || width <= 0 || height <= 0)
@@ -2160,128 +2155,14 @@ unsigned char* CBasePanel::ResizeImage(unsigned char* src, int srcW, int srcH, i
 	return dst;
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: Load PNG from memory using libpng
-//-----------------------------------------------------------------------------
-unsigned char* CBasePanel::LoadPNGFromMemory(unsigned char* data, int dataSize, int& width, int& height, int& channels)
+unsigned char* CBasePanel::LoadImageFromMemory(unsigned char* data, int dataSize, int& width, int& height, int& channels)
 {
-	png_structp png = png_create_read_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
-	if (!png)
-		return nullptr;
-	
-	png_infop info = png_create_info_struct(png);
-	if (!info)
-	{
-		png_destroy_read_struct(&png, nullptr, nullptr);
-		return nullptr;
-	}
-	
-	if (setjmp(png_jmpbuf(png)))
-	{
-		png_destroy_read_struct(&png, &info, nullptr);
-		return nullptr;
-	}
-	
-	struct PNGMemoryReader
-	{
-		unsigned char* data;
-		size_t size;
-		size_t pos;
-	} reader = { data, (size_t)dataSize, 0 };
-	
-	png_set_read_fn(png, &reader, [](png_structp png, png_bytep outBytes, png_size_t byteCount) {
-		PNGMemoryReader* reader = (PNGMemoryReader*)png_get_io_ptr(png);
-		if (reader->pos + byteCount > reader->size)
-			byteCount = reader->size - reader->pos;
-		memcpy(outBytes, reader->data + reader->pos, byteCount);
-		reader->pos += byteCount;
-	});
-	
-	png_read_info(png, info);
-	
-	width = png_get_image_width(png, info);
-	height = png_get_image_height(png, info);
-	png_byte color_type = png_get_color_type(png, info);
-	png_byte bit_depth = png_get_bit_depth(png, info);
-	
-	if (bit_depth == 16)
-		png_set_strip_16(png);
-	
-	if (color_type == PNG_COLOR_TYPE_PALETTE)
-		png_set_palette_to_rgb(png);
-	
-	if (color_type == PNG_COLOR_TYPE_GRAY && bit_depth < 8)
-		png_set_expand_gray_1_2_4_to_8(png);
-	
-	if (png_get_valid(png, info, PNG_INFO_tRNS))
-		png_set_tRNS_to_alpha(png);
-	
-	png_read_update_info(png, info);
-	
-	channels = png_get_channels(png, info);
-	int rowBytes = png_get_rowbytes(png, info);
-	
-	unsigned char* imageData = (unsigned char*)MemAlloc_Alloc(rowBytes * height, __FILE__, __LINE__);
-	png_bytep* rowPointers = (png_bytep*)MemAlloc_Alloc(sizeof(png_bytep) * height, __FILE__, __LINE__);
-	
-	for (int y = 0; y < height; y++)
-		rowPointers[y] = imageData + y * rowBytes;
-	
-	png_read_image(png, rowPointers);
-	
-	MemAlloc_Free(rowPointers);
-	png_destroy_read_struct(&png, &info, nullptr);
-	
-	return imageData;
-}
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-struct JpegErrorManager {
-    jpeg_error_mgr pub;
-    jmp_buf setjmpBuffer;
-};
-
-void JpegErrorExit(j_common_ptr cinfo) {
-    JpegErrorManager* err = (JpegErrorManager*)cinfo->err;
-    longjmp(err->setjmpBuffer, 1);
-}
-
-unsigned char* CBasePanel::LoadJPEGFromMemory(unsigned char* data, int dataSize, int& width, int& height, int& channels)
-{
-    jpeg_decompress_struct cinfo;
-    JpegErrorManager jerr;
-
-    cinfo.err = jpeg_std_error(&jerr.pub);
-    jerr.pub.error_exit = JpegErrorExit;
-
-    if (setjmp(jerr.setjmpBuffer)) {
-        jpeg_destroy_decompress(&cinfo);
-        Warning("JPEG decode failed (corrupt or unsupported file)\n");
-        return nullptr;
+    unsigned char* imageData = stbi_load_from_memory(data, dataSize, &width, &height, &channels, 4);
+    channels = 4; // we forced RGBA
+    if (!imageData)
+    {
+        Warning("Failed to load image: %s\n", stbi_failure_reason());
     }
-
-    jpeg_create_decompress(&cinfo);
-    jpeg_mem_src(&cinfo, data, dataSize);
-    jpeg_read_header(&cinfo, TRUE);
-    jpeg_start_decompress(&cinfo);
-
-    width = cinfo.output_width;
-    height = cinfo.output_height;
-    channels = cinfo.output_components;
-
-    size_t bufferSize = (size_t)width * height * channels;
-	unsigned char* imageData = (unsigned char*)MemAlloc_Alloc(bufferSize, __FILE__, __LINE__);
-
-    while (cinfo.output_scanline < cinfo.output_height) {
-        unsigned char* rowPtr = imageData + (cinfo.output_scanline * width * channels);
-        jpeg_read_scanlines(&cinfo, &rowPtr, 1);
-    }
-
-    jpeg_finish_decompress(&cinfo);
-    jpeg_destroy_decompress(&cinfo);
-
     return imageData;
 }
 

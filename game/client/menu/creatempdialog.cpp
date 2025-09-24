@@ -448,7 +448,7 @@ void MapListPanel::PerformLayout()
 
 void MapListPanel::AddButton( MapListPanel *panel, const char *image, const char *command, const char *mapName )
 {
-    PngButton *btn = new PngButton(panel, mapName, image, image, image, command);
+    ImageExtButton *btn = new ImageExtButton(panel, mapName, image, image, image, command);
     layoutItems.AddToTail(btn);
     panel->AddItem(NULL, btn);
     btn->SetFgColor(Color(180, 180, 180, 255));
@@ -482,25 +482,35 @@ void MapListPanel::LoadMaps(MapListPanel* panel)
         char mapName[MAX_PATH];
         Q_FileBase(pMap, mapName, sizeof(mapName));
 
-        char pngPath[MAX_PATH];
-        Q_snprintf(pngPath, sizeof(pngPath), "maps/thumb/%s.png", mapName);
+		char pngPath[MAX_PATH] = "";
+
+		FileFindHandle_t findhandle;
+		char searchPattern[MAX_PATH];
+		Q_snprintf(searchPattern, sizeof(searchPattern), "maps/thumb/%s.*", mapName);
+
+		const char* foundFile = filesystem->FindFirstEx(searchPattern, "MOD", &findhandle);
+		if (foundFile && *foundFile)
+		{
+			Q_snprintf(pngPath, sizeof(pngPath), "maps/thumb/%s", foundFile);
+			filesystem->FindClose(findhandle);
+		}
+		else
+		{
+			Q_strncpy(pngPath, "maps/thumb/placeholder.png", sizeof(pngPath));
+		}
 
         char imageCommand[MAX_PATH];
         Q_snprintf(imageCommand, sizeof(imageCommand), "select %s", mapName);
 
-        if (!filesystem->FileExists(pngPath))
-        {
-            Q_strncpy(pngPath, "maps/thumb/placeholder.png", sizeof(pngPath));
-        }
-
         AddButton(panel, pngPath, imageCommand, mapName);
     }
 
-	panel->InvalidateLayout(true);
-	panel->MoveScrollBarToTop();
+    panel->InvalidateLayout(true);
+    panel->MoveScrollBarToTop();
 
     filesystem->FindClose(findhandle);
 }
+
 
 void MapListPanel::OnCommand( const char *command )
 {
@@ -519,7 +529,7 @@ void MapListPanel::OnCommand( const char *command )
 
         for ( int i = 0; i < layoutItems.Count(); i++ )
         {
-            PngButton* btn = dynamic_cast< PngButton* >( layoutItems[ i ] );
+            ImageExtButton* btn = dynamic_cast< ImageExtButton* >( layoutItems[ i ] );
             if ( !btn ) continue;
 
             if ( Q_strcmp( btn->GetCommand(), command ) == 0 )

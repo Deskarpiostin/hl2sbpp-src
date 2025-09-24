@@ -21,9 +21,6 @@
 
 #include "ixboxsystem.h"
 
-#include "libpng/png.h"
-#include "jpeglib/jpeglib.h"
-
 #if !defined( _X360 )
 #include "xbox/xboxstubs.h"
 #endif
@@ -211,8 +208,7 @@ public:
 
     void LoadBackgroundImages();
     int LoadImageAsTexture(const char* imagePath);
-    unsigned char* LoadPNGFromMemory(unsigned char* data, int dataSize, int& width, int& height, int& channels);
-    unsigned char* LoadJPEGFromMemory(unsigned char* data, int dataSize, int& width, int& height, int& channels);
+	unsigned char* LoadImageFromMemory(unsigned char* data, int dataSize, int& width, int& height, int& channels);
     int GetNextPowerOfTwo(int value);
     unsigned char* ResizeImage(unsigned char* src, int srcW, int srcH, int dstW, int dstH);
 	// end bg

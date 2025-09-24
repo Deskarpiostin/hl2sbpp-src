@@ -10,8 +10,7 @@
 #include <vgui_controls/TextEntry.h>
 #include <vgui_controls/ComboBox.h>
 #include <vgui_controls/Label.h>
-#include "vgui_imagebutton.h"
-#include "pngbutton.h"
+#include "imageextbutton.h"
 
 using namespace vgui;
 
@@ -31,7 +30,7 @@ public:
 private:
 	CUtlVector< vgui::Panel * >		layoutItems;
 
-	PngButton *m_pSelectedButton;
+	ImageExtButton *m_pSelectedButton;
 	bool m_bMapsLoaded;
 };
 
