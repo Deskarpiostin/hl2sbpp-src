@@ -368,6 +368,14 @@ public:
 
 	CWeaponPhysicsGun();
 
+    virtual bool Deploy()
+	{
+		// ew
+		UpdatePhysgunColors();
+
+		return BaseClass::Deploy();
+	}
+
 #ifdef CLIENT_DLL
 	void GetRenderBounds( Vector& mins, Vector& maxs )
 	{
@@ -466,9 +474,14 @@ public:
 	void ItemPostFrame( void );
 	virtual bool Holster( CBaseCombatWeapon *pSwitchingTo )
 	{
-		EffectDestroy();
-		SoundDestroy();
-		return BaseClass::Holster( pSwitchingTo );
+		bool ret = BaseClass::Holster( pSwitchingTo );
+		CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
+		if ( pOwner )
+		{
+			EffectDestroy();
+			SoundDestroy();
+		}
+		return ret;
 	}
 
 	bool Reload( void );
@@ -729,11 +742,10 @@ void PlayerWeaponColorProxy::OnBind(void* pC_BaseEntity)
 			}
 			else
 			{
-				// ThePixelMoon: sometimes, it just goes blue for a moment. for the player to not notice,
-				// we're going to make it fully black instead.
-				currentR = 0;
-				currentG = 0;
-				currentB = 0;
+				// EDIT: oh yeah, this exists.
+				currentR = clamp( physgun_r.GetInt(), 0, 255 );
+				currentG = clamp( physgun_g.GetInt(), 0, 255 );
+				currentB = clamp( physgun_b.GetInt(), 0, 255 );
 			}
 		}
 
@@ -818,10 +830,10 @@ CWeaponPhysicsGun::CWeaponPhysicsGun()
 
 void CWeaponPhysicsGun::UpdatePhysgunColors( void )
 {
-#ifndef CLIENT_DLL
     CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
     if ( pOwner )
     {
+#ifndef CLIENT_DLL
         const char *pszR = engine->GetClientConVarValue( pOwner->entindex(), "physgun_r" );
         const char *pszG = engine->GetClientConVarValue( pOwner->entindex(), "physgun_g" );
         const char *pszB = engine->GetClientConVarValue( pOwner->entindex(), "physgun_b" );
@@ -832,8 +844,12 @@ void CWeaponPhysicsGun::UpdatePhysgunColors( void )
             m_iPhysgunColorG = clamp( atoi( pszG ), 0, 255 );
             m_iPhysgunColorB = clamp( atoi( pszB ), 0, 255 );
         }
-    }
+#else
+		m_iPhysgunColorR = clamp( physgun_r.GetInt(), 0, 255 );
+        m_iPhysgunColorG = clamp( physgun_g.GetInt(), 0, 255 );
+        m_iPhysgunColorB = clamp( physgun_b.GetInt(), 0, 255 );
 #endif
+    }
 }
 
 //-----------------------------------------------------------------------------

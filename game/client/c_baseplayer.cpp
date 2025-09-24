@@ -537,12 +537,12 @@ bool C_BasePlayer::IsReplay() const
 CBaseEntity	*C_BasePlayer::GetObserverTarget() const	// returns players target or NULL
 {
 #ifndef _XBOX
-	if ( IsHLTV() )
+	if ( IsHLTV() && HLTVCamera() )
 	{
 		return HLTVCamera()->GetPrimaryTarget();
 	}
 #if defined( REPLAY_ENABLED )
-	if ( IsReplay() )
+	if ( IsReplay() && ReplayCamera() )
 	{
 		return ReplayCamera()->GetPrimaryTarget();
 	}
@@ -637,12 +637,12 @@ void C_BasePlayer::SetObserverMode ( int iNewMode )
 int C_BasePlayer::GetObserverMode() const 
 { 
 #ifndef _XBOX
-	if ( IsHLTV() )
+	if ( IsHLTV() && HLTVCamera() )
 	{
 		return HLTVCamera()->GetMode();
 	}
 #if defined( REPLAY_ENABLED )
-	if ( IsReplay() )
+	if ( IsReplay() && ReplayCamera() )
 	{
 		return ReplayCamera()->GetMode();
 	}

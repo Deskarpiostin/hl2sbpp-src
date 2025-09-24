@@ -315,6 +315,9 @@ public:
 	// Physics simulation (player executes it's usercmd's here)
 	virtual void			PhysicsSimulate( void );
 
+	// Process new user settings from the engine
+	void					ClientSettingsChanged();
+
 	// Forces processing of usercmds (e.g., even if game is paused, etc.)
 	void					ForceSimulation();
 
@@ -784,31 +787,29 @@ public:
 	uint64		GetSteamIDAsUInt64( void );
 #endif
 
-	float GetRemainingMovementTimeForUserCmdProcessing() const { return m_flMovementTimeForUserCmdProcessingRemaining; }
-	float ConsumeMovementTimeForUserCmdProcessing( float flTimeNeeded )
+	int GetRemainingMovementTicksForUserCmdProcessing() const { return m_nMovementTicksForUserCmdProcessingRemaining; }
+	int ConsumeMovementTicksForUserCmdProcessing( int nTicks )
 	{
-		if ( m_flMovementTimeForUserCmdProcessingRemaining <= 0.0f )
+		if ( m_nMovementTicksForUserCmdProcessingRemaining < 0 )
 		{
-			return 0.0f;
+			return 0;
 		}
-		else if ( flTimeNeeded > m_flMovementTimeForUserCmdProcessingRemaining + FLT_EPSILON )
+		else if ( nTicks < m_nMovementTicksForUserCmdProcessingRemaining )
 		{
-			float flResult = m_flMovementTimeForUserCmdProcessingRemaining;
-			m_flMovementTimeForUserCmdProcessingRemaining = 0.0f;
-			return flResult;
+			m_nMovementTicksForUserCmdProcessingRemaining -= nTicks;
+			return nTicks;
 		}
 		else
 		{
-			m_flMovementTimeForUserCmdProcessingRemaining -= flTimeNeeded;
-			if ( m_flMovementTimeForUserCmdProcessingRemaining < 0.0f )
-				m_flMovementTimeForUserCmdProcessingRemaining = 0.0f;
-			return flTimeNeeded;
+			nTicks = m_nMovementTicksForUserCmdProcessingRemaining;
+			m_nMovementTicksForUserCmdProcessingRemaining = 0;
+			return nTicks;
 		}
 	}
 
 private:
 	// How much of a movement time buffer can we process from this user?
-	float				m_flMovementTimeForUserCmdProcessingRemaining;
+ 	float				m_nMovementTicksForUserCmdProcessingRemaining;
 
 	// For queueing up CUserCmds and running them from PhysicsSimulate
 	int					GetCommandContextCount( void ) const;
@@ -879,11 +880,14 @@ public:
 
 	char					m_szAnimExtension[32];
 
+	bool					m_bPendingClientSettings; // User client settings changed, but we're not importing them
+
 	int						m_nUpdateRate;		// user snapshot rate cl_updaterate
 	float					m_fLerpTime;		// users cl_interp
 	bool					m_bLagCompensation;	// user wants lag compenstation
 	bool					m_bPredictWeapons; //  user has client side predicted weapons
-	
+	bool					m_bRequestPredict; //  user has client prediction enabled
+
 	float		GetDeathTime( void ) { return m_flDeathTime; }
 
 	void		ClearZoomOwner( void );

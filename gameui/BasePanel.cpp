@@ -1451,6 +1451,10 @@ void CBasePanel::DrawBackgroundImage()
 	int count = m_BackgroundTextureIDs.Count();
 	int iNextBackground = (m_iCurrentBackground + 1) % count;
 
+	EnsureBackgroundTextureLoaded(m_iCurrentBackground);
+	if (count > 1)
+		EnsureBackgroundTextureLoaded(iNextBackground);
+
 	if ( m_flNextBackgroundSwitch <= 0.0f )
 		m_flNextBackgroundSwitch = frametime + switchInterval;
 
@@ -1938,127 +1942,177 @@ void CBasePanel::ApplySchemeSettings(IScheme *pScheme)
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: not much
+// Purpose: Free a single background texture
+//-----------------------------------------------------------------------------
+void CBasePanel::DestroyBackgroundTexture(int index)
+{
+    if (index < 0 || index >= m_BackgroundTextureIDs.Count())
+        return;
+
+    int texID = m_BackgroundTextureIDs[index];
+    if (texID >= 0)
+    {
+        surface()->DestroyTextureID(texID); // free GPU/system resource
+        m_BackgroundTextureIDs[index] = -1;
+        DevMsg("Unloaded background texture index %d (tex %d)\n", index, texID);
+    }
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CBasePanel::EnsureBackgroundTextureLoaded(int index)
+{
+    if (index < 0 || index >= m_BackgroundFiles.Count())
+        return;
+
+    if (m_BackgroundTextureIDs[index] >= 0)
+        return;
+
+    const char* fullPath = m_BackgroundFiles[index].String();
+    int texID = LoadImageAsTexture(fullPath);
+    if (texID != -1)
+    {
+        m_BackgroundTextureIDs[index] = texID;
+        DevMsg("Loaded background: %s -> tex %d\n", fullPath, texID);
+    }
+
+    int keepRadius = m_maxLoadedBackgrounds / 2;
+    int keepStart = max(0, index - keepRadius);
+    int keepEnd   = min(m_BackgroundFiles.Count() - 1, index + keepRadius);
+
+    for (int i = 0; i < m_BackgroundTextureIDs.Count(); ++i)
+    {
+        if (i < keepStart || i > keepEnd)
+            DestroyBackgroundTexture(i);
+    }
+}
+
+//-----------------------------------------------------------------------------
+// Purpose:
 //-----------------------------------------------------------------------------
 void CBasePanel::LoadBackgroundImages()
 {
-	m_BackgroundFiles.RemoveAll();
-	m_BackgroundTextureIDs.RemoveAll();
+    m_BackgroundFiles.RemoveAll();
+    m_BackgroundTextureIDs.RemoveAll();
 
-	FileFindHandle_t findHandle;
-	const char* pFilename = g_pFullFileSystem->FindFirstEx("backgrounds/*.*", "MOD", &findHandle);
+    FileFindHandle_t findHandle;
+    const char* pFilename = g_pFullFileSystem->FindFirstEx("backgrounds/*.*", "MOD", &findHandle);
 
-	while (pFilename)
-	{
-		if (!g_pFullFileSystem->FindIsDirectory(findHandle))
-		{
-			const char* ext = Q_GetFileExtension(pFilename);
-			if (ext)
-			{
-				char fullPath[MAX_PATH];
-				Q_snprintf(fullPath, sizeof(fullPath), "backgrounds/%s", pFilename);
+    while (pFilename)
+    {
+        if (!g_pFullFileSystem->FindIsDirectory(findHandle))
+        {
+            const char* ext = Q_GetFileExtension(pFilename);
+            if (ext)
+            {
+                char fullPath[MAX_PATH];
+                Q_snprintf(fullPath, sizeof(fullPath), "backgrounds/%s", pFilename);
 
-				int texID = -1;
+                m_BackgroundFiles.AddToTail(CUtlString(fullPath));
+                m_BackgroundTextureIDs.AddToTail(-1);
+            }
+        }
+        pFilename = g_pFullFileSystem->FindNext(findHandle);
+    }
+    g_pFullFileSystem->FindClose(findHandle);
 
-				if (!Q_stricmp(ext, "vtf"))
-				{
-					char baseName[MAX_PATH];
-					Q_StripExtension(fullPath, baseName, sizeof(baseName));
-					texID = surface()->CreateNewTextureID();
-					surface()->DrawSetTextureFile(texID, baseName, false, false);
-				}
-				else if (!Q_stricmp(ext, "png") || !Q_stricmp(ext, "jpg") || !Q_stricmp(ext, "jpeg"))
-				{
-					texID = LoadImageAsTexture(fullPath);
-				}
+    m_iCurrentBackground = 0;
+    m_flNextBackgroundSwitch = engine->Time() + 10.0f;
 
-				if (texID != -1)
-				{
-					m_BackgroundFiles.AddToTail(fullPath);
-					m_BackgroundTextureIDs.AddToTail(texID);
-					DevMsg("Loaded background: %s (ID: %d)\n", fullPath, texID);
-				}
-				else
-				{
-					Warning("Failed to load background image: %s\n", fullPath);
-				}
-			}
-		}
+    if (m_BackgroundFiles.Count() > 0)
+        EnsureBackgroundTextureLoaded(m_iCurrentBackground);
+    if (m_BackgroundFiles.Count() > 1)
+        EnsureBackgroundTextureLoaded((m_iCurrentBackground + 1) % m_BackgroundFiles.Count());
 
-		pFilename = g_pFullFileSystem->FindNext(findHandle);
-	}
-
-	g_pFullFileSystem->FindClose(findHandle);
-
-	m_iCurrentBackground = 0;
-	m_flNextBackgroundSwitch = engine->Time() + 10.0f;
-
-	DevMsg("Loaded %d background images total\n", m_BackgroundTextureIDs.Count());
+    DevMsg("Discovered %d background image files (textures loaded on demand)\n", m_BackgroundFiles.Count());
 }
+
+const int MAX_BG_TEXTURE_SIZE = 2048;
 
 int CBasePanel::LoadImageAsTexture(const char* imagePath)
 {
-    CUtlBuffer buf;
-    if (!g_pFullFileSystem->ReadFile(imagePath, "MOD", buf))
-    {
-        Warning("Could not open image file: %s\n", imagePath);
-        return -1;
-    }
-
-    int fileSize = buf.TellPut();
-    unsigned char* fileData = (unsigned char*)buf.Base();
-
-    int width = 0, height = 0, channels = 0;
     unsigned char* imageData = nullptr;
+    int width = 0, height = 0, channels = 0;
+    {
+        CUtlBuffer buf;
+        if (!g_pFullFileSystem->ReadFile(imagePath, "MOD", buf))
+        {
+            Warning("Could not open image file: %s\n", imagePath);
+            return -1;
+        }
+        int fileSize = buf.TellPut();
+        unsigned char* fileData = (unsigned char*)buf.Base();
 
-    const char* ext = Q_GetFileExtension(imagePath);
-    if (!Q_stricmp(ext, "png")) {
-        imageData = LoadPNGFromMemory(fileData, fileSize, width, height, channels);
-    } else if (!Q_stricmp(ext, "jpg") || !Q_stricmp(ext, "jpeg")) {
-        imageData = LoadJPEGFromMemory(fileData, fileSize, width, height, channels);
-    } else {
-        Warning("Unsupported image extension: %s\n", imagePath);
-        return -1;
+        const char* ext = Q_GetFileExtension(imagePath);
+        if (ext && !Q_stricmp(ext, "png"))
+        {
+            imageData = LoadPNGFromMemory(fileData, fileSize, width, height, channels);
+        }
+        else if (ext && (!Q_stricmp(ext, "jpg") || !Q_stricmp(ext, "jpeg")))
+        {
+            imageData = LoadJPEGFromMemory(fileData, fileSize, width, height, channels);
+        }
+        else
+        {
+            Warning("Unsupported image extension: %s\n", imagePath);
+            return -1;
+        }
     }
 
-    if (!imageData || width <= 0 || height <= 0) {
+    if (!imageData || width <= 0 || height <= 0)
+    {
+        if (imageData) MemAlloc_Free(imageData);
         Warning("Failed to decode image: %s\n", imagePath);
-        if (imageData) free(imageData);
         return -1;
     }
 
-	if (channels != 4) {
-		unsigned char* rgba = (unsigned char*)MemAlloc_Alloc(width * height * 4, __FILE__, __LINE__);
-		for (int i = 0; i < width * height; ++i) {
-			int srcIdx = i * channels;
-			int dstIdx = i * 4;
-			rgba[dstIdx + 0] = imageData[srcIdx + 0];
-			rgba[dstIdx + 1] = imageData[srcIdx + 1];
-			rgba[dstIdx + 2] = imageData[srcIdx + 2];
-			rgba[dstIdx + 3] = (channels == 3) ? 255 : imageData[srcIdx + 3];
-		}
-		MemAlloc_Free(imageData);
-		imageData = rgba;
-		channels = 4;
-	}
+    if (channels != 4)
+    {
+        unsigned char* rgba = (unsigned char*)MemAlloc_Alloc(width * height * 4, __FILE__, __LINE__);
+        if (!rgba)
+        {
+            MemAlloc_Free(imageData);
+            Warning("Out of memory converting to RGBA: %s\n", imagePath);
+            return -1;
+        }
+
+        for (int i = 0; i < width * height; ++i)
+        {
+            int srcIdx = i * channels;
+            int dstIdx = i * 4;
+            rgba[dstIdx + 0] = imageData[srcIdx + 0];
+            rgba[dstIdx + 1] = imageData[srcIdx + 1];
+            rgba[dstIdx + 2] = imageData[srcIdx + 2];
+            rgba[dstIdx + 3] = (channels == 3) ? 255 : imageData[srcIdx + 3];
+        }
+
+        MemAlloc_Free(imageData);
+        imageData = rgba;
+        channels = 4;
+    }
 
     int newWidth = GetNextPowerOfTwo(width);
     int newHeight = GetNextPowerOfTwo(height);
-    if (newWidth > 2048) newWidth = 2048;
-    if (newHeight > 2048) newHeight = 2048;
+
+    if (newWidth > MAX_BG_TEXTURE_SIZE) newWidth = MAX_BG_TEXTURE_SIZE;
+    if (newHeight > MAX_BG_TEXTURE_SIZE) newHeight = MAX_BG_TEXTURE_SIZE;
 
     unsigned char* finalData = imageData;
-    if (newWidth != width || newHeight != height) {
+    if (newWidth != width || newHeight != height)
+    {
         finalData = ResizeImage(imageData, width, height, newWidth, newHeight);
         MemAlloc_Free(imageData);
+        imageData = nullptr;
         width = newWidth;
         height = newHeight;
     }
 
-    int texID = surface()->CreateNewTextureID(true);
+    int texID = surface()->CreateNewTextureID(true); // procedural
     surface()->DrawSetTextureRGBA(texID, finalData, width, height, 1, false);
 
-    MemAlloc_Free(finalData);
+    if (finalData) MemAlloc_Free(finalData);
+
     return texID;
 }
 

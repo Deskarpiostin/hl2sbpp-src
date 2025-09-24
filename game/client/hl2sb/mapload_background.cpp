@@ -152,12 +152,14 @@ std::string CapitalizeFirstLetter(const char* str)
     return result;
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: Find the disconnect command, and rename it...
-//-----------------------------------------------------------------------------
+static ConCommand* g_pRealMapCommand         = nullptr;
+static ConCommand* g_pMapCommand             = nullptr;
+static ConCommand* g_pRealChangeLevelCommand = nullptr;
+static ConCommand* g_pChangeLevelCommand     = nullptr;
+
 CON_COMMAND(__map, "Start playing on specified map.")
 {
-	extern CMapLoadBG *pPanelBg;
+	extern CMapLoadBG* pPanelBg;
 
 	if ( args.ArgC() < 2 )
 	{
@@ -165,7 +167,7 @@ CON_COMMAND(__map, "Start playing on specified map.")
 		return;
 	}
 
-	const char *mapName = args[1];
+	const char* mapName = args[1];
 
 	std::string capServer = CapitalizeFirstLetter(cvar->FindVar("hostname")->GetString());
 	pPanelBg->setServerName(capServer.c_str());
@@ -177,26 +179,72 @@ CON_COMMAND(__map, "Start playing on specified map.")
 	pPanelBg->setMapName(capMap.c_str());
 
 	char cmd[MAX_PATH];
-	Q_snprintf( cmd, sizeof(cmd), "progress_enable; __real_map %s", mapName );
-	engine->ClientCmd_Unrestricted( cmd );
+	Q_snprintf(cmd, sizeof(cmd), "progress_enable; __real_map %s", mapName);
+	engine->ClientCmd_Unrestricted(cmd);
+}
+
+CON_COMMAND(__changelevel, "Custom changelevel wrapper")
+{
+	if ( args.ArgC() < 2 )
+	{
+		Msg("Usage: changelevel <mapname>\n");
+		return;
+	}
+
+	const char* mapName = args[1];
+
+	extern CMapLoadBG* pPanelBg;
+
+	std::string capServer = CapitalizeFirstLetter(cvar->FindVar("hostname")->GetString());
+	pPanelBg->setServerName(capServer.c_str());
+
+	std::string capGamemode = CapitalizeFirstLetter(cvar->FindVar("gamemode")->GetString());
+	pPanelBg->setGameModeName(capGamemode.c_str());
+
+	std::string capMap = CapitalizeFirstLetter(mapName);
+	pPanelBg->setMapName(capMap.c_str());
+
+	if (g_pRealChangeLevelCommand)
+	{
+		char cmd[MAX_PATH];
+		Q_snprintf(cmd, sizeof(cmd), "__real_changelevel %s", mapName);
+		engine->ClientCmd_Unrestricted(cmd);
+	}
 }
 
 void SwapMapCommand()
 {
-	ConCommand* _realMapCommand = dynamic_cast<ConCommand*>(g_pCVar->FindCommand("map"));
-	ConCommand* _MapCommand = dynamic_cast<ConCommand*>(g_pCVar->FindCommand("__map"));
+	ConCommand* pRealMap = dynamic_cast<ConCommand*>(g_pCVar->FindCommand("map"));
+	ConCommand* pOurMap   = dynamic_cast<ConCommand*>(g_pCVar->FindCommand("__map"));
 
-	if (!_realMapCommand)
-		return;
+	if (pRealMap && pOurMap)
+	{
+		g_pRealMapCommand = pRealMap;
+		g_pMapCommand     = pOurMap;
 
-	if (!_MapCommand)
-		return;
+		pRealMap->Shutdown();
+		pRealMap->CreateBase("__real_map", "Original map command");
+		pRealMap->Init();
 
-	_realMapCommand->Shutdown();
-	_realMapCommand->CreateBase( "__real_map", "" );
-	_realMapCommand->Init();
+		pOurMap->Shutdown();
+		pOurMap->CreateBase("map", "Custom map command");
+		pOurMap->Init();
+	}
 
-	_MapCommand->Shutdown();
-    _MapCommand->CreateBase("map", "Start playing on specified map.");
-	_MapCommand->Init();
+	ConCommand* pRealChangeLevel = dynamic_cast<ConCommand*>(g_pCVar->FindCommand("changelevel"));
+	ConCommand* pOurChangeLevel  = dynamic_cast<ConCommand*>(g_pCVar->FindCommand("__changelevel"));
+
+	if (pRealChangeLevel && pOurChangeLevel)
+	{
+		g_pRealChangeLevelCommand = pRealChangeLevel;
+		g_pChangeLevelCommand     = pOurChangeLevel;
+
+		pRealChangeLevel->Shutdown();
+		pRealChangeLevel->CreateBase("__real_changelevel", "Original changelevel command");
+		pRealChangeLevel->Init();
+
+		pOurChangeLevel->Shutdown();
+		pOurChangeLevel->CreateBase("changelevel", "Custom changelevel command");
+		pOurChangeLevel->Init();
+	}
 }

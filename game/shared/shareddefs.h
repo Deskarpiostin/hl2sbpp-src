@@ -233,6 +233,18 @@ enum CastVote
 	#define MAX_PLAYERS				33  // Absolute max players supported
 #endif
 
+// Josh: Accounts for code that may index this array by an entindex
+// of player rather than the player index... :s
+#define MAX_PLAYERS_ARRAY_SAFE		( MAX_PLAYERS + 1 )
+
+inline bool IsIndexIntoPlayerArrayValid( int iIndex )
+{
+	if ( iIndex < 0 || iIndex >= MAX_PLAYERS_ARRAY_SAFE )
+		return false;
+		
+	return true;
+}
+
 #define MAX_PLACE_NAME_LENGTH		18
 
 #define MAX_FOV						110
@@ -254,6 +266,8 @@ enum CastVote
 
 // Weapon m_iState
 #define WEAPON_IS_ONTARGET				0x40
+
+#define MAX_TEAMS_ARRAY_SAFE 	MAX_TEAMS
 
 #define WEAPON_NOT_CARRIED				0	// Weapon is on the ground
 #define WEAPON_IS_CARRIED_BY_PLAYER		1	// This client is carrying this weapon.

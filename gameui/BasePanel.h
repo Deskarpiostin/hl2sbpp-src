@@ -204,6 +204,10 @@ public:
 	float m_flZoomAmount = 0.15f;
 	float m_flCurrentZoom = 0.0f;
 	float m_flZoomSpeed = 0.001f;
+	int m_maxLoadedBackgrounds = 2;
+
+	void DestroyBackgroundTexture(int index);
+	void EnsureBackgroundTextureLoaded(int index);
 
     void LoadBackgroundImages();
     int LoadImageAsTexture(const char* imagePath);
