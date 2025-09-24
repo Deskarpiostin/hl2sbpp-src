@@ -348,6 +348,8 @@ FileWeaponInfo_t::FileWeaponInfo_t()
 	m_bAllowFlipping = true;
 	m_bBuiltRightHanded = true;
 	iViewModelFOV = 0;
+	m_bPrimaryAutomatic = true;
+	m_bSecondaryAutomatic = true;
 }
 
 #ifdef CLIENT_DLL

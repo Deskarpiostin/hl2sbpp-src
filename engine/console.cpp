@@ -1276,7 +1276,7 @@ void CConPanel::PaintBackground()
 
 	int wide = GetWide();
 	char ver[ 100 ];
-	Q_snprintf(ver, sizeof( ver ), "Source Engine %i (build %d, created for HL2SB++)", PROTOCOL_VERSION, build_number() );
+	Q_snprintf(ver, sizeof( ver ), "Source Engine %i (build %s, created for HL2SB++)", PROTOCOL_VERSION, GIT_COMMIT_HASH );
 	wchar_t unicode[ 200 ];
 	g_pVGuiLocalize->ConvertANSIToUnicode( ver, unicode, sizeof( unicode ) );
 

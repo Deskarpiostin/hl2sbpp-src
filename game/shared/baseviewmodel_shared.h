@@ -147,7 +147,8 @@ public:
 	// Should this object receive shadows?
 	virtual bool			ShouldReceiveProjectedTextures( int flags )
 	{
-		return false;
+		// @ThePixelMoon: fuck it what do i have to lose
+		return true;
 	}
 
 	// Add entity to visible view models list?

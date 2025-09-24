@@ -614,6 +614,9 @@ CBasePlayer::CBasePlayer( )
 	m_vecSmoothedVelocity.Init();
 #endif
 
+	m_flMouseDeltaX = 0.0f;
+	m_flMouseDeltaY = 0.0f;
+
 	if ( s_PlayerEdict )
 	{
 		// take the assigned edict_t and attach it

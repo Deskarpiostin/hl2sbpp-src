@@ -1937,65 +1937,61 @@ void CBasePanel::ApplySchemeSettings(IScheme *pScheme)
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Load background images
+// Purpose: not much
 //-----------------------------------------------------------------------------
 void CBasePanel::LoadBackgroundImages()
 {
 	m_BackgroundFiles.RemoveAll();
 	m_BackgroundTextureIDs.RemoveAll();
-	
-	const char* searchPatterns[] = {
-		"backgrounds/*.vtf",
-		"backgrounds/*.png", 
-		"backgrounds/*.jpg",
-		"backgrounds/*.jpeg"
-	};
-	
-	for (int patternIdx = 0; patternIdx < ARRAYSIZE(searchPatterns); patternIdx++)
+
+	FileFindHandle_t findHandle;
+	const char* pFilename = g_pFullFileSystem->FindFirstEx("backgrounds/*.*", "MOD", &findHandle);
+
+	while (pFilename)
 	{
-		FileFindHandle_t findHandle;
-		const char *pFilename = g_pFullFileSystem->FindFirstEx(searchPatterns[patternIdx], "MOD", &findHandle);
-		
-		while (pFilename)
+		if (!g_pFullFileSystem->FindIsDirectory(findHandle))
 		{
-			char fullPath[MAX_PATH];
-			Q_snprintf(fullPath, sizeof(fullPath), "backgrounds/%s", pFilename);
-			
-			int texID = -1;
 			const char* ext = Q_GetFileExtension(pFilename);
-			
-			if (!Q_stricmp(ext, "vtf"))
+			if (ext)
 			{
-				char baseName[MAX_PATH];
-				Q_StripExtension(fullPath, baseName, sizeof(baseName));
-				texID = surface()->CreateNewTextureID();
-				surface()->DrawSetTextureFile(texID, baseName, false, false);
+				char fullPath[MAX_PATH];
+				Q_snprintf(fullPath, sizeof(fullPath), "backgrounds/%s", pFilename);
+
+				int texID = -1;
+
+				if (!Q_stricmp(ext, "vtf"))
+				{
+					char baseName[MAX_PATH];
+					Q_StripExtension(fullPath, baseName, sizeof(baseName));
+					texID = surface()->CreateNewTextureID();
+					surface()->DrawSetTextureFile(texID, baseName, false, false);
+				}
+				else if (!Q_stricmp(ext, "png") || !Q_stricmp(ext, "jpg") || !Q_stricmp(ext, "jpeg"))
+				{
+					texID = LoadImageAsTexture(fullPath);
+				}
+
+				if (texID != -1)
+				{
+					m_BackgroundFiles.AddToTail(fullPath);
+					m_BackgroundTextureIDs.AddToTail(texID);
+					DevMsg("Loaded background: %s (ID: %d)\n", fullPath, texID);
+				}
+				else
+				{
+					Warning("Failed to load background image: %s\n", fullPath);
+				}
 			}
-			else if (!Q_stricmp(ext, "png") || !Q_stricmp(ext, "jpg") || !Q_stricmp(ext, "jpeg"))
-			{
-				texID = LoadImageAsTexture(fullPath);
-			}
-			
-			if (texID != -1)
-			{
-				m_BackgroundFiles.AddToTail(fullPath);
-				m_BackgroundTextureIDs.AddToTail(texID);
-				DevMsg("Loaded background: %s (ID: %d)\n", fullPath, texID);
-			}
-			else
-			{
-				Warning("Failed to load background image: %s\n", fullPath);
-			}
-			
-			pFilename = g_pFullFileSystem->FindNext(findHandle);
 		}
-		
-		g_pFullFileSystem->FindClose(findHandle);
+
+		pFilename = g_pFullFileSystem->FindNext(findHandle);
 	}
-	
+
+	g_pFullFileSystem->FindClose(findHandle);
+
 	m_iCurrentBackground = 0;
 	m_flNextBackgroundSwitch = engine->Time() + 10.0f;
-	
+
 	DevMsg("Loaded %d background images total\n", m_BackgroundTextureIDs.Count());
 }
 

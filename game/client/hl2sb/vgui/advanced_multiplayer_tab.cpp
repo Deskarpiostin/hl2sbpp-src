@@ -13,6 +13,32 @@
 
 using namespace vgui;
 
+static bool s_bPopulatingNameField = false;
+static const char *s_sPlayerNameCfg = "cfg/plus_playername.cfg";
+
+static void SavePlayerNameToFile( const char *name )
+{
+    KeyValues *kv = new KeyValues( "PlayerName" );
+    kv->SetString( "name", name ? name : "" );
+    kv->SaveToFile( g_pFullFileSystem, s_sPlayerNameCfg );
+    kv->deleteThis();
+}
+
+static void LoadPlayerNameFromFile( CUtlString &out )
+{
+    KeyValues *kv = new KeyValues( "PlayerName" );
+    if ( kv->LoadFromFile( g_pFullFileSystem, s_sPlayerNameCfg ) )
+    {
+        const char *n = kv->GetString( "name", "" );
+        out = n ? n : "";
+    }
+    else
+    {
+        out = "";
+    }
+    kv->deleteThis();
+}
+
 ColorPreset GlobalPresets[] = {
     { "Red",    255, 0, 0 },
     { "Green",  0, 255, 0 },
@@ -24,16 +50,13 @@ ColorPreset GlobalPresets[] = {
     { "Orange", 255, 128, 0 }
 };
 
-// Put this in your .cpp (replace your previous version).
 static void LoadHandModelsFromLua(std::vector<HandModelInfo> &out)
 {
     out.clear();
 
-    // Choose a Lua state: prefer LGameUI on client, otherwise use L if available.
     lua_State* Lstate = nullptr;
     Lstate = (LGameUI ? LGameUI : L);
 
-    // Get global HandModels table
     lua_getglobal(Lstate, "HandModels");
     if (!lua_istable(Lstate, -1))
     {
@@ -41,12 +64,9 @@ static void LoadHandModelsFromLua(std::vector<HandModelInfo> &out)
         return;
     }
 
-    // Iterate HandModels: for each top-level key
     lua_pushnil(Lstate); // first key
     while (lua_next(Lstate, -2) != 0)
     {
-        // Stack: -1 = value, -2 = key, -3 = HandModels table
-        // Get a safe string for the key (handles non-string keys)
         const char* topKey = nullptr;
         if (lua_type(Lstate, -2) == LUA_TSTRING)
         {
@@ -54,15 +74,13 @@ static void LoadHandModelsFromLua(std::vector<HandModelInfo> &out)
         }
         else
         {
-            // convert key to string representation, then pop the temporary string
-            lua_tostring(Lstate, -2); // pushes string version of key
+            lua_tostring(Lstate, -2);
             topKey = lua_tostring(Lstate, -1);
             lua_pop(Lstate, 1); // remove tostring result
         }
 
         if (topKey && lua_istable(Lstate, -1))
         {
-            // Check if this entry is a direct model (has "model" field)
             lua_getfield(Lstate, -1, "model");
             bool hasModel = lua_isstring(Lstate, -1);
             lua_pop(Lstate, 1);
@@ -88,7 +106,6 @@ static void LoadHandModelsFromLua(std::vector<HandModelInfo> &out)
             }
             else
             {
-                // Nested table (like default = { combine = {...}, citizen = {...} })
                 lua_pushnil(Lstate); // first subkey
                 while (lua_next(Lstate, -2) != 0)
                 {
@@ -106,7 +123,6 @@ static void LoadHandModelsFromLua(std::vector<HandModelInfo> &out)
                     if (subKey && lua_istable(Lstate, -1))
                     {
                         HandModelInfo info;
-                        // For issuing c_handmodel we prefer the actual subkey (e.g. "combine")
                         info.key = subKey;
 
                         lua_getfield(Lstate, -1, "model");
@@ -121,26 +137,20 @@ static void LoadHandModelsFromLua(std::vector<HandModelInfo> &out)
                         std::string subName = lua_isstring(Lstate, -1) ? lua_tostring(Lstate, -1) : std::string(subKey);
                         lua_pop(Lstate, 1);
 
-                        // Label like "Default - Combine"
                         info.name = std::string(topKey) + " - " + subName;
 
                         out.push_back(info);
                     }
 
-                    // pop subvalue, keep subkey for lua_next
                     lua_pop(Lstate, 1);
                 }
             }
         }
 
-        // pop value, keep key for next iteration
         lua_pop(Lstate, 1);
     }
 
-    // pop HandModels table
     lua_pop(Lstate, 1);
-
-    // IMPORTANT: do NOT call lua_close on Lstate (it's a global/shared engine state).
 }
 
 static void ApplyColorToConvarsByTarget( int target, int r, int g, int b )
@@ -352,12 +362,41 @@ void CAdvancedOptionsMultiplayer::PopulatePlayerModels()
 
 void CAdvancedOptionsMultiplayer::OnTextChanged( KeyValues *pKeyValues )
 {
+    if ( s_bPopulatingNameField )
+        return;
+
     char buf[ MAX_PATH ];
     m_pNameEntry->GetText( buf, sizeof( buf ) );
 
-	char cmd[ MAX_PATH ];
-	Q_snprintf( cmd, sizeof( cmd ), "name \"%s\"", buf );
-	engine->ClientCmd_Unrestricted( cmd );
+    char tmp[MAX_PATH];
+    int j = 0;
+    for (int i = 0; buf[i] != '\0' && j < (int)sizeof(tmp) - 1; ++i)
+    {
+        if ( buf[i] == '"' ) continue;
+        tmp[j++] = buf[i];
+    }
+    tmp[j] = '\0';
+    Q_strncpy( buf, tmp, sizeof(buf) );
+
+    // trim left
+    int start = 0;
+    while ( buf[start] && isspace((unsigned char)buf[start]) ) start++;
+    if ( start > 0 ) memmove( buf, buf + start, Q_strlen(buf + start) + 1 );
+    // trim right
+    int len = Q_strlen(buf);
+    while ( len > 0 && isspace((unsigned char)buf[len-1]) ) { buf[len-1] = '\0'; --len; }
+
+    buf[ m_pNameEntry->GetMaximumCharCount() ] = '\0';
+
+    SavePlayerNameToFile( buf );
+
+    ConVar* nameVar = cvar->FindVar( "name" );
+    if ( nameVar )
+        nameVar->SetValue( buf );
+
+    char cmd[ MAX_PATH ];
+    Q_snprintf( cmd, sizeof( cmd ), "name \"%s\"", buf );
+    engine->ClientCmd_Unrestricted( cmd );
 }
 
 void CAdvancedOptionsMultiplayer::OnTick()
@@ -432,7 +471,6 @@ void CAdvancedOptionsMultiplayer::PerformLayout()
 
     m_pNameLabel->SetBounds(12, 12, 100, 30);
     m_pNameEntry->SetBounds(97, 12, 100, 30);
-    m_pNameEntry->SetText( cvar->FindVar("name")->GetString() );
 
     ConVar *pm = cvar->FindVar("cl_playermodel");
     m_pszCurrentPM = pm->GetString();
@@ -546,16 +584,13 @@ void CAdvancedOptionsMultiplayer::PerformLayout()
         );
     }
     
-    // --------- populate m_HandModelSelector from Lua (fallback to static) ----------
     m_pHandModelSelector->DeleteAllItems();
     m_HandModels.clear();
 
-    // try to load from lua/handmodels.lua
     LoadHandModelsFromLua(m_HandModels);
 
     if (m_HandModels.empty())
     {
-        // fallback to original static list
         struct HandModelEntry { const char* key; const char* path; const char* name; int skin; };
         HandModelEntry models[] = {
             { "citizen",     "models/weapons/c_arms_citizen.mdl", "Citizen", 0 },
@@ -579,13 +614,11 @@ void CAdvancedOptionsMultiplayer::PerformLayout()
         }
     }
 
-    // fill the combo box with friendly names
     for (size_t i = 0; i < m_HandModels.size(); ++i)
     {
         m_pHandModelSelector->AddItem(m_HandModels[i].name.c_str(), nullptr);
     }
 
-    // determine selection index from cvar
     const char* c_handmodel = cvar->FindVar("c_handmodel")->GetString();
     int selIndex = 0;
     for (size_t i = 0; i < m_HandModels.size(); ++i)
@@ -606,6 +639,25 @@ void CAdvancedOptionsMultiplayer::PerformLayout()
 
     // model
     m_pPMModel->SetGroundGrid( true );
+
+	s_bPopulatingNameField = true;
+	CUtlString fileLoadedName;
+	LoadPlayerNameFromFile( fileLoadedName );
+
+	if ( fileLoadedName.Length() > 0 )
+	{
+		m_pNameEntry->SetText( fileLoadedName.Get() );
+	}
+	else
+	{
+		ConVar *nameVar = cvar->FindVar("name");
+		if ( nameVar && nameVar->GetString() && nameVar->GetString()[0] != '\0' )
+			m_pNameEntry->SetText( nameVar->GetString() );
+		else
+			m_pNameEntry->SetText( "" );
+	}
+
+	s_bPopulatingNameField = false;
 }
 
 void CAdvancedOptionsMultiplayer::OnColorPicked( KeyValues *data )

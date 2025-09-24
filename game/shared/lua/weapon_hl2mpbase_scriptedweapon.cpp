@@ -353,7 +353,10 @@ void CHL2MPScriptedWeapon::InitScriptedWeapon( void )
 		lua_pop(L, 1);
 
 		lua_getfield(L, -1, "Automatic");
-		// TODO: add
+		if (lua_isboolean(L, -1))
+			m_pLuaWeaponInfo->m_bPrimaryAutomatic = lua_toboolean(L, -1);
+		else
+			m_pLuaWeaponInfo->m_bPrimaryAutomatic = false;
 		lua_pop(L, 1);
 
 		lua_getfield(L, -1, "Ammo");
@@ -496,7 +499,10 @@ void CHL2MPScriptedWeapon::InitScriptedWeapon( void )
 		lua_pop(L, 1);
 
 		lua_getfield(L, -1, "Automatic");
-		// TODO: add
+		if (lua_isboolean(L, -1))
+			m_pLuaWeaponInfo->m_bSecondaryAutomatic = lua_toboolean(L, -1);
+		else
+			m_pLuaWeaponInfo->m_bSecondaryAutomatic = false;
 		lua_pop(L, 1);
 
 		lua_getfield(L, -1, "Ammo");
@@ -1265,7 +1271,7 @@ bool CHL2MPScriptedWeapon::Holster( CBaseCombatWeapon *pSwitchingTo )
 
 		lua_pop(L, 2);
 
-		if (pPlayer->m_CurrentHandModel != desiredModel)
+		//if (pPlayer->m_CurrentHandModel != desiredModel)
 		{
 			CBaseViewModel *pHandModel = pPlayer->GetViewModel(1);
 			if ( pHandModel )

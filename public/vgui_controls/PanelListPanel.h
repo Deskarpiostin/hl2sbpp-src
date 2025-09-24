@@ -83,7 +83,7 @@ public:
 		return &m_SortedItems;
 	}
 
-	int	ComputeVPixelsNeeded();
+	virtual int	ComputeVPixelsNeeded();
 
 protected:
 	// overrides

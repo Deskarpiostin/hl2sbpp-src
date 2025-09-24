@@ -31,10 +31,6 @@
 #include "engine/IStaticPropMgr.h"
 #include "particle_parse.h"
 #include "globalstate.h"
-#ifdef LUA_SDK
-#include "luamanager.h"
-#include <string>
-#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -480,9 +476,15 @@ CWorld::~CWorld( )
 	if ( g_pGameRules )
 	{
 		g_pGameRules->LevelShutdown();
-		//delete g_pGameRules;
+		if ( g_pGameRules )
+		{
+			DevMsg("Precache: deleting g_pGameRules %p\n", g_pGameRules);
+			delete g_pGameRules;
+			g_pGameRules = NULL;
+		}
 	}
-	g_WorldEntity = nullptr;
+	if (g_WorldEntity)
+		g_WorldEntity = NULL;
 }
 
 

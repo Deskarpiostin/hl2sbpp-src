@@ -94,7 +94,7 @@ ConVar physgun_halo_override_r( "physgun_halo_override_r", "0", FCVAR_USERINFO |
 ConVar physgun_halo_override_g( "physgun_halo_override_g", "229", FCVAR_USERINFO | FCVAR_ARCHIVE );
 ConVar physgun_halo_override_b( "physgun_halo_override_b", "238", FCVAR_USERINFO | FCVAR_ARCHIVE );
 
-ConVar physgun_light( "physgun_light", "1", FCVAR_REPLICATED );
+ConVar physgun_light( "physgun_light", "0", FCVAR_REPLICATED );
 
 static IPhysicsObject *GetPhysObjFromPhysicsBone( CBaseEntity *pEntity, short physicsbone )
 {
@@ -1542,10 +1542,10 @@ int CWeaponPhysicsGun::DrawModel( int flags )
 			C_BaseAnimating *pModel = pObject->GetBaseAnimating();;
 			if (pModel)
 			{
-				if (!pModel->m_pRagdoll)
+				if (!strcmp(pModel->GetClassname(), "15C_ServerRagdoll") == 0)
 					pObject->EntityToWorldSpace(m_worldPosition, &points[2]);
 				else
-					m_pGrabbedPhys->LocalToWorld(&points[2], m_worldPosition);
+					points[2] = tr.endpos;
 			}
 			else
 			{
@@ -1689,10 +1689,10 @@ void CWeaponPhysicsGun::ViewModelDrawn( C_BaseViewModel *pBaseViewModel )
 		C_BaseAnimating *pModel = pObject->GetBaseAnimating();;
 		if (pModel)
 		{
-			if (!pModel->m_pRagdoll)
+			if (!strcmp(pModel->GetClassname(), "15C_ServerRagdoll") == 0)
 				pObject->EntityToWorldSpace(m_worldPosition, &points[2]);
 			else
-				m_pGrabbedPhys->LocalToWorld(&points[2], m_worldPosition);
+				points[2] = tr.endpos;
 		}
 		else
 		{

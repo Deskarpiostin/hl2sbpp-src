@@ -19,40 +19,83 @@ ConVar mpdialog("mpdialog", "0");
 
 CUtlVector<const char*> hardcodedMaps;
 const char* hl2_maps[] = {
-    // Point Insertion
     "d1_trainstation_01", "d1_trainstation_02", "d1_trainstation_03", "d1_trainstation_04",
     "d1_trainstation_05", "d1_trainstation_06",
 
-    // Route Kanal
     "d1_canals_01", "d1_canals_01a", "d1_canals_02", "d1_canals_03", "d1_canals_05",
     "d1_canals_06", "d1_canals_07", "d1_canals_08", "d1_canals_09", "d1_canals_10",
     "d1_canals_11", "d1_canals_12", "d1_canals_13",
 
-    // Black Mesa East
     "d1_eli_01", "d1_eli_02",
 
-    // We Don't Go to Ravenholm...
     "d1_town_01", "d1_town_01a", "d1_town_02", "d1_town_03", "d1_town_02a", "d1_town_04", "d1_town_05",
 
-    // Highway 17
     "d2_coast_01", "d2_coast_03", "d2_coast_04", "d2_coast_05", "d2_coast_07", "d2_coast_08",
 
-    // Sandtraps
     "d2_coast_09", "d2_coast_10", "d2_coast_11", "d2_coast_12", "d2_prison_01",
 
-    // Nova Prospekt
     "d2_prison_02", "d2_prison_03", "d2_prison_04", "d2_prison_05",
 
-    // Entanglement
     "d2_prison_06", "d2_prison_07", "d2_prison_08", "d3_c17_01", "d3_c17_02", "d3_c17_03", "d3_c17_04",
     "d3_c17_05", "d3_c17_06", "d3_c17_07", "d3_c17_08", "d3_c17_09", "d3_c17_10a", "d3_c17_10b",
     "d3_c17_11", "d3_c17_12", "d3_c17_12b", "d3_c17_13",
 
-    // Our Benefactors
     "d3_citadel_01", "d3_citadel_02", "d3_citadel_03", "d3_citadel_04", "d3_citadel_05",
 
-    // Dark Energy
     "d3_breen_01"
+};
+
+const char* hl2mp_maps[] = {
+	"dm_lockdown", "dm_overwatch", "dm_powerhouse", "dm_resistance",
+	"dm_runoff", "dm_steamlab", "dm_underpass", "halls3"
+};
+
+const char* episodic_maps[] = {
+    "ep1_citadel_00",
+    "ep1_citadel_01",
+    "ep1_citadel_02",
+    "ep1_citadel_02b",
+
+    "ep1_citadel_03",
+    "ep1_citadel_04",
+
+    "ep1_c17_00",
+    "ep1_c17_00a",
+
+    "ep1_c17_01",
+    "ep1_c17_02",
+    "ep1_c17_02b",
+    "ep1_c17_02a",
+
+    "ep1_c17_05",
+    "ep1_c17_06"
+};
+
+const char* ep2_maps[] = {
+    "ep2_outland_01",
+    "ep2_outland_01a",
+
+    "ep2_outland_02",
+    "ep2_outland_03",
+    "ep2_outland_04",
+
+    "ep2_outland_05",
+    "ep2_outland_06",
+
+    "ep2_outland_06a",
+    "ep2_outland_07",
+    "ep2_outland_08",
+
+    "ep2_outland_09",
+    "ep2_outland_10",
+    "ep2_outland_10a",
+
+    "ep2_outland_11",
+    "ep2_outland_11a",
+    "ep2_outland_11b",
+
+    "ep2_outland_12",
+    "ep2_outland_12a"
 };
 
 const char* css_maps[] = {
@@ -198,6 +241,9 @@ extern ConVar hl2_mounted;
 extern ConVar portal_mounted;
 extern ConVar css_mounted;
 extern ConVar hl1_mounted;
+extern ConVar hl2mp_mounted;
+extern ConVar episodic_mounted;
+extern ConVar ep2_mounted;
 
 GameMapsPanel::GameMapsPanel(vgui::Panel *parent, const char *pName) : MapListPanel(parent, pName)
 {
@@ -219,6 +265,18 @@ GameMapsPanel::GameMapsPanel(vgui::Panel *parent, const char *pName) : MapListPa
 		for (int i = 0; i < ARRAYSIZE(hl1_maps); i++)
 			hardcodedMaps.AddToTail(hl1_maps[i]);
 
+	if (hl2mp_mounted.GetBool())
+		for (int i = 0; i < ARRAYSIZE(hl2mp_maps); i++)
+			hardcodedMaps.AddToTail(hl2mp_maps[i]);
+
+	if (episodic_mounted.GetBool())
+		for (int i = 0; i < ARRAYSIZE(episodic_maps); i++)
+			hardcodedMaps.AddToTail(episodic_maps[i]);
+
+	if (ep2_mounted.GetBool())
+		for (int i = 0; i < ARRAYSIZE(ep2_maps); i++)
+			hardcodedMaps.AddToTail(ep2_maps[i]);
+
     for (int i = 0; i < hardcodedMaps.Count(); i++)
     {
 		char pngPath[260];
@@ -234,6 +292,9 @@ GameMapsPanel::GameMapsPanel(vgui::Panel *parent, const char *pName) : MapListPa
         else
             AddButton(this, "maps/thumb/placeholder.png", command, hardcodedMaps[i]);
     }
+
+	InvalidateLayout(true);
+	MoveScrollBarToTop();
 
     PerformLayout();
 }
@@ -435,6 +496,9 @@ void MapListPanel::LoadMaps(MapListPanel* panel)
         AddButton(panel, pngPath, imageCommand, mapName);
     }
 
+	panel->InvalidateLayout(true);
+	panel->MoveScrollBarToTop();
+
     filesystem->FindClose(findhandle);
 }
 
@@ -471,7 +535,10 @@ void MapListPanel::OnCommand( const char *command )
 
 MapList::MapList( vgui::VPANEL *parent, const char *pName ) : BaseClass( NULL, "MapList" )
 {
-	SetSize( 800, 640 );
+	int iWide, iTall;
+	surface()->GetScreenSize(iWide, iTall);
+
+	SetSize( iWide/1.25, iTall/1.25 );
 	SetTitle("New Game", true);
 	
 	int screenWide, screenTall;
@@ -557,6 +624,30 @@ void MapList::OnTick()
 	BaseClass::OnTick();
 	
 	SetVisible(mpdialog.GetBool());
+}
+
+int MapListPanel::ComputeVPixelsNeeded()
+{
+    int count = layoutItems.Count();
+    if (count == 0)
+        return 0;
+
+    const int tileW = 127;
+    const int tileH = 127;
+    const int gap = 2;
+    const int leftPadding = 5;
+    int wide = GetWide();
+
+    if (wide <= tileW)
+        wide = tileW + 1;
+
+    int cols = (wide - leftPadding) / (tileW + gap);
+    if (cols < 1) cols = 1;
+
+    int rows = (count + cols - 1) / cols;
+
+    int total = rows * (tileH + gap) + leftPadding;
+    return total;
 }
 
 class MapListInterface : public CMapList

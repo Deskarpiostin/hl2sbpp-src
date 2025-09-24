@@ -1170,9 +1170,13 @@ bool CHL2GameMovement::CanAccelerate()
 	}
 #endif
 
+#ifdef HL2SB
+	return BaseClass::CanAccelerate();
+#else
 	BaseClass::CanAccelerate();
 
 	return true;
+#endif
 }
 
 

@@ -687,32 +687,16 @@ void CInput::MouseMove( CUserCmd *cmd )
 	}
 
 #ifdef ARGG
-
-
 	// adnan
-
-
 	// only set the new viewangles if we're not supposed to override them
-
-
 	if( !( g_pClientMode->OverrideViewAngles() ) )
-
-
 	{
-
-
 #endif // AS_DLL
 	// Store out the new viewangles.
 	engine->SetViewAngles( viewangles );
 #ifdef ARGG
-
-
 	} 
-
-
 	// end adnan
-
-
 #endif // AS_DLL
 }
 

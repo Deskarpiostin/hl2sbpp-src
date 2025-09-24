@@ -829,6 +829,9 @@ public:
 	// Used by gamemovement to check if the entity is stuck.
 	int m_StuckLast;
 	
+	float m_flMouseDeltaX;
+	float m_flMouseDeltaY;
+
 	// FIXME: Make these protected or private!
 
 	// This player's data that should only be replicated to 

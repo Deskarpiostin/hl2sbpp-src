@@ -26,6 +26,8 @@ public:
 	virtual void LoadMaps( MapListPanel *panel );
 	virtual void OnCommand( const char *command );
 
+	virtual int ComputeVPixelsNeeded() override;
+
 private:
 	CUtlVector< vgui::Panel * >		layoutItems;
 

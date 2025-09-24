@@ -314,6 +314,35 @@ static int CBasePlayer_GetPlayerMins (lua_State *L) {
   return 1;
 }
 
+static int CBasePlayer_StripWeapons(lua_State* L) {
+    CBasePlayer* pPlayer = luaL_checkplayer(L, 1);
+    if (!pPlayer)
+        return 0;
+
+    CUtlVector<CBaseCombatWeapon*> weapons;
+    for (int i = 0; i < pPlayer->WeaponCount(); i++) {
+        CBaseCombatWeapon* w = pPlayer->GetWeapon(i);
+        if (w)
+            weapons.AddToTail(w);
+    }
+
+    for (int i = 0; i < weapons.Count(); i++) {
+        CBaseCombatWeapon* pWeapon = weapons[i];
+
+#ifdef GAME_DLL
+        //pPlayer->RemoveWeapon(pWeapon);
+        UTIL_Remove(pWeapon);
+#endif
+    }
+
+	if (pPlayer->GetActiveWeapon())
+	{
+		pPlayer->GetActiveWeapon()->Remove();
+	}
+
+    return 0;
+}
+
 static int CBasePlayer_GetPlayerName (lua_State *L) {
   lua_pushstring(L, luaL_checkplayer(L, 1)->GetPlayerName());
   return 1;
@@ -1028,6 +1057,7 @@ static const luaL_Reg CBasePlayermeta[] = {
   {"ShouldShowHints", CBasePlayer_ShouldShowHints},
   {"SimulatePlayerSimulatedEntities", CBasePlayer_SimulatePlayerSimulatedEntities},
   {"SmoothViewOnStairs", CBasePlayer_SmoothViewOnStairs},
+  {"StripWeapons", CBasePlayer_StripWeapons},
   {"Spawn", CBasePlayer_Spawn},
   {"SwitchToNextBestWeapon", CBasePlayer_SwitchToNextBestWeapon},
   {"UpdateClientData", CBasePlayer_UpdateClientData},

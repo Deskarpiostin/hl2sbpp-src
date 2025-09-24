@@ -28,17 +28,26 @@ CMapLoadBG::CMapLoadBG( char const *panelName ) : EditablePanel( NULL, panelName
 	// Is the sole thing that makes fill the background to the entire screen regardless of the texture size
 	// Congratulations to Valve for once again give options to only one side and not both
 	SetProportional( true );
-	LoadControlSettings( "resource/loadingdialogbackground.res" );
 
-	m_pBackground = FindControl<ImagePanel> ( "LoadingImage", true );
-	m_pServerName = FindControl<Label>		( "ServerName", true );
-	m_pGradient = 	FindControl<ImagePanel> ( "Gradient", true );
-	m_pMapName = 	FindControl<Label>		( "MapName", true );
-	m_pGameMode = 	FindControl<Label>		( "GameMode", true );
-	m_pMapIcon = 	new PngImagePanel( this, "PNGPanel", "maps/thumb/placeholder.png" );
-	m_pGameLogo = 	FindControl<ImagePanel> ( "Logo", true );
+	m_pBackground = new ImagePanel(this, "LoadingImage");
+	m_pBackground->SetShouldScaleImage(true);
+	m_pBackground->SetImage("img/bg");
 
-	SetZPos(99999);
+	m_pGradient = new ImagePanel(this, "Gradient");
+	m_pGradient->SetShouldScaleImage(true);
+	m_pGradient->SetImage("img/gradient");
+
+	m_pGameLogo = new ImagePanel(this, "Logo");
+	m_pGameLogo->SetShouldScaleImage(true);
+	m_pGameLogo->SetImage("hl2sbpp");
+
+    m_pServerName = new Label(this, "ServerName", "");
+    m_pMapName    = new Label(this, "MapName", "");
+    m_pGameMode   = new Label(this, "GameMode", "");
+
+    m_pMapIcon = new PngImagePanel(this, "PNGPanel", "maps/thumb/placeholder.png");
+
+    SetZPos(99999);
 }
 
 //-----------------------------------------------------------------------------
@@ -56,84 +65,78 @@ void CMapLoadBG::OnThink()
 {
     BaseClass::OnThink();
 
-    if (m_pGameLogo)
-    {
-        float flTime = gpGlobals->curtime;
-        float flWave = sin(flTime * 2.0f);
-        float flScale = (flWave + 1.0f) * 0.5f;
+	if (m_pGameLogo)
+	{
+		float flTime = gpGlobals->curtime;
+		float flWave = sin(flTime * 2.0f);
+		float flScale = (flWave + 1.0f) * 0.5f;
 
-        float flMinScale = 1.0f;
-        float flMaxScale = 1.2f;
-        float flCurrentScale = flMinScale + (flMaxScale - flMinScale) * flScale;
+		float flMinScale = 1.0f;
+		float flMaxScale = 1.2f;
+		float flCurrentScale = flMinScale + (flMaxScale - flMinScale) * flScale;
 
-        int newWide = (int)(m_iLogoBaseWide * flCurrentScale);
-        int newTall = (int)(m_iLogoBaseTall * flCurrentScale);
+		int newWide = (int)(m_iLogoBaseWide * flCurrentScale);
+		int newTall = (int)(m_iLogoBaseTall * flCurrentScale);
 
-        int centerX = m_iLogoBaseX + m_iLogoBaseWide / 2;
-        int centerY = m_iLogoBaseY + m_iLogoBaseTall / 2;
+		int iWide, iTall;
+		surface()->GetScreenSize(iWide, iTall);
 
-        m_pGameLogo->SetSize(newWide, newTall);
-        m_pGameLogo->SetPos(centerX - newWide / 2, centerY - newTall / 2);
-    }
+		int centerX = iWide / 2;
+		int centerY = iTall / 2;
+
+		m_pGameLogo->SetSize(newWide, newTall);
+		m_pGameLogo->SetPos(centerX - newWide / 2, centerY - newTall / 2);
+	}
 }
 
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
-void CMapLoadBG::ApplySchemeSettings( IScheme *pScheme )
+void CMapLoadBG::ApplySchemeSettings(IScheme *pScheme)
 {
-    BaseClass::ApplySchemeSettings( pScheme );
+    BaseClass::ApplySchemeSettings(pScheme);
 
     int iWide, iTall;
     surface()->GetScreenSize(iWide, iTall);
     SetSize(iWide, iTall);
 
-    int iconWidth  = iWide / 12.75;// 12.75% of screen width
-    int iconX = iWide * 0.01;      // 1% from left
-    int iconY = iTall * 0.02;      // 2% from top
+    m_pBackground->SetBounds(0, 0, iWide, iTall);
+	m_pGradient->SetBounds(0, 0, 400, 130);
+    m_pGradient->SetAlpha(128);
 
-	m_pGradient->SetBorder( nullptr );
-	m_pBackground->SetBorder( nullptr );
-	m_pGameLogo->SetBorder( nullptr );
+	m_iLogoBaseWide = iWide / 6;
+	m_iLogoBaseTall = m_iLogoBaseWide; // square
 
-	m_pGradient->SetAlpha(128);
+	int centerX = iWide / 2;
+	int centerY = iTall / 2;
 
-    vgui::HFont hFont = pScheme->GetFont("Default", true);
-    hFont = vgui::surface()->CreateFont();
-    vgui::surface()->SetFontGlyphSet(hFont, "Arial", 24, 800, 0, 0, NULL);
+	int logoX = centerX - m_iLogoBaseWide / 2;
+	int logoY = centerY - m_iLogoBaseTall / 2;
+
+	m_pGameLogo->SetBounds(logoX, logoY, m_iLogoBaseWide, m_iLogoBaseTall);
+
+    vgui::HFont hFont = vgui::surface()->CreateFont();
+    int fontSize = iTall / 30;
+    vgui::surface()->SetFontGlyphSet(hFont, "Arial", fontSize, 500, 0, 0, NULL);
 
     m_pServerName->SetFont(hFont);
-	m_pServerName->SizeToContents();
-	m_pMapName->SetFont(hFont);
-	m_pMapName->SizeToContents();
-	m_pGameMode->SetFont(hFont);
-	m_pGameMode->SizeToContents();
+    m_pMapName->SetFont(hFont);
+    m_pGameMode->SetFont(hFont);
 
-	m_pMapIcon->SetBounds(
-		10, 10,
-		110, 110
-	);
+	Color black(0, 0, 0, 255);
+	m_pServerName->SetFgColor(black);
+	m_pMapName->SetFgColor(black);
+	m_pGameMode->SetFgColor(black);
 
-    int labelX = iconX + iconWidth + (iWide * 0.01);
-    int labelY = iconY + 5;
-    m_pServerName->SetPos(labelX, labelY);
-    m_pServerName->SetWide(iWide - labelX - (iWide * 0.01));
-	m_pServerName->SetFgColor(COLOR_BLACK);
+    int iconX = iWide * 0.01;
+    int iconY = iTall * 0.01;
+    m_pMapIcon->SetBounds(iconX, iconY, 200, 200);
 
-	m_pMapName->SetPos(labelX, labelY + m_pServerName->GetTall() + 5);
-    m_pMapName->SetWide(iWide - labelX - (iWide * 0.01));
-	m_pMapName->SetFgColor(COLOR_BLACK);
+    m_pServerName->SetPos(135, 20);
+    m_pServerName->SetWide(400);
 
-	m_pGameMode->SetPos(labelX, m_pMapName->GetYPos() + m_pMapName->GetTall() + 5);
-    m_pGameMode->SetWide(iWide - labelX - (iWide * 0.01));
-	m_pGameMode->SetFgColor(COLOR_BLACK);
+    m_pMapName->SetPos(135, 20 + m_pServerName->GetTall() + iTall * 0.01);
+    m_pMapName->SetWide(400);
 
-	if (m_pGameLogo)
-    {
-        m_iLogoBaseWide = m_pGameLogo->GetWide();
-        m_iLogoBaseTall = m_pGameLogo->GetTall();
-        m_pGameLogo->GetPos(m_iLogoBaseX, m_iLogoBaseY);
-    }
+    m_pGameMode->SetPos(135, m_pMapName->GetYPos() + m_pMapName->GetTall() + iTall * 0.01);
+    m_pGameMode->SetWide(400);
 }
 
 std::string CapitalizeFirstLetter(const char* str)

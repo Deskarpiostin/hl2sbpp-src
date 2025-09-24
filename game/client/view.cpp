@@ -746,8 +746,8 @@ void CViewRender::SetUpViews()
 	float flFOVOffset = fDefaultFov - view.fov;
 
 	//Adjust the viewmodel's FOV to move with any FOV offsets on the viewer's end
-	view.fovViewmodel = fabs( g_pClientMode->GetViewModelFOV() - flFOVOffset );
-
+	view.fovViewmodel = fabs( g_pClientMode->GetViewModelFOV() - MIN( flFOVOffset, g_pClientMode->GetViewModelFOV() ) );
+	
 	if ( UseVR() )
 	{
 		// Let the headtracking read the status of the HMD, etc.
@@ -1290,8 +1290,13 @@ void CViewRender::Render( vrect_t *rect )
 
 						//DevMsg("camera attachment found\n");
 					}
-					view.angles += cameraAngles * cl_camera_anim_intensity.GetFloat();
-					view.origin += cameraOrigin * cl_camera_anim_intensity.GetFloat();
+					
+					// hacky hack
+					if (!GetActiveWeapon()->IsIronsighted())
+					{
+						view.angles += cameraAngles * cl_camera_anim_intensity.GetFloat();
+						view.origin += cameraOrigin * cl_camera_anim_intensity.GetFloat();
+					}
 				}
 			}
 		}

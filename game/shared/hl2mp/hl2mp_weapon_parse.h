@@ -27,7 +27,6 @@ public:
 
 
 public:
-
 	int m_iPlayerDamage;
 };
 

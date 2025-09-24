@@ -906,6 +906,9 @@ ConVar hl2_mounted("hl2_mounted", "0", FCVAR_DEVELOPMENTONLY);
 ConVar portal_mounted("portal_mounted", "0", FCVAR_DEVELOPMENTONLY);
 ConVar css_mounted("css_mounted", "0", FCVAR_DEVELOPMENTONLY);
 ConVar hl1_mounted("hl1_mounted", "0", FCVAR_DEVELOPMENTONLY);
+ConVar hl2mp_mounted("hl2mp_mounted", "0", FCVAR_DEVELOPMENTONLY);
+ConVar ep2_mounted("ep2_mounted", "0", FCVAR_DEVELOPMENTONLY);
+ConVar episodic_mounted("episodic_mounted", "0", FCVAR_DEVELOPMENTONLY);
 #endif
 
 //-----------------------------------------------------------------------------
@@ -1018,7 +1021,6 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
         "hl1/hl1_pak_dir.vpk",
         "episodic/ep1_pak_dir.vpk",
         "ep2/ep2_pak_dir.vpk",
-        "garrysmod/garrysmod_dir.vpk",
         "portal/portal_sound_vo_english_dir.vpk",
         "portal/portal_pak_dir.vpk",
         "cstrike/cstrike_english_dir.vpk",
@@ -1037,14 +1039,16 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
         "hl1",
         "dod",
         "portal",
-        "cstrike",
-        "garrysmod"
+        "cstrike"
     };
 
     bool cssMounted    = false;
     bool hl2Mounted    = false;
     bool portalMounted = false;
     bool hl1Mounted    = false;
+	bool hl2mpMounted  = false;
+	bool episodicMounted = false;
+	bool ep2Mounted    = false;
 
     for (int i = 0; i < ARRAYSIZE(relativeTargets); ++i)
     {
@@ -1074,14 +1078,21 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 				g_pFullFileSystem->AddSearchPath(candidate, "GAME", PATH_ADD_TO_TAIL);
 			}
 
-            if (Q_stristr(candidate, "cstrike"))
-                cssMounted = true;
-            else if (Q_stristr(candidate, "hl2mp") || Q_stristr(candidate, "episodic") || Q_stristr(candidate, "ep2"))
-                hl2Mounted = true;
-            else if (Q_stristr(candidate, "portal"))
-                portalMounted = true;
-            else if (Q_stristr(candidate, "hl1"))
-                hl1Mounted = true;
+			if (Q_stristr(candidate, "cstrike"))
+				cssMounted = true;
+			if (Q_stristr(candidate, "hl1"))
+				hl1Mounted = true;
+			if (Q_stristr(candidate, "hl2mp"))
+				hl2mpMounted = true;
+			if (Q_stristr(candidate, "hl2"))
+				hl2Mounted = true;
+			if (Q_stristr(candidate, "episodic"))
+				episodicMounted = true;
+			if (Q_stristr(candidate, "ep2"))
+				ep2Mounted = true;
+			if (Q_stristr(candidate, "portal"))
+				portalMounted = true;
+
         }
         else
             DevMsg("Skipping missing: %s\n", candidate);
@@ -1091,11 +1102,9 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
     hl2_mounted.SetValue(hl2Mounted ? 1 : 0);
     portal_mounted.SetValue(portalMounted ? 1 : 0);
     hl1_mounted.SetValue(hl1Mounted ? 1 : 0);
-
-    DevMsg("css_mounted set to %d\n", cssMounted ? 1 : 0);
-    DevMsg("hl2_mounted set to %d\n", hl2Mounted ? 1 : 0);
-    DevMsg("portal_mounted set to %d\n", portalMounted ? 1 : 0);
-    DevMsg("hl1_mounted set to %d\n", hl1Mounted ? 1 : 0);
+	hl2mp_mounted.SetValue(hl2mpMounted ? 1 : 0);
+	episodic_mounted.SetValue(episodicMounted ? 1 : 0);
+	ep2_mounted.SetValue(ep2Mounted ? 1 : 0);
 #endif
 
 #ifdef WORKSHOP_IMPORT_ENABLED

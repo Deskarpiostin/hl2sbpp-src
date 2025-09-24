@@ -646,6 +646,8 @@ void CHL2MP_Player::PostThink( void )
 
 	lua_pop(L, 2);
 
+	PrecacheModel( desiredModel.Get() );
+
 	if (m_CurrentHandModel != desiredModel)
 	{
 		CBaseViewModel *pHandModel = GetViewModel(1);
