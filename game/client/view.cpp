@@ -1292,10 +1292,14 @@ void CViewRender::Render( vrect_t *rect )
 					}
 					
 					// hacky hack
-					if (!GetActiveWeapon()->IsIronsighted())
+					CBaseCombatWeapon *pWeapon = GetActiveWeapon();
+					if (pWeapon)
 					{
-						view.angles += cameraAngles * cl_camera_anim_intensity.GetFloat();
-						view.origin += cameraOrigin * cl_camera_anim_intensity.GetFloat();
+						if (pWeapon->IsIronsighted() == false)
+						{
+							view.angles += cameraAngles * cl_camera_anim_intensity.GetFloat();
+							view.origin += cameraOrigin * cl_camera_anim_intensity.GetFloat();
+						}
 					}
 				}
 			}

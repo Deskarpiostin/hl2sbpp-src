@@ -28,6 +28,7 @@
 #include "materialsystem/imaterialsystem.h"
 #include "sourcevr/isourcevirtualreality.h"
 #include "VGuiMatSurface/IMatSystemSurface.h"
+#include "tier0/memalloc.h"
 
 using namespace vgui;
 
@@ -2025,21 +2026,21 @@ int CBasePanel::LoadImageAsTexture(const char* imagePath)
         if (imageData) free(imageData);
         return -1;
     }
-	
-    if (channels != 4) {
-        unsigned char* rgba = (unsigned char*)malloc(width * height * 4);
-        for (int i = 0; i < width * height; ++i) {
-            int srcIdx = i * channels;
-            int dstIdx = i * 4;
-            rgba[dstIdx + 0] = imageData[srcIdx + 0];
-            rgba[dstIdx + 1] = imageData[srcIdx + 1];
-            rgba[dstIdx + 2] = imageData[srcIdx + 2];
-            rgba[dstIdx + 3] = (channels == 3) ? 255 : imageData[srcIdx + 3];
-        }
-        free(imageData);
-        imageData = rgba;
-        channels = 4;
-    }
+
+	if (channels != 4) {
+		unsigned char* rgba = (unsigned char*)MemAlloc_Alloc(width * height * 4, __FILE__, __LINE__);
+		for (int i = 0; i < width * height; ++i) {
+			int srcIdx = i * channels;
+			int dstIdx = i * 4;
+			rgba[dstIdx + 0] = imageData[srcIdx + 0];
+			rgba[dstIdx + 1] = imageData[srcIdx + 1];
+			rgba[dstIdx + 2] = imageData[srcIdx + 2];
+			rgba[dstIdx + 3] = (channels == 3) ? 255 : imageData[srcIdx + 3];
+		}
+		MemAlloc_Free(imageData);
+		imageData = rgba;
+		channels = 4;
+	}
 
     int newWidth = GetNextPowerOfTwo(width);
     int newHeight = GetNextPowerOfTwo(height);
@@ -2049,7 +2050,7 @@ int CBasePanel::LoadImageAsTexture(const char* imagePath)
     unsigned char* finalData = imageData;
     if (newWidth != width || newHeight != height) {
         finalData = ResizeImage(imageData, width, height, newWidth, newHeight);
-        free(imageData);
+        MemAlloc_Free(imageData);
         width = newWidth;
         height = newHeight;
     }
@@ -2057,7 +2058,7 @@ int CBasePanel::LoadImageAsTexture(const char* imagePath)
     int texID = surface()->CreateNewTextureID(true);
     surface()->DrawSetTextureRGBA(texID, finalData, width, height, 1, false);
 
-    free(finalData);
+    MemAlloc_Free(finalData);
     return texID;
 }
 
@@ -2077,7 +2078,7 @@ int CBasePanel::GetNextPowerOfTwo(int value)
 //-----------------------------------------------------------------------------
 unsigned char* CBasePanel::ResizeImage(unsigned char* src, int srcW, int srcH, int dstW, int dstH)
 {
-	unsigned char* dst = (unsigned char*)malloc(dstW * dstH * 4);
+	unsigned char* dst = (unsigned char*)MemAlloc_Alloc(dstW * dstH * 4, __FILE__, __LINE__);
 	
 	float xRatio = (float)srcW / dstW;
 	float yRatio = (float)srcH / dstH;
@@ -2166,15 +2167,15 @@ unsigned char* CBasePanel::LoadPNGFromMemory(unsigned char* data, int dataSize, 
 	channels = png_get_channels(png, info);
 	int rowBytes = png_get_rowbytes(png, info);
 	
-	unsigned char* imageData = (unsigned char*)malloc(rowBytes * height);
-	png_bytep* rowPointers = (png_bytep*)malloc(sizeof(png_bytep) * height);
+	unsigned char* imageData = (unsigned char*)MemAlloc_Alloc(rowBytes * height, __FILE__, __LINE__);
+	png_bytep* rowPointers = (png_bytep*)MemAlloc_Alloc(sizeof(png_bytep) * height, __FILE__, __LINE__);
 	
 	for (int y = 0; y < height; y++)
 		rowPointers[y] = imageData + y * rowBytes;
 	
 	png_read_image(png, rowPointers);
 	
-	free(rowPointers);
+	MemAlloc_Free(rowPointers);
 	png_destroy_read_struct(&png, &info, nullptr);
 	
 	return imageData;
@@ -2217,7 +2218,7 @@ unsigned char* CBasePanel::LoadJPEGFromMemory(unsigned char* data, int dataSize,
     channels = cinfo.output_components;
 
     size_t bufferSize = (size_t)width * height * channels;
-    unsigned char* imageData = (unsigned char*)malloc(bufferSize);
+	unsigned char* imageData = (unsigned char*)MemAlloc_Alloc(bufferSize, __FILE__, __LINE__);
 
     while (cinfo.output_scanline < cinfo.output_height) {
         unsigned char* rowPtr = imageData + (cinfo.output_scanline * width * channels);
