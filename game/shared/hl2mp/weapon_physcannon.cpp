@@ -1104,7 +1104,7 @@ public:
 
 	CWeaponPhysCannon( void );
 
-	void CWeaponPhysCannon::PuntRagdoll(CBaseEntity* pEntity, const Vector& vecForward, trace_t& tr)
+	void PuntRagdoll(CBaseEntity* pEntity, const Vector& vecForward, trace_t& tr)
 	{
 #ifndef CLIENT_DLL
 		CBasePlayer* pOwner = ToBasePlayer(GetOwner());
@@ -1162,7 +1162,7 @@ public:
 #endif
 	}
 
-	void CWeaponPhysCannon::Spawn(void)
+	void Spawn(void)
 	{
 		BaseClass::Spawn();
 
