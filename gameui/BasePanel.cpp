@@ -1997,35 +1997,35 @@ void CBasePanel::LoadBackgroundImages()
 
 int CBasePanel::LoadImageAsTexture(const char* imagePath)
 {
-    FileHandle_t file = g_pFullFileSystem->Open(imagePath, "rb", "MOD");
-    if (!file) {
+    CUtlBuffer buf;
+    if (!g_pFullFileSystem->ReadFile(imagePath, "MOD", buf))
+    {
         Warning("Could not open image file: %s\n", imagePath);
         return -1;
     }
-    int fileSize = g_pFullFileSystem->Size(file);
-    unsigned char* fileData = (unsigned char*)malloc(fileSize);
-    g_pFullFileSystem->Read(fileData, fileSize, file);
-    g_pFullFileSystem->Close(file);
+
+    int fileSize = buf.TellPut();
+    unsigned char* fileData = (unsigned char*)buf.Base();
 
     int width = 0, height = 0, channels = 0;
     unsigned char* imageData = nullptr;
-    const char* ext = Q_GetFileExtension(imagePath);
 
+    const char* ext = Q_GetFileExtension(imagePath);
     if (!Q_stricmp(ext, "png")) {
         imageData = LoadPNGFromMemory(fileData, fileSize, width, height, channels);
     } else if (!Q_stricmp(ext, "jpg") || !Q_stricmp(ext, "jpeg")) {
         imageData = LoadJPEGFromMemory(fileData, fileSize, width, height, channels);
     } else {
         Warning("Unsupported image extension: %s\n", imagePath);
+        return -1;
     }
-    free(fileData);
 
     if (!imageData || width <= 0 || height <= 0) {
         Warning("Failed to decode image: %s\n", imagePath);
         if (imageData) free(imageData);
         return -1;
     }
-
+	
     if (channels != 4) {
         unsigned char* rgba = (unsigned char*)malloc(width * height * 4);
         for (int i = 0; i < width * height; ++i) {
@@ -2181,38 +2181,53 @@ unsigned char* CBasePanel::LoadPNGFromMemory(unsigned char* data, int dataSize, 
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: Load JPEG from memory using libjpeg
+// Purpose:
 //-----------------------------------------------------------------------------
+struct JpegErrorManager {
+    jpeg_error_mgr pub;
+    jmp_buf setjmpBuffer;
+};
+
+void JpegErrorExit(j_common_ptr cinfo) {
+    JpegErrorManager* err = (JpegErrorManager*)cinfo->err;
+    longjmp(err->setjmpBuffer, 1);
+}
+
 unsigned char* CBasePanel::LoadJPEGFromMemory(unsigned char* data, int dataSize, int& width, int& height, int& channels)
 {
-	struct jpeg_decompress_struct cinfo;
-	struct jpeg_error_mgr jerr;
-	
-	cinfo.err = jpeg_std_error(&jerr);
-	jpeg_create_decompress(&cinfo);
-	
-	// Set up memory reading
-	jpeg_mem_src(&cinfo, data, dataSize);
-	
-	jpeg_read_header(&cinfo, TRUE);
-	jpeg_start_decompress(&cinfo);
-	
-	width = cinfo.output_width;
-	height = cinfo.output_height;
-	channels = cinfo.output_components;
-	
-	unsigned char* imageData = (unsigned char*)malloc(width * height * channels);
-	
-	while (cinfo.output_scanline < cinfo.output_height)
-	{
-		unsigned char* rowPtr = imageData + (cinfo.output_scanline * width * channels);
-		jpeg_read_scanlines(&cinfo, &rowPtr, 1);
-	}
-	
-	jpeg_finish_decompress(&cinfo);
-	jpeg_destroy_decompress(&cinfo);
-	
-	return imageData;
+    jpeg_decompress_struct cinfo;
+    JpegErrorManager jerr;
+
+    cinfo.err = jpeg_std_error(&jerr.pub);
+    jerr.pub.error_exit = JpegErrorExit;
+
+    if (setjmp(jerr.setjmpBuffer)) {
+        jpeg_destroy_decompress(&cinfo);
+        Warning("JPEG decode failed (corrupt or unsupported file)\n");
+        return nullptr;
+    }
+
+    jpeg_create_decompress(&cinfo);
+    jpeg_mem_src(&cinfo, data, dataSize);
+    jpeg_read_header(&cinfo, TRUE);
+    jpeg_start_decompress(&cinfo);
+
+    width = cinfo.output_width;
+    height = cinfo.output_height;
+    channels = cinfo.output_components;
+
+    size_t bufferSize = (size_t)width * height * channels;
+    unsigned char* imageData = (unsigned char*)malloc(bufferSize);
+
+    while (cinfo.output_scanline < cinfo.output_height) {
+        unsigned char* rowPtr = imageData + (cinfo.output_scanline * width * channels);
+        jpeg_read_scanlines(&cinfo, &rowPtr, 1);
+    }
+
+    jpeg_finish_decompress(&cinfo);
+    jpeg_destroy_decompress(&cinfo);
+
+    return imageData;
 }
 
 //-----------------------------------------------------------------------------
