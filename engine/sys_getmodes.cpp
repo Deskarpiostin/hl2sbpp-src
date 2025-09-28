@@ -702,11 +702,11 @@ void CVideoMode_Common::DrawStartupGraphic()
     pRenderContext->DepthRange( 0, 1 );
     pRenderContext->SetToneMappingScaleLinear( Vector(1,1,1) );
 
-    pRenderContext->ClearColor3ub( 80, 137, 191 ); // cyan
+    pRenderContext->ClearColor3ub( 68, 138, 201 );
     pRenderContext->ClearBuffers( true, true, true );
 
 	KeyValues* pLogoKeyValues = new KeyValues("UnlitGeneric");
-	pLogoKeyValues->SetString("$basetexture", "vgui/hl2sbpp"); // note: no .vtf
+	pLogoKeyValues->SetString("$basetexture", "vgui/hl2sbpp");
     pLogoKeyValues->SetInt( "$translucent", 1 );
     pLogoKeyValues->SetInt( "$ignorez", 1 );
     pLogoKeyValues->SetInt( "$nofog", 1 );
@@ -719,15 +719,9 @@ void CVideoMode_Common::DrawStartupGraphic()
     int lh = m_pHL2SBPPLogo->Height();
 
 	float depth = 0.5f;
-	
-	// Make sure we clear both front & back buffer.
-	for (int i = 0; i < 2; ++i)
-	{
-		int logoX = (w - lw) / 2;
-		int logoY = (h - lh) / 2;
-
-		DrawScreenSpaceRectangle( pLogoMaterial, logoX, logoY, lw, lh, 0, 0, lw-1, lh-1, lw, lh, NULL, 1, 1, depth );
-	}
+	int logoX = (w - lw) / 2;
+	int logoY = (h - lh) / 5;
+	DrawScreenSpaceRectangle( pLogoMaterial, logoX, logoY, lw, lh, 0, 0, lw-1, lh-1, lw, lh, NULL, 1, 1, depth );
 
     KeyValues* pVMTKeyValues = new KeyValues( "UnlitGeneric" );
     pVMTKeyValues->SetString( "$basetexture", "vgui/white" ); // 1x1 white
@@ -738,40 +732,24 @@ void CVideoMode_Common::DrawStartupGraphic()
     pVMTKeyValues->SetInt( "$nocull", 1 );
     IMaterial* pBarMaterial = g_pMaterialSystem->CreateMaterial( "__startup_bar", pVMTKeyValues );
 
-    // Loading bar geometry: 5% of screen height at bottom
-    const int barH = max( 2, (int)( h * 0.05f ) );
-    const int barX = 0;
-    const int barY = h - barH;
-    const int barW = w;
-
-    const int pad = 3;
-    const int innerX = barX + pad;
-    const int innerY = barY + pad;
-    const int innerW = barW - pad * 2;
-    const int innerH = barH - pad * 2;
+    const int barH = max( 2, (int)( h * 0.03f ) );
+    const int barX = w / 4;
+    const int barW = w / 2;
+    const int barY = h - (barH * 6);
 
     float progress = clampf( (float)startupStep / (float)totalSteps, 0.0f, 1.0f );
 
-    // Background of inner bar (dark translucent)
-    pBarMaterial->ColorModulate( 0.04f, 0.04f, 0.04f );
-    pBarMaterial->AlphaModulate( 0.75f );
-    DrawScreenSpaceRectangle( pBarMaterial, innerX, innerY, innerW, innerH, 0, 0, 1, 1, 1, 1, NULL, 1, 1, 0.5f );
+    pBarMaterial->ColorModulate( 0.75f, 0.75f, 0.75f );
+    pBarMaterial->AlphaModulate( 1.0f );
+    DrawScreenSpaceRectangle( pBarMaterial, barX, barY, barW, barH, 0, 0, 1, 1, 1, 1, NULL, 1, 1, 0.5f );
 
-    // Filled portion
-    int filledW = (int)( innerW * clampf( progress, 0.0f, 1.0f ) );
+    int filledW = (int)( barW * progress );
     if ( filledW > 0 )
     {
-        // tint to a light cyan
-        pBarMaterial->ColorModulate( 0.78f, 0.86f, 0.94f );
+        pBarMaterial->ColorModulate( 0.0f, 0.8f, 0.0f );
         pBarMaterial->AlphaModulate( 1.0f );
-        DrawScreenSpaceRectangle( pBarMaterial, innerX, innerY, filledW, innerH, 0, 0, 1, 1, 1, 1, NULL, 1, 1, 0.49f );
+        DrawScreenSpaceRectangle( pBarMaterial, barX + 3, barY + 3, filledW - 6, barH - 6, 0, 0, 1, 1, 1, 1, NULL, 1, 1, 0.49f );
     }
-
-    // subtle top highlight
-    pBarMaterial->ColorModulate( 1.0f, 1.0f, 1.0f );
-    pBarMaterial->AlphaModulate( 0.07f );
-    DrawScreenSpaceRectangle( pBarMaterial, barX, barY, barW, 1, 0, 0, 1, 1, 1, 1, NULL, 1, 1, 0.48f );
-    // -----------------------------------------------------------
 
     g_pMaterialSystem->SwapBuffers();
 

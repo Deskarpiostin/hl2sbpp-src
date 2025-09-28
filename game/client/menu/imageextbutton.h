@@ -22,9 +22,13 @@ struct ImageData {
 };
 
 struct TexInfo {
-	int texId;
-	int width;
-	int height;
+    int texId;
+    int width;
+    int height;
+    int refCount;
+
+    TexInfo() : texId(-1), width(0), height(0), refCount(0) {}
+    TexInfo(int t, int w, int h, int r=1) : texId(t), width(w), height(h), refCount(r) {}
 };
 
 class ImageExtButton : public vgui::Panel {
@@ -32,6 +36,11 @@ class ImageExtButton : public vgui::Panel {
 
 public:
     const char* GetCommand() const { return m_command; }
+
+	int NextPowerOfTwo(int value);
+	unsigned char* ResizeImageToPowerOfTwo(unsigned char* originalData, 
+                                                      int originalWidth, int originalHeight,
+                                                      int& newWidth, int& newHeight);
 
 private:
     ImageData m_normalImage;

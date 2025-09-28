@@ -35,6 +35,9 @@ $Project "Client (HL2MP)"
 		$File	"$SRCDIR\game\shared\teamplay_round_timer.cpp"
 		$File	"$SRCDIR\game\shared\teamplay_round_timer.h"
 
+		$File	"$SRCDIR\common\GameUI\cvarslider.cpp"
+		$File	"$SRCDIR\common\GameUI\cvarslider.h"
+
 		$Folder	"NextBot"
 		{
 			$File	"NextBot\C_NextBot.cpp"

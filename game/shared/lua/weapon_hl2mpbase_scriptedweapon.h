@@ -22,8 +22,9 @@
 //=========================================================
 class CHL2MPScriptedWeapon : public CBaseHL2MPCombatWeapon
 {
-public:
 	DECLARE_CLASS( CHL2MPScriptedWeapon, CBaseHL2MPCombatWeapon );
+
+public:
 	DECLARE_DATADESC();
 
 	CHL2MPScriptedWeapon();

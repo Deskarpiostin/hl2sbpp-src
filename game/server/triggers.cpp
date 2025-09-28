@@ -1607,7 +1607,12 @@ void CChangeLevel::ChangeLevelNow( CBaseEntity *pActivator )
 
 	// This object will get removed in the call to engine->ChangeLevel, copy the params into "safe" memory
 	Q_strncpy(st_szNextMap, m_szMapName, sizeof(st_szNextMap));
-	engine->ChangeLevel( st_szNextMap, NULL );	
+	engine->ChangeLevel( st_szNextMap, NULL );
+
+	// huh. thats the only way it works without removing
+	// the player entity. extremely weird. but, if it
+	// works, then it works lmao
+	return;
 #else
 	CBaseEntity *pPlayer = (pActivator && pActivator->IsPlayer()) ? pActivator : UTIL_GetLocalPlayer();
 #endif

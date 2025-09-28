@@ -834,7 +834,7 @@ const char *CHL2MPScriptedWeapon::GetWorldModel( void ) const
 const char *CHL2MPScriptedWeapon::GetAnimPrefix( void ) const
 {
 	if (m_nTableReference == LUA_NOREF)
-		return BaseClass::GetAnimPrefix();
+		return "anim";
 
 #if defined ( LUA_SDK )
 	lua_getref( L, m_nTableReference );
@@ -844,13 +844,13 @@ const char *CHL2MPScriptedWeapon::GetAnimPrefix( void ) const
 	RETURN_LUA_STRING();
 #endif
 
-	return BaseClass::GetAnimPrefix();
+	return "anim";
 }
 
 const char *CHL2MPScriptedWeapon::GetPrintName( void ) const
 {
 	if (m_nTableReference == LUA_NOREF)
-		return BaseClass::GetPrintName();
+		return "[MISSING PRINTNAME]";
 
 #if defined ( LUA_SDK )
 	lua_getref( L, m_nTableReference );
@@ -860,13 +860,13 @@ const char *CHL2MPScriptedWeapon::GetPrintName( void ) const
 	RETURN_LUA_STRING();
 #endif
 
-	return BaseClass::GetPrintName();
+	return "[MISSING PRINTNAME]";
 }
 
 int CHL2MPScriptedWeapon::GetMaxClip1( void ) const
 {
 	if (m_nTableReference == LUA_NOREF)
-		return BaseClass::GetMaxClip1();
+		return -1;
 
 #if defined ( LUA_SDK )
     lua_getref( L, m_nTableReference );
@@ -885,13 +885,13 @@ int CHL2MPScriptedWeapon::GetMaxClip1( void ) const
     lua_pop( L, 2 );
 #endif
 
-	return BaseClass::GetMaxClip1();
+	return -1;
 }
 
 int CHL2MPScriptedWeapon::GetMaxClip2( void ) const
 {
 	if (m_nTableReference == LUA_NOREF)
-		return BaseClass::GetMaxClip2();
+		return -1;
 
 #if defined ( LUA_SDK )
     lua_getref( L, m_nTableReference );
@@ -910,13 +910,13 @@ int CHL2MPScriptedWeapon::GetMaxClip2( void ) const
     lua_pop( L, 2 );
 #endif
 
-	return BaseClass::GetMaxClip2();
+	return -1;
 }
 
 int CHL2MPScriptedWeapon::GetDefaultClip1( void ) const
 {
 	if (m_nTableReference == LUA_NOREF)
-		return BaseClass::GetDefaultClip1();
+		return -1;
 
 #if defined ( LUA_SDK )
     lua_getref( L, m_nTableReference );
@@ -935,13 +935,13 @@ int CHL2MPScriptedWeapon::GetDefaultClip1( void ) const
     lua_pop( L, 2 );
 #endif
 
-	return BaseClass::GetDefaultClip1();
+	return -1;
 }
 
 int CHL2MPScriptedWeapon::GetDefaultClip2( void ) const
 {
 	if (m_nTableReference == LUA_NOREF)
-		return BaseClass::GetDefaultClip2();
+		return -1;
 
 #if defined ( LUA_SDK )
     lua_getref( L, m_nTableReference );
@@ -960,14 +960,14 @@ int CHL2MPScriptedWeapon::GetDefaultClip2( void ) const
     lua_pop( L, 2 );
 #endif
 
-	return BaseClass::GetDefaultClip2();
+	return -1;
 }
 
 
 bool CHL2MPScriptedWeapon::IsMeleeWeapon() const
 {
 	if (m_nTableReference == LUA_NOREF)
-		return BaseClass::IsMeleeWeapon();
+		return true;
 
 #if defined ( LUA_SDK )
 	lua_getref( L, m_nTableReference );
@@ -987,7 +987,7 @@ bool CHL2MPScriptedWeapon::IsMeleeWeapon() const
 	}
 #endif
 
-	return BaseClass::IsMeleeWeapon();
+	return true;
 }
 
 bool CHL2MPScriptedWeapon::DrawAmmo() const
@@ -1002,12 +1002,14 @@ bool CHL2MPScriptedWeapon::DrawAmmo() const
 
 	RETURN_LUA_BOOLEAN();
 #endif
+
+	return false;
 }
 
 int CHL2MPScriptedWeapon::GetWeight( void ) const
 {
 	if (m_nTableReference == LUA_NOREF)
-		return BaseClass::GetWeight();
+		return 0;
 
 #if defined ( LUA_SDK )
 	lua_getref( L, m_nTableReference );
@@ -1017,13 +1019,13 @@ int CHL2MPScriptedWeapon::GetWeight( void ) const
 	RETURN_LUA_INTEGER();
 #endif
 
-	return BaseClass::GetWeight();
+	return 0;
 }
 
 bool CHL2MPScriptedWeapon::AllowsAutoSwitchTo( void ) const
 {
 	if (m_nTableReference == LUA_NOREF)
-		return BaseClass::AllowsAutoSwitchTo();
+		return true;
 
 #if defined ( LUA_SDK )
 	lua_getref( L, m_nTableReference );
@@ -1043,13 +1045,13 @@ bool CHL2MPScriptedWeapon::AllowsAutoSwitchTo( void ) const
 	}
 #endif
 
-	return BaseClass::AllowsAutoSwitchTo();
+	return true;
 }
 
 bool CHL2MPScriptedWeapon::AllowsAutoSwitchFrom( void ) const
 {
 	if (m_nTableReference == LUA_NOREF)
-		return BaseClass::AllowsAutoSwitchFrom();
+		return true;
 
 #if defined ( LUA_SDK )
 	lua_getref( L, m_nTableReference );
@@ -1069,7 +1071,7 @@ bool CHL2MPScriptedWeapon::AllowsAutoSwitchFrom( void ) const
 	}
 #endif
 
-	return BaseClass::AllowsAutoSwitchFrom();
+return true;
 }
 
 bool CHL2MPScriptedWeapon::IsSpawnable( void ) const
@@ -1084,12 +1086,14 @@ bool CHL2MPScriptedWeapon::IsSpawnable( void ) const
 
 	RETURN_LUA_BOOLEAN();
 #endif
+
+	return false;
 }
 
 int CHL2MPScriptedWeapon::GetWeaponFlags( void ) const
 {
 	if (m_nTableReference == LUA_NOREF)
-		return BaseClass::GetWeaponFlags();
+		return 0;
 
 #if defined ( LUA_SDK )
 	lua_getref( L, m_nTableReference );
@@ -1098,13 +1102,13 @@ int CHL2MPScriptedWeapon::GetWeaponFlags( void ) const
 	RETURN_LUA_INTEGER();
 #endif
 
-	return BaseClass::GetWeaponFlags();
+	return 0;
 }
 
 int CHL2MPScriptedWeapon::GetSlot( void ) const
 {
 	if (m_nTableReference == LUA_NOREF)
-		return BaseClass::GetSlot();
+		return 0;
 
 #if defined ( LUA_SDK )
 	lua_getref( L, m_nTableReference );
@@ -1114,13 +1118,13 @@ int CHL2MPScriptedWeapon::GetSlot( void ) const
 	RETURN_LUA_INTEGER();
 #endif
 
-	return BaseClass::GetSlot();
+	return 0;
 }
 
 int CHL2MPScriptedWeapon::GetPosition( void ) const
 {
 	if (m_nTableReference == LUA_NOREF)
-		return BaseClass::GetPosition();
+		return 0;
 
 #if defined ( LUA_SDK )
 	lua_getref( L, m_nTableReference );
@@ -1130,7 +1134,7 @@ int CHL2MPScriptedWeapon::GetPosition( void ) const
 	RETURN_LUA_INTEGER();
 #endif
 
-	return BaseClass::GetPosition();
+	return 0;
 }
 
 const Vector &CHL2MPScriptedWeapon::GetBulletSpread( void )
@@ -1181,7 +1185,7 @@ void CHL2MPScriptedWeapon::FireBullets( const FireBulletsInfo_t &info )
 bool CHL2MPScriptedWeapon::Reload( void )
 {
 	if (m_nTableReference == LUA_NOREF)
-		return BaseClass::Reload();
+		return true;
 
 #if defined ( LUA_SDK )
 	BEGIN_LUA_CALL_WEAPON_METHOD( "Reload" );
@@ -1189,7 +1193,8 @@ bool CHL2MPScriptedWeapon::Reload( void )
 
 	RETURN_LUA_BOOLEAN();
 #endif
-	return BaseClass::Reload();
+
+	return true;
 }
 
 //-----------------------------------------------------------------------------
@@ -1230,7 +1235,7 @@ bool CHL2MPScriptedWeapon::Deploy( void )
 Activity CHL2MPScriptedWeapon::GetDrawActivity( void )
 {
 	if (m_nTableReference == LUA_NOREF)
-		return BaseClass::GetDrawActivity();
+		return ACT_INVALID;
 
 #if defined ( LUA_SDK )
 	BEGIN_LUA_CALL_WEAPON_METHOD( "GetDrawActivity" );
@@ -1240,7 +1245,7 @@ Activity CHL2MPScriptedWeapon::GetDrawActivity( void )
 	RETURN_LUA_ACTIVITY();
 #endif
 
-	return BaseClass::GetDrawActivity();
+	return ACT_INVALID;
 }
 
 //-----------------------------------------------------------------------------
@@ -1314,6 +1319,7 @@ void CHL2MPScriptedWeapon::ItemPostFrame( void )
 
 	RETURN_LUA_NONE();
 #endif
+
 	BaseClass::ItemPostFrame();
 }
 
@@ -1339,7 +1345,7 @@ void CHL2MPScriptedWeapon::ItemBusyFrame( void )
 int CHL2MPScriptedWeapon::CapabilitiesGet( void )
 {
 	if (m_nTableReference == LUA_NOREF)
-		return BaseClass::CapabilitiesGet();
+			return 0;
 
 #if defined ( LUA_SDK )
 	BEGIN_LUA_CALL_WEAPON_METHOD( "CapabilitiesGet" );
@@ -1348,13 +1354,13 @@ int CHL2MPScriptedWeapon::CapabilitiesGet( void )
 	RETURN_LUA_INTEGER();
 #endif
 
-	return BaseClass::CapabilitiesGet();
+	return 0;
 }
 #else
 int CHL2MPScriptedWeapon::DrawModel( int flags )
 {
 	if (m_nTableReference == LUA_NOREF)
-		return BaseClass::DrawModel( flags );
+			return 0;
 
 #if defined ( LUA_SDK )
 	BEGIN_LUA_CALL_WEAPON_METHOD( "DrawModel" );
@@ -1364,7 +1370,7 @@ int CHL2MPScriptedWeapon::DrawModel( int flags )
 	RETURN_LUA_INTEGER();
 #endif
 
-	return BaseClass::DrawModel( flags );
+	return 0;
 }
 #endif
 

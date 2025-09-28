@@ -15,7 +15,7 @@ ImageExtButton::ImageExtButton(vgui::Panel* parent, const char* panelName,
       m_hasMouseOverImage(false),
       m_hasMouseClickImage(false),
       m_hasCommand(false),
-      m_bScaleImage(false),
+      m_bScaleImage(true),
       m_currentImage(nullptr),
       m_pParent(parent)
 {
@@ -37,10 +37,6 @@ ImageExtButton::ImageExtButton(vgui::Panel* parent, const char* panelName,
     if (m_hasMouseClickImage && m_mouseClickImagePath[0] != '\0')
         LoadImage(m_mouseClickImagePath, m_mouseClickImage);
 
-    if (m_normalImage.isValid && !m_bScaleImage) {
-        SetSize(m_normalImage.width, m_normalImage.height);
-    }
-
     SetNormalImage();
 }
 
@@ -48,6 +44,47 @@ ImageExtButton::~ImageExtButton() {
     if (m_normalImage.textureId != -1) ReleaseTextureByKey(m_normalImagePath);
     if (m_mouseOverImage.textureId != -1) ReleaseTextureByKey(m_mouseOverImagePath);
     if (m_mouseClickImage.textureId != -1) ReleaseTextureByKey(m_mouseClickImagePath);
+}
+
+int ImageExtButton::NextPowerOfTwo(int value) {
+    if (value <= 0) return 1;
+    if ((value & (value - 1)) == 0) return value; // already power of 2
+    
+    int power = 1;
+    while (power < value) {
+        power <<= 1;
+    }
+    return power;
+}
+
+unsigned char* ImageExtButton::ResizeImageToPowerOfTwo(unsigned char* originalData, 
+                                                      int originalWidth, int originalHeight,
+                                                      int& newWidth, int& newHeight) {
+    newWidth = NextPowerOfTwo(originalWidth);
+    newHeight = NextPowerOfTwo(originalHeight);
+    
+    if (newWidth == originalWidth && newHeight == originalHeight) {
+        return originalData;
+    }
+    
+    unsigned char* newData = (unsigned char*)malloc(newWidth * newHeight * 4);
+    if (!newData) return originalData;
+    
+    memset(newData, 0, newWidth * newHeight * 4);
+    
+    for (int y = 0; y < originalHeight && y < newHeight; y++) {
+        for (int x = 0; x < originalWidth && x < newWidth; x++) {
+            int srcIdx = (y * originalWidth + x) * 4;
+            int dstIdx = (y * newWidth + x) * 4;
+            
+            newData[dstIdx + 0] = originalData[srcIdx + 0]; // R
+            newData[dstIdx + 1] = originalData[srcIdx + 1]; // G  
+            newData[dstIdx + 2] = originalData[srcIdx + 2]; // B
+            newData[dstIdx + 3] = originalData[srcIdx + 3]; // A
+        }
+    }
+    
+    return newData;
 }
 
 bool ImageExtButton::LoadImage(const char* filename, ImageData& imageData) {
@@ -60,53 +97,80 @@ bool ImageExtButton::LoadImage(const char* filename, ImageData& imageData) {
         return false;
     }
 
-    int width = 0, height = 0, channels = 0;
-    unsigned char* data = stbi_load_from_memory(
+    int originalWidth = 0, originalHeight = 0, channels = 0;
+    
+    unsigned char* originalData = stbi_load_from_memory(
         reinterpret_cast<unsigned char*>(buf.Base()),
         buf.TellPut(),
-        &width,
-        &height,
+        &originalWidth,
+        &originalHeight,
         &channels,
         4 // force RGBA
     );
 
-    if (!data) {
+    if (!originalData) {
         Warning("ImageExtButton: Failed to decode '%s' (%s)\n", filename, stbi_failure_reason());
         return false;
     }
 
-    imageData.textureId = CreateOrGetTextureFromImageData(filename, data, width, height);
-    imageData.width = width;
-    imageData.height = height;
-    imageData.isValid = true;
+    if (originalWidth <= 0 || originalHeight <= 0 || originalWidth > 4096 || originalHeight > 4096) {
+        Warning("ImageExtButton: Invalid image dimensions %dx%d for '%s'\n", originalWidth, originalHeight, filename);
+        stbi_image_free(originalData);
+        return false;
+    }
 
-    stbi_image_free(data);
-    return true;
+    int textureWidth, textureHeight;
+    unsigned char* textureData = ResizeImageToPowerOfTwo(originalData, originalWidth, originalHeight, 
+                                                        textureWidth, textureHeight);
+    
+    bool needsFreeing = (textureData != originalData);
+
+    Msg("ImageExtButton: Loaded '%s' - Original: %dx%d, Texture: %dx%d\n", 
+        filename, originalWidth, originalHeight, textureWidth, textureHeight);
+
+    imageData.textureId = CreateOrGetTextureFromImageData(filename, textureData, textureWidth, textureHeight);
+    imageData.width = originalWidth;   
+    imageData.height = originalHeight;
+    imageData.isValid = (imageData.textureId != -1);
+
+    // Clean up
+    if (needsFreeing) {
+        free(textureData);
+    }
+    stbi_image_free(originalData);
+    
+    return imageData.isValid;
 }
 
 int ImageExtButton::CreateOrGetTextureFromImageData(const char* key,
                                                     unsigned char* data,
                                                     int width, int height)
 {
-    std::string keyStr(key);
+    std::string keyStr(key ? key : "");
     auto it = s_textureCache.find(keyStr);
     if (it != s_textureCache.end()) {
+        it->second.refCount++;
         return it->second.texId;
     }
 
     int texId = vgui::surface()->CreateNewTextureID(true);
     vgui::surface()->DrawSetTextureRGBA(texId, data, width, height, 1, false);
-    TexInfo texInfo = { texId, width, height };
+    TexInfo texInfo(texId, width, height, 1);
     s_textureCache[keyStr] = texInfo;
     return texId;
 }
 
 void ImageExtButton::ReleaseTextureByKey(const char* key) {
+    if (!key || key[0] == '\0') return;
+
     std::string keyStr(key);
     auto it = s_textureCache.find(keyStr);
     if (it != s_textureCache.end()) {
-        vgui::surface()->DestroyTextureID(it->second.texId);
-        s_textureCache.erase(it);
+        it->second.refCount--;
+        if (it->second.refCount <= 0) {
+            vgui::surface()->DestroyTextureID(it->second.texId);
+            s_textureCache.erase(it);
+        }
     }
 }
 
@@ -120,11 +184,37 @@ bool ImageExtButton::LoadImageIfNeeded(ImageData& imageData, const char* path, b
 
 void ImageExtButton::SetCurrentImage(ImageData* image) {
     m_currentImage = image;
+
+    if (m_currentImage && m_currentImage->isValid && !m_bScaleImage) {
+        if (m_currentImage->width > 0 && m_currentImage->height > 0) {
+            SetSize(m_currentImage->width, m_currentImage->height);
+        }
+    }
+
+    InvalidateLayout();
+    Repaint();
 }
 
-void ImageExtButton::SetNormalImage() { SetCurrentImage(&m_normalImage); }
-void ImageExtButton::SetMouseOverImage() { SetCurrentImage(&m_mouseOverImage); }
-void ImageExtButton::SetMouseClickImage() { SetCurrentImage(&m_mouseClickImage); }
+void ImageExtButton::SetNormalImage() {
+    if (!m_normalImage.isValid && m_normalImagePath[0] != '\0') {
+        LoadImage(m_normalImagePath, m_normalImage);
+    }
+    SetCurrentImage(&m_normalImage);
+}
+
+void ImageExtButton::SetMouseOverImage() {
+    if (m_hasMouseOverImage && !m_mouseOverImage.isValid && m_mouseOverImagePath[0] != '\0') {
+        LoadImage(m_mouseOverImagePath, m_mouseOverImage);
+    }
+    SetCurrentImage(&m_mouseOverImage);
+}
+
+void ImageExtButton::SetMouseClickImage() {
+    if (m_hasMouseClickImage && !m_mouseClickImage.isValid && m_mouseClickImagePath[0] != '\0') {
+        LoadImage(m_mouseClickImagePath, m_mouseClickImage);
+    }
+    SetCurrentImage(&m_mouseClickImage);
+}
 
 void ImageExtButton::Paint() {
     if (!m_currentImage) return;

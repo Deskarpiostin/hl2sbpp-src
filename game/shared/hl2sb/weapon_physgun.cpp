@@ -711,87 +711,61 @@ bool PlayerWeaponColorProxy::Init(IMaterial* pMaterial, KeyValues* pKeyValues)
 
 void PlayerWeaponColorProxy::OnBind(void* pC_BaseEntity)
 {
-	if (m_pResultVar)
+	if (!m_pResultVar)
+		return;
+
+	float currentR, currentG, currentB;
+
+	C_BasePlayer* pPlayer = C_BasePlayer::GetLocalPlayer();
+	if (!pPlayer)
+		return;
+
+	C_WeaponPhysicsGun* pPhysgun = dynamic_cast<C_WeaponPhysicsGun*>(pPlayer->GetActiveWeapon());
+	if (pPhysgun)
 	{
-		C_WeaponPhysicsGun *pWeapon = dynamic_cast<C_WeaponPhysicsGun*>(C_BasePlayer::GetLocalPlayer()->GetActiveWeapon());
-		float currentR;
-		float currentG;
-		float currentB;
-        if ( pWeapon )
-        {
-            currentR = pWeapon->GetPhysgunColorR();
-            currentG = pWeapon->GetPhysgunColorG();
-            currentB = pWeapon->GetPhysgunColorB();
-		} else
-		{
-			CBasePlayer* pPlayer = C_BasePlayer::GetLocalPlayer();
-			if (!pPlayer)
-				return;
-
-			CBaseCombatWeapon* pWeapon = pPlayer->GetActiveWeapon();
-			if (!pWeapon)
-				return;
-
-			const char* szClass = pWeapon->GetClassname();
-			if (szClass && strcmp(szClass, "weapon_physcannon") == 0)
-			{
-				// quite a hacky hack but fuck it
-				currentR = 150;
-				currentG = 255;
-				currentB = 255;
-			}
-			else
-			{
-				// EDIT: oh yeah, this exists.
-				currentR = clamp( physgun_r.GetInt(), 0, 255 );
-				currentG = clamp( physgun_g.GetInt(), 0, 255 );
-				currentB = clamp( physgun_b.GetInt(), 0, 255 );
-			}
-		}
-
-		float targetRed = currentR + 50.0f;
-		float targetGreen = currentG + 50.0f;
-		float targetBlue = currentB + 50.0f;
-
-		static float red = currentR, green = currentG, blue = currentB;
-
-		if (currentR != lastPhysgunR || currentG != lastPhysgunG || currentB != lastPhysgunB)
-		{
-			red = currentR;
-			green = currentG;
-			blue = currentB;
-			lastPhysgunR = currentR;
-			lastPhysgunG = currentG;
-			lastPhysgunB = currentB;
-		}
-
-		if (fadingOut)
-		{
-			if (red < targetRed)
-				red += fadeSpeed;
-			if (green < targetGreen)
-				green += fadeSpeed;
-			if (blue < targetBlue)
-				blue += fadeSpeed;
-			if (red >= targetRed && green >= targetGreen && blue >= targetBlue)
-				fadingOut = false;
-		} else {
-			if (red > currentR)
-				red -= fadeSpeed;
-			if (green > currentG)
-				green -= fadeSpeed;
-			if (blue > currentB)
-				blue -= fadeSpeed;
-			if (red <= currentR && green <= currentG && blue <= currentB)
-				fadingOut = true;
-		}
-
-		float r = red / 255.0f;
-		float g = green / 255.0f;
-		float b = blue / 255.0f;
-
-		m_pResultVar->SetVecValue(r, g, b);
+		currentR = pPhysgun->GetPhysgunColorR();
+		currentG = pPhysgun->GetPhysgunColorG();
+		currentB = pPhysgun->GetPhysgunColorB();
 	}
+	else
+	{
+		CBaseCombatWeapon* pWeapon = pPlayer->GetActiveWeapon();
+		if (!pWeapon)
+			return;
+
+		const char* szClass = pWeapon->GetClassname();
+		if (szClass && strcmp(szClass, "weapon_physcannon") == 0)
+		{
+			// fallback teal-ish lmfao
+			currentR = 150;
+			currentG = 255;
+			currentB = 255;
+		}
+		else
+		{
+			currentR = clamp(physgun_r.GetInt(), 0, 255);
+			currentG = clamp(physgun_g.GetInt(), 0, 255);
+			currentB = clamp(physgun_b.GetInt(), 0, 255);
+		}
+	}
+
+	const float period = 1.0f;
+	const float amp    = 25.0f;
+
+	float t = (sinf(gpGlobals->curtime * (2.0f * M_PI / period)) + 1.0f) * 0.5f; // [0,1]
+
+	float minR = currentR;
+	float maxR = min(255.0f, minR + amp * 2.0f);
+	float minG = currentG;
+	float maxG = min(255.0f, minG + amp * 2.0f);
+	float minB = currentB;
+	float maxB = min(255.0f, minB + amp * 2.0f);
+
+	float r = minR + t * (maxR - minR);
+	float g = minG + t * (maxG - minG);
+	float b = minB + t * (maxB - minB);
+
+	m_pResultVar->SetVecValue(r / 255.0f, g / 255.0f, b / 255.0f);
 }
 
 void PlayerWeaponColorProxy::Release()
@@ -844,10 +818,6 @@ void CWeaponPhysicsGun::UpdatePhysgunColors( void )
             m_iPhysgunColorG = clamp( atoi( pszG ), 0, 255 );
             m_iPhysgunColorB = clamp( atoi( pszB ), 0, 255 );
         }
-#else
-		m_iPhysgunColorR = clamp( physgun_r.GetInt(), 0, 255 );
-        m_iPhysgunColorG = clamp( physgun_g.GetInt(), 0, 255 );
-        m_iPhysgunColorB = clamp( physgun_b.GetInt(), 0, 255 );
 #endif
     }
 }
@@ -1543,29 +1513,31 @@ int CWeaponPhysicsGun::DrawModel( int flags )
 
 		// a little noise 11t & 13t should be somewhat non-periodic looking
 		//points[1].z += 4*sin( gpGlobals->curtime*11 ) + 5*cos( gpGlobals->curtime*13 );
-		if ( pObject == NULL )
+		trace_t tr;
+		TraceLine(&tr);
+		points[2] = tr.endpos;
+
+		if ( pObject )
 		{
-			//points[2] = m_targetPosition;
-			trace_t tr;
-			TraceLine( &tr );
-			points[2] = tr.endpos;
-		}
-		else
-		{
-			trace_t tr;
-			TraceLine( &tr );
-			
-			C_BaseAnimating *pModel = pObject->GetBaseAnimating();;
-			if (pModel)
+			IPhysicsObject *pPhys = m_pGrabbedPhys ? m_pGrabbedPhys : GetPhysObjFromPhysicsBone( pObject, m_physicsBone );
+
+			if ( pPhys )
 			{
-				if (!strcmp(pModel->GetClassname(), "15C_ServerRagdoll") == 0)
-					pObject->EntityToWorldSpace(m_worldPosition, &points[2]);
-				else
-					points[2] = tr.endpos;
+				Vector worldGrabPos;
+				pPhys->LocalToWorld( &worldGrabPos, m_worldPosition );
+
+				static Vector s_prevGrabPos = worldGrabPos;
+				const float lerpFactor = 0.45f;
+				points[2] = s_prevGrabPos * (1.0f - lerpFactor) + worldGrabPos * lerpFactor;
+				s_prevGrabPos = points[2];
 			}
 			else
 			{
-				points[2] = tr.endpos;
+				C_BaseAnimating *pModel = pObject->GetBaseAnimating();
+				if ( pModel )
+				{
+					pObject->EntityToWorldSpace( m_worldPosition, &points[2] );
+				}
 			}
 		}
 
@@ -1690,29 +1662,31 @@ void CWeaponPhysicsGun::ViewModelDrawn( C_BaseViewModel *pBaseViewModel )
 
 	// a little noise 11t & 13t should be somewhat non-periodic looking
 	//points[1].z += 4*sin( gpGlobals->curtime*11 ) + 5*cos( gpGlobals->curtime*13 );
-	if ( !pObject )
+	trace_t tr;
+	TraceLine(&tr);
+	points[2] = tr.endpos;
+
+	if ( pObject )
 	{
-		//points[2] = m_targetPosition;
-		trace_t tr;
-		TraceLine( &tr );
-		points[2] = tr.endpos;
-	}
-	else
-	{
-		trace_t tr;
-		TraceLine( &tr );
-		
-		C_BaseAnimating *pModel = pObject->GetBaseAnimating();;
-		if (pModel)
+		IPhysicsObject *pPhys = m_pGrabbedPhys ? m_pGrabbedPhys : GetPhysObjFromPhysicsBone( pObject, m_physicsBone );
+
+		if ( pPhys )
 		{
-			if (!strcmp(pModel->GetClassname(), "15C_ServerRagdoll") == 0)
-				pObject->EntityToWorldSpace(m_worldPosition, &points[2]);
-			else
-				points[2] = tr.endpos;
+			Vector worldGrabPos;
+			pPhys->LocalToWorld( &worldGrabPos, m_worldPosition );
+
+			static Vector s_prevGrabPos = worldGrabPos;
+			const float lerpFactor = 0.45f;
+			points[2] = s_prevGrabPos * (1.0f - lerpFactor) + worldGrabPos * lerpFactor;
+			s_prevGrabPos = points[2];
 		}
 		else
 		{
-			points[2] = tr.endpos;
+			C_BaseAnimating *pModel = pObject->GetBaseAnimating();
+			if ( pModel )
+			{
+				pObject->EntityToWorldSpace( m_worldPosition, &points[2] );
+			}
 		}
 	}
 

@@ -508,39 +508,55 @@ static bool ShouldDampRotation( const CPhysCollide *pCollide )
 
 bool CPhysBox::CreateVPhysics()
 {
-	solid_t tmpSolid;
-	PhysModelParseSolid( tmpSolid, this, GetModelIndex() );
-	if ( m_massScale > 0 )
-	{
-		tmpSolid.params.mass *= m_massScale;
-	}
+    solid_t tmpSolid;
+    PhysModelParseSolid(tmpSolid, this, GetModelIndex());
 
-	vcollide_t *pVCollide = modelinfo->GetVCollide( GetModelIndex() );
-	PhysGetMassCenterOverride( this, pVCollide, tmpSolid );
-	PhysSolidOverride( tmpSolid, m_iszOverrideScript );
-	if ( tmpSolid.params.rotdamping < 1.0f && ShouldDampRotation(pVCollide->solids[0]) )
-	{
-		tmpSolid.params.rotdamping = 1.0f;
-	}
-	IPhysicsObject *pPhysics = VPhysicsInitNormal( GetSolid(), GetSolidFlags(), true, &tmpSolid );
+    if (m_massScale > 0)
+    {
+        tmpSolid.params.mass *= m_massScale;
+    }
 
-	if ( m_damageType == 1 )
-	{
-		PhysSetGameFlags( pPhysics, FVPHYSICS_DMG_SLICE );
-	}
+    vcollide_t *pVCollide = modelinfo->GetVCollide(GetModelIndex());
+    if (!pVCollide)
+    {
+        DevWarning("CPhysBox::CreateVPhysics: No vcollide for model %s\n", STRING(GetModelName()));
+        return false;
+    }
 
-	// Wake it up if not asleep
-	if ( !HasSpawnFlags(SF_PHYSBOX_ASLEEP) )
-	{
-		pPhysics->Wake();
-	}
+    PhysGetMassCenterOverride(this, pVCollide, tmpSolid);
+    PhysSolidOverride(tmpSolid, m_iszOverrideScript);
 
-	if ( HasSpawnFlags(SF_PHYSBOX_MOTIONDISABLED) || m_damageToEnableMotion > 0 || m_flForceToEnableMotion > 0 )
-	{
-		pPhysics->EnableMotion( false );
-	}
+    if (pVCollide->solidCount > 0 && tmpSolid.params.rotdamping < 1.0f)
+    {
+        if (ShouldDampRotation(pVCollide->solids[0]))
+        {
+            tmpSolid.params.rotdamping = 1.0f;
+        }
+    }
 
-	return true;
+    IPhysicsObject *pPhysics = VPhysicsInitNormal(GetSolid(), GetSolidFlags(), true, &tmpSolid);
+    if (!pPhysics)
+    {
+        DevWarning("CPhysBox::CreateVPhysics: Failed to init physics for model %s\n", STRING(GetModelName()));
+        return false;
+    }
+
+    if (m_damageType == 1)
+    {
+        PhysSetGameFlags(pPhysics, FVPHYSICS_DMG_SLICE);
+    }
+
+    if (!HasSpawnFlags(SF_PHYSBOX_ASLEEP))
+    {
+        pPhysics->Wake();
+    }
+
+    if (HasSpawnFlags(SF_PHYSBOX_MOTIONDISABLED) || m_damageToEnableMotion > 0 || m_flForceToEnableMotion > 0)
+    {
+        pPhysics->EnableMotion(false);
+    }
+
+    return true;
 }
 
        

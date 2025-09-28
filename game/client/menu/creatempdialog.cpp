@@ -316,7 +316,7 @@ ServerSettingsPanel::ServerSettingsPanel(vgui::Panel *parent, const char *pName)
     lblMaxPlayers->SetContentAlignment(vgui::Label::a_west);
 
     m_pMaxPlayers = new vgui::TextEntry(this, "MaxPlayersEntry");
-    m_pMaxPlayers->SetText("16"); // default / placeholder
+    m_pMaxPlayers->SetText("1");
     m_pMaxPlayers->SetSize(inputWidth, rowHeight);
     m_pMaxPlayers->SetPos(xInput, y);
     y += rowHeight + 15;
@@ -327,7 +327,7 @@ ServerSettingsPanel::ServerSettingsPanel(vgui::Panel *parent, const char *pName)
     lblHostname->SetContentAlignment(vgui::Label::a_west);
 
     m_pHostname = new vgui::TextEntry(this, "HostnameEntry");
-    m_pHostname->SetText("My Server"); // default / placeholder
+    m_pHostname->SetText("My HL2SB++ Server");
     m_pHostname->SetSize(inputWidth, rowHeight);
     m_pHostname->SetPos(xInput, y);
     y += rowHeight + 15;
@@ -355,7 +355,6 @@ ServerSettingsPanel::ServerSettingsPanel(vgui::Panel *parent, const char *pName)
     m_pGamemodeCombo->SetPos(xInput, y);
     y += rowHeight + 15;
 
-    // populate the combobox with gamemodes found on disk
     LoadGamemodes();
 }
 
@@ -418,7 +417,6 @@ void MapListPanel::OnTick( void )
 	}
 }
 
-//Just perform like a SMenu
 void MapListPanel::PerformLayout()
 {
 	BaseClass::PerformLayout();
@@ -446,14 +444,17 @@ void MapListPanel::PerformLayout()
 	}	
 }
 
-void MapListPanel::AddButton( MapListPanel *panel, const char *image, const char *command, const char *mapName )
+void MapListPanel::AddButton(MapListPanel *panel, const char *image, const char *command, const char *mapName)
 {
-    ImageExtButton *btn = new ImageExtButton(panel, mapName, image, image, image, command);
+    ImageExtButton *btn = new ImageExtButton(panel, mapName, image, nullptr, nullptr, command);
+
     layoutItems.AddToTail(btn);
     panel->AddItem(NULL, btn);
+
     btn->SetFgColor(Color(180, 180, 180, 255));
-    BaseTooltip *pTooltip = btn->GetTooltip();
-    pTooltip->SetText(mapName);
+
+    if (BaseTooltip *pTooltip = btn->GetTooltip())
+        pTooltip->SetText(mapName);
 }
 
 void MapList::OnCancel()
@@ -466,6 +467,15 @@ void MapList::OnClose()
     mpdialog.SetValue(0);
 }
 
+static const char* FilenameOnly(const char* path)
+{
+    if (!path || !path[0]) return path;
+    const char* p1 = strrchr(path, '/');
+    const char* p2 = strrchr(path, '\\');
+    const char* p = p1 > p2 ? p1 : p2;
+    return p ? (p + 1) : path;
+}
+
 void MapListPanel::LoadMaps(MapListPanel* panel)
 {
     if (m_bMapsLoaded) 
@@ -474,43 +484,51 @@ void MapListPanel::LoadMaps(MapListPanel* panel)
 
     layoutItems.RemoveAll();
 
-    FileFindHandle_t findhandle;
-    for (const char* pMap = filesystem->FindFirstEx("maps/*.bsp", "MOD", &findhandle); 
+    FileFindHandle_t mapHandle;
+    for (const char* pMap = filesystem->FindFirstEx("maps/*.bsp", "MOD", &mapHandle); 
          pMap && *pMap; 
-         pMap = filesystem->FindNext(findhandle))
+         pMap = filesystem->FindNext(mapHandle))
     {
         char mapName[MAX_PATH];
         Q_FileBase(pMap, mapName, sizeof(mapName));
 
-		char pngPath[MAX_PATH] = "";
-
-		FileFindHandle_t findhandle;
 		char searchPattern[MAX_PATH];
 		Q_snprintf(searchPattern, sizeof(searchPattern), "maps/thumb/%s.*", mapName);
 
-		const char* foundFile = filesystem->FindFirstEx(searchPattern, "MOD", &findhandle);
-		if (foundFile && *foundFile)
+		FileFindHandle_t thumbHandle;
+		char imageName[MAX_PATH] = "";
+
+		for (const char* foundFile = filesystem->FindFirstEx(searchPattern, "MOD", &thumbHandle);
+			foundFile && *foundFile;
+			foundFile = filesystem->FindNext(thumbHandle))
 		{
-			Q_snprintf(pngPath, sizeof(pngPath), "maps/thumb/%s", foundFile);
-			filesystem->FindClose(findhandle);
+			char base[MAX_PATH];
+			Q_FileBase(foundFile, base, sizeof(base));
+
+			if (!Q_stricmp(base, mapName)) // exact match
+			{
+				Q_snprintf(imageName, sizeof(imageName), "maps/thumb/%s", foundFile);
+				break;
+			}
 		}
-		else
+		filesystem->FindClose(thumbHandle);
+
+		if (imageName[0] == '\0')
 		{
-			Q_strncpy(pngPath, "maps/thumb/placeholder.png", sizeof(pngPath));
+			Q_strncpy(imageName, "maps/thumb/placeholder.png", sizeof(imageName));
 		}
 
         char imageCommand[MAX_PATH];
         Q_snprintf(imageCommand, sizeof(imageCommand), "select %s", mapName);
 
-        AddButton(panel, pngPath, imageCommand, mapName);
+        AddButton(panel, imageName, imageCommand, mapName);
     }
+
+    filesystem->FindClose(mapHandle);
 
     panel->InvalidateLayout(true);
     panel->MoveScrollBarToTop();
-
-    filesystem->FindClose(findhandle);
 }
-
 
 void MapListPanel::OnCommand( const char *command )
 {

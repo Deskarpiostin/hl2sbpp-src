@@ -269,7 +269,10 @@ void CNPC_Apache::Flight( void )
 	}
 	else
 	{
-		AngleVectors( GetGoalEnt()->GetAbsAngles(), &m_vecGoalOrientation );
+		if ( GetGoalEnt() )
+		{
+			AngleVectors( GetGoalEnt()->GetAbsAngles(), &m_vecGoalOrientation );
+		}
 	}
 //	SetGoalOrientation( vecGoalOrientation );
 	

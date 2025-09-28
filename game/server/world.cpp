@@ -479,7 +479,6 @@ CWorld::~CWorld( )
 		if ( g_pGameRules )
 		{
 			DevMsg("Precache: deleting g_pGameRules %p\n", g_pGameRules);
-			delete g_pGameRules;
 			g_pGameRules = NULL;
 		}
 	}
