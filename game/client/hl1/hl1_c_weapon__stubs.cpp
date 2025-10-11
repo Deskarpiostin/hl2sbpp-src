@@ -26,5 +26,5 @@ STUB_WEAPON_CLASS( foo_weapon_basebludgeonweapon, BaseBludgeonWeapon, C_BaseComb
 //STUB_WEAPON_CLASS( weapon_rpg,			WeaponRPG,			C_BaseHL1CombatWeapon );
 //STUB_WEAPON_CLASS( weapon_satchel,		WeaponSatchel,		C_BaseHL1CombatWeapon );
 //STUB_WEAPON_CLASS( weapon_shotgun,		WeaponShotgun,		C_BaseHL1CombatWeapon );
-STUB_WEAPON_CLASS( weapon_snark,		WeaponSnark,		C_BaseHL1CombatWeapon );
-STUB_WEAPON_CLASS( weapon_tripmine,		WeaponTripMine_HL1,		C_BaseHL1CombatWeapon );
+STUB_WEAPON_CLASS( weapon_snark_hl1,		WeaponSnark,		C_BaseHL1CombatWeapon );
+STUB_WEAPON_CLASS( weapon_tripmine_hl1,		WeaponTripMine_HL1,		C_BaseHL1CombatWeapon );

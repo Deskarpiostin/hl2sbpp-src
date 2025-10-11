@@ -1,4 +1,4 @@
-//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
+//===== Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -54,7 +54,458 @@ LUA_API lua_Frame *lua_toframe (lua_State *L, int idx) {
   return dynamic_cast<lua_Frame *>(phPanel->Get());
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: Screen size change notification handler
+//-----------------------------------------------------------------------------
+void LFrame::OnScreenSizeChanged(int nOldWide, int nOldTall)
+{
+	BaseClass::OnScreenSizeChanged(nOldWide, nOldTall);
 
+#ifdef LUA_SDK
+	BEGIN_LUA_CALL_PANEL_METHOD( "OnScreenSizeChanged" );
+		lua_pushinteger( m_lua_State, nOldWide );
+		lua_pushinteger( m_lua_State, nOldTall );
+	END_LUA_CALL_PANEL_METHOD( 2, 0 );
+#endif
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void LFrame::PaintBorder()
+{
+	BaseClass::PaintBorder();
+
+#ifdef LUA_SDK
+	BEGIN_LUA_CALL_PANEL_METHOD( "PaintBorder" );
+	END_LUA_CALL_PANEL_METHOD( 0, 0 );
+#endif
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void LFrame::PaintBackground()
+{ 
+	BaseClass::PaintBackground();
+
+#ifdef LUA_SDK
+	BEGIN_LUA_CALL_PANEL_METHOD( "PaintBackground" );
+	END_LUA_CALL_PANEL_METHOD( 0, 0 );
+#endif
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void LFrame::Paint()
+{
+	BaseClass::Paint();
+
+#ifdef LUA_SDK
+	BEGIN_LUA_CALL_PANEL_METHOD( "Paint" );
+	END_LUA_CALL_PANEL_METHOD( 0, 0 );
+#endif
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void LFrame::PostChildPaint()
+{
+#ifdef LUA_SDK
+	BEGIN_LUA_CALL_PANEL_METHOD( "PostChildPaint" );
+	END_LUA_CALL_PANEL_METHOD( 0, 0 );
+#endif
+
+	BaseClass::PostChildPaint();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Draws a black rectangle around the panel.
+//-----------------------------------------------------------------------------
+void LFrame::PaintBuildOverlay()
+{
+#ifdef LUA_SDK
+	BEGIN_LUA_CALL_PANEL_METHOD( "PaintBuildOverlay" );
+	END_LUA_CALL_PANEL_METHOD( 0, 1 );
+
+	RETURN_LUA_PANEL_NONE();
+#endif
+
+	BaseClass::PaintBuildOverlay();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void LFrame::OnChildAdded(VPANEL child)
+{
+#ifdef LUA_SDK
+	BEGIN_LUA_CALL_PANEL_METHOD( "OnChildAdded" );
+		lua_pushpanel( m_lua_State, child );
+	END_LUA_CALL_PANEL_METHOD( 0, 1 );
+
+	RETURN_LUA_PANEL_NONE();
+#endif
+
+	BaseClass::OnChildAdded(child);
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: default message handler
+//-----------------------------------------------------------------------------
+void LFrame::OnSizeChanged(int newWide, int newTall)
+{
+#ifdef LUA_SDK
+	BEGIN_LUA_CALL_PANEL_METHOD( "OnSizeChanged" );
+		lua_pushinteger( m_lua_State, newWide );
+		lua_pushinteger( m_lua_State, newTall );
+	END_LUA_CALL_PANEL_METHOD( 2, 1 );
+
+	RETURN_LUA_PANEL_NONE();
+#endif
+
+	BaseClass::OnSizeChanged(newWide, newTall);
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Called every frame the panel is visible, designed to be overridden
+//-----------------------------------------------------------------------------
+void LFrame::OnThink()
+{
+#ifdef LUA_SDK
+	BEGIN_LUA_CALL_PANEL_METHOD( "OnThink" );
+	END_LUA_CALL_PANEL_METHOD( 0, 0 );
+#endif
+
+	BaseClass::OnThink();
+}
+
+// input messages handlers (designed for override)
+void LFrame::OnCursorMoved(int x, int y)
+{
+#ifdef LUA_SDK
+	BEGIN_LUA_CALL_PANEL_METHOD( "OnCursorMoved" );
+		lua_pushinteger( m_lua_State, x );
+		lua_pushinteger( m_lua_State, y );
+	END_LUA_CALL_PANEL_METHOD( 2, 0 );
+#endif
+
+	BaseClass::OnCursorMoved(x, y);
+}
+
+void LFrame::OnCursorEntered()
+{
+#ifdef LUA_SDK
+	BEGIN_LUA_CALL_PANEL_METHOD( "OnCursorEntered" );
+	END_LUA_CALL_PANEL_METHOD( 0, 0 );
+#endif
+
+	BaseClass::OnCursorEntered();
+}
+
+void LFrame::OnCursorExited()
+{
+#ifdef LUA_SDK
+	BEGIN_LUA_CALL_PANEL_METHOD( "OnCursorExited" );
+	END_LUA_CALL_PANEL_METHOD( 0, 0 );
+#endif
+
+	BaseClass::OnCursorExited();
+}
+
+void LFrame::OnMousePressed(MouseCode code)
+{
+#ifdef LUA_SDK
+	BEGIN_LUA_CALL_PANEL_METHOD( "OnMousePressed" );
+		lua_pushinteger( m_lua_State, code );
+	END_LUA_CALL_PANEL_METHOD( 1, 0 );
+#endif
+
+	BaseClass::OnMousePressed(code);
+}
+
+void LFrame::OnMouseDoublePressed(MouseCode code)
+{
+#ifdef LUA_SDK
+	BEGIN_LUA_CALL_PANEL_METHOD( "OnMouseDoublePressed" );
+		lua_pushinteger( m_lua_State, code );
+	END_LUA_CALL_PANEL_METHOD( 1, 0 );
+#endif
+
+	BaseClass::OnMouseDoublePressed(code);
+}
+
+void LFrame::OnMouseTriplePressed(MouseCode code)
+{
+#ifdef LUA_SDK
+	BEGIN_LUA_CALL_PANEL_METHOD( "OnMouseTriplePressed" );
+		lua_pushinteger( m_lua_State, code );
+	END_LUA_CALL_PANEL_METHOD( 1, 0 );
+#endif
+
+	BaseClass::OnMouseTriplePressed(code);
+}
+
+void LFrame::OnMouseReleased(MouseCode code)
+{
+#ifdef LUA_SDK
+	BEGIN_LUA_CALL_PANEL_METHOD( "OnMouseReleased" );
+		lua_pushinteger( m_lua_State, code );
+	END_LUA_CALL_PANEL_METHOD( 1, 0 );
+#endif
+
+	BaseClass::OnMouseReleased(code);
+}
+
+void LFrame::OnMouseWheeled(int delta)
+{
+#ifdef LUA_SDK
+	BEGIN_LUA_CALL_PANEL_METHOD( "OnMouseWheeled" );
+		lua_pushinteger( m_lua_State, delta );
+	END_LUA_CALL_PANEL_METHOD( 1, 1 );
+
+	RETURN_LUA_PANEL_NONE();
+#endif
+
+	BaseClass::OnMouseWheeled(delta);
+}
+
+// base implementation forwards Key messages to the Panel's parent - override to 'swallow' the input
+void LFrame::OnKeyCodePressed(KeyCode code)
+{
+#ifdef LUA_SDK
+	BEGIN_LUA_CALL_PANEL_METHOD( "OnKeyCodePressed" );
+		lua_pushinteger( m_lua_State, code );
+	END_LUA_CALL_PANEL_METHOD( 1, 1 );
+
+	RETURN_LUA_PANEL_NONE();
+#endif
+
+	BaseClass::OnKeyCodePressed(code);
+}
+
+void LFrame::OnKeyCodeTyped(KeyCode code)
+{
+#ifdef LUA_SDK
+	BEGIN_LUA_CALL_PANEL_METHOD( "OnKeyCodeTyped" );
+		lua_pushinteger( m_lua_State, code );
+	END_LUA_CALL_PANEL_METHOD( 1, 1 );
+
+	RETURN_LUA_PANEL_NONE();
+#endif
+
+	BaseClass::OnKeyCodeTyped(code);
+}
+
+void LFrame::OnKeyCodeReleased(KeyCode code)
+{
+#ifdef LUA_SDK
+	BEGIN_LUA_CALL_PANEL_METHOD( "OnKeyCodeReleased" );
+		lua_pushinteger( m_lua_State, code );
+	END_LUA_CALL_PANEL_METHOD( 1, 1 );
+
+	RETURN_LUA_PANEL_NONE();
+#endif
+
+	BaseClass::OnKeyCodeReleased(code);
+}
+
+void LFrame::OnKeyFocusTicked()
+{
+#ifdef LUA_SDK
+	BEGIN_LUA_CALL_PANEL_METHOD( "OnKeyFocusTicked" );
+	END_LUA_CALL_PANEL_METHOD( 0, 1 );
+
+	RETURN_LUA_PANEL_NONE();
+#endif
+
+	BaseClass::OnKeyFocusTicked();
+}
+
+void LFrame::OnMouseFocusTicked()
+{
+#ifdef LUA_SDK
+	BEGIN_LUA_CALL_PANEL_METHOD( "OnMouseFocusTicked" );
+	END_LUA_CALL_PANEL_METHOD( 0, 1 );
+
+	RETURN_LUA_PANEL_NONE();
+#endif
+
+	BaseClass::OnMouseFocusTicked();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Called after a panel requests focus to fix up the whole chain
+//-----------------------------------------------------------------------------
+void LFrame::OnRequestFocus(VPANEL subFocus, VPANEL defaultPanel)
+{
+#ifdef LUA_SDK
+	BEGIN_LUA_CALL_PANEL_METHOD( "OnRequestFocus" );
+		lua_pushpanel( m_lua_State, subFocus );
+		lua_pushpanel( m_lua_State, defaultPanel );
+	END_LUA_CALL_PANEL_METHOD( 2, 1 );
+
+	RETURN_LUA_PANEL_NONE();
+#endif
+
+//	BaseClass::OnRequestFocus(subFocus, defaultPanel);
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Called when a panel loses it's mouse capture
+//-----------------------------------------------------------------------------
+void LFrame::OnMouseCaptureLost()
+{
+#ifdef LUA_SDK
+	BEGIN_LUA_CALL_PANEL_METHOD( "OnMouseCaptureLost" );
+	END_LUA_CALL_PANEL_METHOD( 0, 1 );
+
+	RETURN_LUA_PANEL_NONE();
+#endif
+
+	BaseClass::OnMouseCaptureLost();
+}
+
+void LFrame::PerformLayout()
+{
+#ifdef LUA_SDK
+	BEGIN_LUA_CALL_PANEL_METHOD( "PerformLayout" );
+	END_LUA_CALL_PANEL_METHOD( 0, 0 );
+#endif
+
+	BaseClass::PerformLayout();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Called when a panel receives a command message from another panel
+//-----------------------------------------------------------------------------
+void LFrame::OnCommand(const char *command)
+{
+#ifdef LUA_SDK
+	BEGIN_LUA_CALL_PANEL_METHOD( "OnCommand" );
+		lua_pushstring( m_lua_State, command );
+	END_LUA_CALL_PANEL_METHOD( 1, 1 );
+
+	RETURN_LUA_PANEL_NONE();
+#endif
+	BaseClass::OnCommand( command );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: panel gained focus message
+//-----------------------------------------------------------------------------
+void LFrame::OnSetFocus()
+{
+#ifdef LUA_SDK
+	BEGIN_LUA_CALL_PANEL_METHOD( "OnSetFocus" );
+	END_LUA_CALL_PANEL_METHOD( 0, 1 );
+
+	RETURN_LUA_PANEL_NONE();
+#endif
+
+	BaseClass::OnSetFocus();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: panel lost focus message
+//-----------------------------------------------------------------------------
+void LFrame::OnKillFocus()
+{
+#ifdef LUA_SDK
+	BEGIN_LUA_CALL_PANEL_METHOD( "OnKillFocus" );
+	END_LUA_CALL_PANEL_METHOD( 0, 1 );
+
+	RETURN_LUA_PANEL_NONE();
+#endif
+
+	BaseClass::OnKillFocus();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void LFrame::ApplySchemeSettings(IScheme *pScheme)
+{
+	BaseClass::ApplySchemeSettings(pScheme);
+
+#ifdef LUA_SDK
+	BEGIN_LUA_CALL_PANEL_METHOD( "ApplySchemeSettings" );
+	END_LUA_CALL_PANEL_METHOD( 0, 0 );
+#endif
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: Loads panel details from the resource info
+//-----------------------------------------------------------------------------
+void LFrame::ApplySettings(KeyValues *inResourceData)
+{
+	BaseClass::ApplySettings( inResourceData );
+
+#ifdef LUA_SDK
+	BEGIN_LUA_CALL_PANEL_METHOD( "ApplySettings" );
+	END_LUA_CALL_PANEL_METHOD( 0, 0 );
+#endif
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: called whenever the panel moves
+//-----------------------------------------------------------------------------
+void LFrame::OnMove()
+{
+#ifdef LUA_SDK
+	BEGIN_LUA_CALL_PANEL_METHOD( "OnMove" );
+	END_LUA_CALL_PANEL_METHOD( 0, 0 );
+#endif
+
+	BaseClass::OnMove();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: empty function
+//-----------------------------------------------------------------------------
+void LFrame::OnTick()
+{
+#ifdef LUA_SDK
+	BEGIN_LUA_CALL_PANEL_METHOD( "OnTick" );
+	END_LUA_CALL_PANEL_METHOD( 0, 0 );
+#endif
+
+	BaseClass::OnTick();
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Handles a message
+//			Dispatches the message to a set of message maps
+//-----------------------------------------------------------------------------
+void LFrame::OnMessage(const KeyValues *params, VPANEL ifromPanel)
+{
+#ifdef LUA_SDK
+	BEGIN_LUA_CALL_PANEL_METHOD( "OnMessage" );
+		lua_pushpanel( m_lua_State, ifromPanel );
+	END_LUA_CALL_PANEL_METHOD( 1, 1 );
+
+	RETURN_LUA_PANEL_NONE();
+#endif
+
+	BaseClass::OnMessage( params, ifromPanel );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Called to delete the panel
+//-----------------------------------------------------------------------------
+void LFrame::OnDelete()
+{
+#ifdef LUA_SDK
+	BEGIN_LUA_CALL_PANEL_METHOD( "OnDelete" );
+	END_LUA_CALL_PANEL_METHOD( 0, 0 );
+#endif
+
+	BaseClass::OnDelete();
+}
 
 /*
 ** push functions (C -> stack)
@@ -309,9 +760,14 @@ static int Frame_SetSmallCaption (lua_State *L) {
   return 0;
 }
 
-static int Frame_SetTitle (lua_State *L) {
-  luaL_checkframe(L, 1)->SetTitle(luaL_checkstring(L, 2), luaL_checkboolean(L, 3));
-  return 0;
+static int Frame_SetTitle(lua_State *L) {
+    Frame *frame = luaL_checkframe(L, 1);
+    const char *title = luaL_checkstring(L, 2);
+
+    int showTitle = luaL_optboolean(L, 3, 1);
+
+    frame->SetTitle(title, showTitle);
+    return 0;
 }
 
 static int Frame_SetTitleBarVisible (lua_State *L) {

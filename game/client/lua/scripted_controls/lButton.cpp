@@ -1,4 +1,4 @@
-//========= Copyright © 1996-2005, Valve Corporation, All rights reserved. ============//
+//========= Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ============//
 //
 // Purpose: Basic button control
 //
@@ -78,6 +78,18 @@ LUALIB_API lua_Button *luaL_checkbutton (lua_State *L, int narg) {
   return d;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: 
+//-----------------------------------------------------------------------------
+void LButton::PaintBackground()
+{ 
+	BaseClass::PaintBackground();
+
+#ifdef LUA_SDK
+	BEGIN_LUA_CALL_PANEL_METHOD( "PaintBackground" );
+	END_LUA_CALL_PANEL_METHOD( 0, 0 );
+#endif
+}
 
 static int Button_CanBeDefaultButton (lua_State *L) {
   lua_pushboolean(L, luaL_checkbutton(L, 1)->CanBeDefaultButton());
@@ -210,6 +222,16 @@ static int Button_OnHotkey (lua_State *L) {
 
 static int Button_OnKillFocus (lua_State *L) {
   luaL_checkbutton(L, 1)->OnKillFocus();
+  return 0;
+}
+
+static int Button_SetText (lua_State *L) {
+  luaL_checkbutton(L, 1)->SetText( luaL_checkstring(L, 2) );
+  return 0;
+}
+
+static int Button_SetContentAlignment (lua_State *L) {
+  luaL_checkbutton(L, 1)->SetContentAlignment( (vgui::Label::Alignment)luaL_checkint(L, 2) );
   return 0;
 }
 
@@ -476,6 +498,8 @@ static const luaL_Reg Buttonmeta[] = {
   {"SetUseCaptureMouse", Button_SetUseCaptureMouse},
   {"ShouldPaint", Button_ShouldPaint},
   {"SizeToContents", Button_SizeToContents},
+  {"SetContentAlignment", Button_SetContentAlignment},
+  {"SetText", Button_SetText},
   {"__index", Button___index},
   {"__newindex", Button___newindex},
   {"__gc", Button___gc},

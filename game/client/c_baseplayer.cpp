@@ -89,7 +89,7 @@ static C_BasePlayer *s_pLocalPlayer = NULL;
 
 static ConVar	cl_customsounds ( "cl_customsounds", "1", 0, "Enable customized player sound playback" );
 static ConVar	spec_track		( "spec_track", "0", 0, "Tracks an entity in spec mode" );
-static ConVar	cl_smooth		( "cl_smooth", "1", 0, "Smooth view/eye origin after prediction errors" );
+static ConVar	cl_smooth		( "cl_smooth", "0", 0, "Smooth view/eye origin after prediction errors" );
 static ConVar	cl_smoothtime	( 
 	"cl_smoothtime", 
 	"0.1", 

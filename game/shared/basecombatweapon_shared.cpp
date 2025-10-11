@@ -1512,7 +1512,12 @@ bool CBaseCombatWeapon::DefaultDeploy( char *szViewModel, char *szWeaponModel, i
         SetViewModel();
         SendWeaponAnim( iActivity );
 
-        float flDeploySpeed = sv_defaultdeployspeed.GetFloat();
+        float flDeploySpeed;
+		if (IsScripted())
+			flDeploySpeed = GetWpnData().fDeploySpeed;
+		else
+			flDeploySpeed = sv_defaultdeployspeed.GetFloat();
+
         if ( flDeploySpeed <= 0.0f )
             flDeploySpeed = 1.0f; // sanity check
 

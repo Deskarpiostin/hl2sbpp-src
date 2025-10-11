@@ -77,7 +77,7 @@ public:
 		}
 		else
 		{
-			Q_strncpy(imageName, "maps/thumb/placeholder.png", sizeof(imageName));
+			Q_strncpy(imageName, "materials/gui/noicon.png", sizeof(imageName));
 		}
 
 		m_pMapIcon->DeletePanel();

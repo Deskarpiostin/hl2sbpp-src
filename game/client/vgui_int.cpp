@@ -34,6 +34,7 @@
 #include "menu/creatempdialog.h"
 #include "hl2sb/mapload_background.h"
 #include "hl2sb/vgui/advanced_options.h"
+#include "menu/spawnmenu_new.h"
 #endif
 
 #if defined( TF_CLIENT_DLL )
@@ -233,6 +234,7 @@ void VGui_CreateGlobalPanels( void )
 #ifdef HL2SB
 	smlmenu->Create(gameParent);
 	maplist->Create(GameUiDll);
+	spawnmenu->Create(gameParent);
 #endif
 
 #if defined( TRACK_BLOCKING_IO )

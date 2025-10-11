@@ -17,6 +17,22 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
+static int luasrc_UTIL_GetAllPlayers(lua_State *L) {
+    lua_newtable(L);
+
+    int index = 1;
+    for (int i = 1; i <= gpGlobals->maxClients; i++) {
+        CBasePlayer* pPlayer = UTIL_PlayerByIndex(i);
+        if (pPlayer && pPlayer->IsPlayer()) {
+            lua_pushplayer(L, pPlayer);
+            lua_rawseti(L, -2, index);
+            index++;
+        }
+    }
+
+    return 1;
+}
+
 static int luasrc_UTIL_VecToYaw (lua_State *L) {
   lua_pushnumber(L, UTIL_VecToYaw(luaL_checkvector(L, 1)));
   return 1;
@@ -177,6 +193,7 @@ static const luaL_Reg util_funcs[] = {
   {"IsSpaceEmpty",  luasrc_UTIL_IsSpaceEmpty},
   // {"UTIL_PlayerByIndex",  luasrc_UTIL_PlayerByIndex},
   {"PlayerByIndex",  luasrc_UTIL_PlayerByIndex},
+  {"GetAllPlayers", luasrc_UTIL_GetAllPlayers},
   {NULL, NULL}
 };
 

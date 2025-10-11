@@ -17,9 +17,9 @@
 #include "game.h"
 #include "vstdlib/random.h"
 #include "engine/IEngineSound.h"
-#include "hl1_player.h"
 #include "hl1_basegrenade.h"
 #include "beam_shared.h"
+#include "hl2mp_player.h"
 
 extern ConVar sk_plr_dmg_tripmine;
 
@@ -115,7 +115,7 @@ void CWeaponTripMine_HL1::Equip( CBaseCombatCharacter *pOwner )
 //-----------------------------------------------------------------------------
 void CWeaponTripMine_HL1::PrimaryAttack( void )
 {
-	CHL1_Player *pPlayer = ToHL1Player( GetOwner() );
+	CHL2MP_Player *pPlayer = ToHL2MPPlayer( GetOwner() );
 	if ( !pPlayer )
 	{
 		return;

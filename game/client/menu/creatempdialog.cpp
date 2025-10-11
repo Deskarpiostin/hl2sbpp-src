@@ -285,12 +285,12 @@ GameMapsPanel::GameMapsPanel(vgui::Panel *parent, const char *pName) : MapListPa
         char command[128];
         Q_snprintf(command, sizeof(command), "select %s", hardcodedMaps[i]);
 
-        if (filesystem->FileExists(pngPath))
+        if (g_pFullFileSystem->FileExists(pngPath))
         {
 			AddButton(this, pngPath, command, hardcodedMaps[i]);
 		}
         else
-            AddButton(this, "maps/thumb/placeholder.png", command, hardcodedMaps[i]);
+            AddButton(this, "materials/gui/noicon.png", command, hardcodedMaps[i]);
     }
 
 	InvalidateLayout(true);
@@ -367,14 +367,14 @@ void ServerSettingsPanel::LoadGamemodes()
 	m_pGamemodeCombo->ActivateItem( defaultIndex );
 
     FileFindHandle_t findhandle;
-    for (const char* p = filesystem->FindFirstEx("gamemodes/*", "MOD", &findhandle); p && *p; p = filesystem->FindNext(findhandle))
+    for (const char* p = g_pFullFileSystem->FindFirstEx("gamemodes/*", "MOD", &findhandle); p && *p; p = g_pFullFileSystem->FindNext(findhandle))
     {
         if (strchr(p, '.'))
             continue;
 
         m_pGamemodeCombo->AddItem(p, NULL);
     }
-    filesystem->FindClose(findhandle);
+    g_pFullFileSystem->FindClose(findhandle);
 }
 
 void ServerSettingsPanel::OnTick( void )
@@ -485,9 +485,9 @@ void MapListPanel::LoadMaps(MapListPanel* panel)
     layoutItems.RemoveAll();
 
     FileFindHandle_t mapHandle;
-    for (const char* pMap = filesystem->FindFirstEx("maps/*.bsp", "MOD", &mapHandle); 
+    for (const char* pMap = g_pFullFileSystem->FindFirstEx("maps/*.bsp", "MOD", &mapHandle); 
          pMap && *pMap; 
-         pMap = filesystem->FindNext(mapHandle))
+         pMap = g_pFullFileSystem->FindNext(mapHandle))
     {
         char mapName[MAX_PATH];
         Q_FileBase(pMap, mapName, sizeof(mapName));
@@ -498,9 +498,9 @@ void MapListPanel::LoadMaps(MapListPanel* panel)
 		FileFindHandle_t thumbHandle;
 		char imageName[MAX_PATH] = "";
 
-		for (const char* foundFile = filesystem->FindFirstEx(searchPattern, "MOD", &thumbHandle);
+		for (const char* foundFile = g_pFullFileSystem->FindFirstEx(searchPattern, "MOD", &thumbHandle);
 			foundFile && *foundFile;
-			foundFile = filesystem->FindNext(thumbHandle))
+			foundFile = g_pFullFileSystem->FindNext(thumbHandle))
 		{
 			char base[MAX_PATH];
 			Q_FileBase(foundFile, base, sizeof(base));
@@ -511,11 +511,11 @@ void MapListPanel::LoadMaps(MapListPanel* panel)
 				break;
 			}
 		}
-		filesystem->FindClose(thumbHandle);
+		g_pFullFileSystem->FindClose(thumbHandle);
 
 		if (imageName[0] == '\0')
 		{
-			Q_strncpy(imageName, "maps/thumb/placeholder.png", sizeof(imageName));
+			Q_strncpy(imageName, "materials/gui/noicon.png", sizeof(imageName));
 		}
 
         char imageCommand[MAX_PATH];
@@ -524,7 +524,7 @@ void MapListPanel::LoadMaps(MapListPanel* panel)
         AddButton(panel, imageName, imageCommand, mapName);
     }
 
-    filesystem->FindClose(mapHandle);
+    g_pFullFileSystem->FindClose(mapHandle);
 
     panel->InvalidateLayout(true);
     panel->MoveScrollBarToTop();

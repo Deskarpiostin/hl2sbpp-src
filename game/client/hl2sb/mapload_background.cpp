@@ -45,7 +45,7 @@ CMapLoadBG::CMapLoadBG( char const *panelName ) : EditablePanel( NULL, panelName
     m_pMapName    = new Label(this, "MapName", "");
     m_pGameMode   = new Label(this, "GameMode", "");
 
-    m_pMapIcon = new PngImagePanel(this, "PNGPanel", "maps/thumb/placeholder.png");
+    m_pMapIcon = new PngImagePanel(this, "PNGPanel", "materials/gui/noicon.png");
 
     SetZPos(99999);
 }

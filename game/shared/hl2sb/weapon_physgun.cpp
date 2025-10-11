@@ -13,6 +13,8 @@
 #include "gamerules.h"
 #ifdef CLIENT_DLL
 #include "clienteffectprecachesystem.h"
+#else
+#include "vehicle_base.h"
 #endif
 #include "weapon_hl2mpbasehlmpcombatweapon.h"
 #ifndef CLIENT_DLL
@@ -88,6 +90,8 @@ CLIENTEFFECT_REGISTER_END()
 ConVar physgun_r( "physgun_r", "0", FCVAR_USERINFO | FCVAR_ARCHIVE );
 ConVar physgun_g( "physgun_g", "229", FCVAR_USERINFO | FCVAR_ARCHIVE );
 ConVar physgun_b( "physgun_b", "238", FCVAR_USERINFO | FCVAR_ARCHIVE );
+
+ConVar phys_gunrotationspeed("phys_gunrotationspeed", "10" );
 
 ConVar physgun_halo_override( "physgun_halo_override", "0", FCVAR_USERINFO | FCVAR_ARCHIVE );
 ConVar physgun_halo_override_r( "physgun_halo_override_r", "0", FCVAR_USERINFO | FCVAR_ARCHIVE );
@@ -864,41 +868,6 @@ bool CGravControllerPoint::UpdateObject( CBasePlayer *pPlayer, CBaseEntity *pEnt
 		return false;
 	}
 
-#if 1
-	// adnan
-	// if we've been rotating it, set it to its proper new angles (change m_attachedAnglesPlayerSpace while modifier)
-	//Pickup_GetRotatedCarryAngles( pEntity, pPlayer, pPlayer->EntityToWorldTransform(), angles );
-	// added the ... && (mousedx | mousedy) so we dont have to calculate if no mouse movement
-	// UPDATE: m_vecRotatedCarryAngles has become a temp variable... can be cleaned up by using actual temp vars
-#ifdef CLIENT_DLL
-	if( m_bHasRotatedCarryAngles && (pPlayer->m_pCurrentCommand->mousedx || pPlayer->m_pCurrentCommand->mousedy) )
-#else
-	if( m_bHasRotatedCarryAngles && (pPlayer->GetCurrentCommand()->mousedx || pPlayer->GetCurrentCommand()->mousedy) )
-#endif
-	{
-		// method II: relative orientation
-		VMatrix vDeltaRotation, vCurrentRotation, vNewRotation;
-		
-		MatrixFromAngles( m_targetRotation, vCurrentRotation );
-
-#ifdef CLIENT_DLL
-		m_vecRotatedCarryAngles[YAW] = pPlayer->m_pCurrentCommand->mousedx*0.05;
-		m_vecRotatedCarryAngles[PITCH] = pPlayer->m_pCurrentCommand->mousedy*-0.05;
-#else
-		m_vecRotatedCarryAngles[YAW] = pPlayer->GetCurrentCommand()->mousedx*0.05;
-		m_vecRotatedCarryAngles[PITCH] = pPlayer->GetCurrentCommand()->mousedy*-0.05;
-#endif
-		m_vecRotatedCarryAngles[ROLL] = 0;
-		MatrixFromAngles( m_vecRotatedCarryAngles, vDeltaRotation );
-
-		MatrixMultiply(vDeltaRotation, vCurrentRotation, vNewRotation);
-		MatrixToAngles( vNewRotation, m_targetRotation );
-	}
-	// end adnan
-#endif
-
-	SetTargetPosition( m_targetPosition, m_targetRotation );
-
 	return true;
 }
 
@@ -1018,16 +987,25 @@ void CWeaponPhysicsGun::EffectUpdate( void )
 		const char* pszPropName = pObject->GetClassname();
 
 #ifdef GAME_DLL
-		IPhysicsObject* pFreeze = GetPhysObjFromPhysicsBone( pObject, m_physicsBone );
+    IPhysicsObject* pFreeze = GetPhysObjFromPhysicsBone( pObject, m_physicsBone );
 
-		if ( pFreeze != nullptr )
-		{
-			if ( strcmp( pszPropName, "prop_vehicle_jeep" ) != 0 ) // make sure it's not a jeep
-			{
-				pFreeze->EnableMotion( true ); // unfreeze, if possible
-			}
-		}
-#endif 
+    if ( pFreeze != nullptr )
+    {
+        CBaseAnimating* pEntity = pObject->GetBaseAnimating();
+
+        if ( pEntity && pEntity->GetServerVehicle() )
+        {
+            CPropVehicleDriveable* pVehicle = dynamic_cast<CPropVehicleDriveable*>(pEntity);
+            if ( pVehicle )
+                pVehicle->GetPhysics()->EnableMotion();
+
+			// we have wheels frozen, freeze the base too
+			pVehicle->VPhysicsGetObject()->EnableMotion( true );
+        }
+        else
+            pFreeze->EnableMotion( true );
+    }
+#endif
 
 #if defined( GLOWS_ENABLE ) && defined( GAME_DLL )
 		CBaseAnimating* pAnimating = pObject->GetBaseAnimating();
@@ -1068,12 +1046,24 @@ void CWeaponPhysicsGun::EffectUpdate( void )
 			{
 				m_useDown = false;
 
-				if ( strcmp( pszPropName, "prop_vehicle_jeep" ) != 0 ) // make sure it's not a jeep
+				//if ( strcmp( pszPropName, "prop_vehicle_jeep" ) != 0 ) // make sure it's not a jeep
 				{
 #ifdef GAME_DLL
 					if ( pFreeze != nullptr )
 					{
-						pFreeze->EnableMotion( false ); // freeze the object
+						CBaseAnimating* pEntity = pObject->GetBaseAnimating();
+
+						if ( pEntity && pEntity->GetServerVehicle() )
+						{
+							CPropVehicleDriveable* pVehicle = dynamic_cast<CPropVehicleDriveable*>(pEntity);
+							if ( pVehicle )
+								pVehicle->GetPhysics()->DisableMotion();
+
+							// we have wheels frozen, freeze the base too
+							pVehicle->VPhysicsGetObject()->EnableMotion( false );
+						}
+						else
+							pFreeze->EnableMotion( false );
 					}
 
 					int nMagnitude   = 2;   // intensity
@@ -1103,12 +1093,24 @@ void CWeaponPhysicsGun::EffectUpdate( void )
 			if ( pOwner->m_afButtonPressed & IN_ATTACK2 )
 			{
 				m_useDown = false;
-				if ( strcmp( pszPropName, "prop_vehicle_jeep" ) != 0 ) // make sure it's not a jeep
+				//if ( strcmp( pszPropName, "prop_vehicle_jeep" ) != 0 ) // make sure it's not a jeep
 				{
 #ifdef GAME_DLL
 					if ( pFreeze != nullptr )
 					{
-						pFreeze->EnableMotion( false ); // freeze the object
+						CBaseAnimating* pEntity = pObject->GetBaseAnimating();
+
+						if ( pEntity && pEntity->GetServerVehicle() )
+						{
+							CPropVehicleDriveable* pVehicle = dynamic_cast<CPropVehicleDriveable*>(pEntity);
+							if ( pVehicle )
+								pVehicle->GetPhysics()->DisableMotion();
+
+							// we have wheels frozen, freeze the base too
+							pVehicle->VPhysicsGetObject()->EnableMotion( false );
+						}
+						else
+							pFreeze->EnableMotion( false );
 					}
 
 					int nMagnitude   = 2;   // intensity

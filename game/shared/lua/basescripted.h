@@ -28,6 +28,10 @@ public:
 	CBaseScripted();
 	~CBaseScripted();
 
+#ifdef GAME_DLL
+	virtual bool AcceptInput(const char *inputName, CBaseEntity *pActivator, CBaseEntity *pCaller, variant_t value, int outputID);
+#endif
+
 	bool	IsScripted( void ) const { return true; }
 
 	virtual int OnTakeDamage(const CTakeDamageInfo &info);

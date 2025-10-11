@@ -1643,6 +1643,14 @@ void CPropAirboat::FireGun( )
 
 	DoMuzzleFlash();
 
+	Vector endPos = vecGunPosition + (vecRay * MAX_TRACE_LENGTH);
+
+	//Shoot a shot straight out
+	trace_t	tr;
+	UTIL_TraceLine(vecGunPosition, endPos, MASK_SHOT, this, COLLISION_GROUP_NONE, &tr);
+
+	DoImpactEffect(tr, 0);
+
 	// NOTE: This must occur after FireBullets
 	if ( gpGlobals->curtime >= m_flNextHeavyShotTime )
 	{

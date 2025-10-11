@@ -301,6 +301,7 @@ void CGlowObjectManager::ApplyEntityGlowEffects( const CViewSetup *pSetup, int n
 		stencilState.SetStencilState( pRenderContext );
 
 		// Draw quad
+		render->SetBlend( 0.5f );
 		pRenderContext->DrawScreenSpaceRectangle( pMatHaloAddToScreen, 0, 0, nViewportWidth, nViewportHeight,
 			0.0f, -0.5f, nSrcWidth / 4 - 1, nSrcHeight / 4 - 1,
 			pRtQuarterSize1->GetActualWidth(),

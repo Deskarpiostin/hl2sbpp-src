@@ -691,48 +691,26 @@ void CChairServerVehicle::ItemPostFrame( CBasePlayer *player )
 	}
 }
 
-
-//-----------------------------------------------------------------------------
-// Purpose: 
-//-----------------------------------------------------------------------------
 void CChairServerVehicle::GetVehicleViewPosition( int nRole, Vector *pAbsOrigin, QAngle *pAbsAngles, float *pFOV /*= NULL*/ )
 {
-	// FIXME: This needs to be reconciled with the other versions of this function!
-	Assert( nRole == VEHICLE_ROLE_DRIVER );
-	CBasePlayer *pPlayer = ToBasePlayer( GetDrivableVehicle()->GetDriver() );
-	Assert( pPlayer );
+    Assert( nRole == VEHICLE_ROLE_DRIVER );
+    CBasePlayer *pPlayer = ToBasePlayer( GetDrivableVehicle()->GetDriver() );
+    Assert( pPlayer );
 
-	*pAbsAngles = pPlayer->EyeAngles(); // yuck. this is an in/out parameter.
-
-	float flPitchFactor = 1.0;
-	matrix3x4_t vehicleEyePosToWorld;
-	Vector vehicleEyeOrigin;
-	QAngle vehicleEyeAngles;
-	GetPod()->GetAttachment( "vehicle_driver_eyes", vehicleEyeOrigin, vehicleEyeAngles );
-	AngleMatrix( vehicleEyeAngles, vehicleEyePosToWorld );
-
-	// Compute the relative rotation between the unperterbed eye attachment + the eye angles
-	matrix3x4_t cameraToWorld;
-	AngleMatrix( *pAbsAngles, cameraToWorld );
-
-	matrix3x4_t worldToEyePos;
-	MatrixInvert( vehicleEyePosToWorld, worldToEyePos );
-
-	matrix3x4_t vehicleCameraToEyePos;
-	ConcatTransforms( worldToEyePos, cameraToWorld, vehicleCameraToEyePos );
-
-	// Now perterb the attachment point
-	vehicleEyeAngles.x = RemapAngleRange( PITCH_CURVE_ZERO * flPitchFactor, PITCH_CURVE_LINEAR, vehicleEyeAngles.x );
-	vehicleEyeAngles.z = RemapAngleRange( ROLL_CURVE_ZERO * flPitchFactor, ROLL_CURVE_LINEAR, vehicleEyeAngles.z );
-	AngleMatrix( vehicleEyeAngles, vehicleEyeOrigin, vehicleEyePosToWorld );
-
-	// Now treat the relative eye angles as being relative to this new, perterbed view position...
-	matrix3x4_t newCameraToWorld;
-	ConcatTransforms( vehicleEyePosToWorld, vehicleCameraToEyePos, newCameraToWorld );
-
-	// output new view abs angles
-	MatrixAngles( newCameraToWorld, *pAbsAngles );
-
-	// UNDONE: *pOrigin would already be correct in single player if the HandleView() on the server ran after vphysics
-	MatrixGetColumn( newCameraToWorld, 3, *pAbsOrigin );
+    Vector vehicleEyeOrigin;
+    QAngle vehicleEyeAngles;
+    
+    int eyeAttachmentIndex = GetPod()->LookupAttachment("vehicle_driver_eyes");
+    if (eyeAttachmentIndex > 0)
+    {
+        GetPod()->GetAttachment(eyeAttachmentIndex, vehicleEyeOrigin, vehicleEyeAngles);
+    }
+    else
+    {
+        vehicleEyeOrigin = GetPod()->GetAbsOrigin() + Vector(0, 0, 48);
+        vehicleEyeAngles = GetPod()->GetAbsAngles();
+    }
+    
+    *pAbsOrigin = vehicleEyeOrigin;
+    *pAbsAngles = pPlayer->EyeAngles();
 }

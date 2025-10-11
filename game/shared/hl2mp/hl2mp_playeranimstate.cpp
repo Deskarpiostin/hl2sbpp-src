@@ -112,8 +112,20 @@ Activity CHL2MPPlayerAnimState::TranslateActivity( Activity actDesired )
 			return danceAct;
 	}
 	
-    if ( pPlayer && pPlayer->IsInAVehicle() )
-        return ACT_HL2MP_SIT;
+	if ( pPlayer && pPlayer->IsInAVehicle() )
+	{
+#ifdef GAME_DLL
+		if ( CBaseEntity *pVehicle = pPlayer->GetVehicleEntity() )
+#endif
+		{
+#ifdef GAME_DLL
+			if ( FStrEq( pVehicle->GetClassname(), "prop_prisoner_pod" ) )
+				return ACT_HL2MP_IDLE; // standing
+#endif
+
+			return ACT_HL2MP_SIT;
+		}
+	}
 
     if (pPlayer->GetMoveType() == MOVETYPE_NOCLIP)
         return ACT_GMOD_NOCLIP_LAYER;

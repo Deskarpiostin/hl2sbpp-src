@@ -7398,6 +7398,11 @@ void CC_Ent_Create( const CCommand& args )
 			entity->KeyValue( pKeyName, pValue );
 		}
 
+		ConVarRef npcEquipVar("npc_create_equipment");
+		const char *equipValue = npcEquipVar.IsValid() ? npcEquipVar.GetString() : nullptr;
+		if (equipValue && equipValue[0] != '\0')
+			entity->KeyValue("additionalequipment", equipValue);
+
 		DispatchSpawn(entity);
 
 		// Now attempt to drop into the world

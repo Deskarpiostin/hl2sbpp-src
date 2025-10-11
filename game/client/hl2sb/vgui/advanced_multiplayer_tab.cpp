@@ -14,27 +14,33 @@
 using namespace vgui;
 
 static bool s_bPopulatingNameField = false;
-static const char *s_sPlayerNameCfg = "cfg/plus_playername.cfg";
+static const char *s_sPlusSettingsCfg = "cfg/plus_settings.cfg";
+static int s_iLastHandIndex = -1;
 
-static void SavePlayerNameToFile( const char *name )
+static void SaveSettingsToFile( const char *playerName, const char *handModel )
 {
-    KeyValues *kv = new KeyValues( "PlayerName" );
-    kv->SetString( "name", name ? name : "" );
-    kv->SaveToFile( g_pFullFileSystem, s_sPlayerNameCfg );
+    KeyValues *kv = new KeyValues( "PlusSettings" );
+
+    kv->SetString( "PlayerName", playerName ? playerName : "" );
+    kv->SetString( "HandModel",  handModel ? handModel : "" );
+
+    kv->SaveToFile( g_pFullFileSystem, s_sPlusSettingsCfg );
     kv->deleteThis();
 }
 
-static void LoadPlayerNameFromFile( CUtlString &out )
+static void LoadSettingsFromFile( CUtlString &outPlayerName, CUtlString &outHandModel )
 {
-    KeyValues *kv = new KeyValues( "PlayerName" );
-    if ( kv->LoadFromFile( g_pFullFileSystem, s_sPlayerNameCfg ) )
+    outPlayerName = "";
+    outHandModel = "";
+
+    KeyValues *kv = new KeyValues( "PlusSettings" );
+    if ( kv->LoadFromFile( g_pFullFileSystem, s_sPlusSettingsCfg ) )
     {
-        const char *n = kv->GetString( "name", "" );
-        out = n ? n : "";
-    }
-    else
-    {
-        out = "";
+        const char *name = kv->GetString( "PlayerName", "" );
+        const char *hand = kv->GetString( "HandModel", "" );
+
+        outPlayerName = name ? name : "";
+        outHandModel = hand ? hand : "";
     }
     kv->deleteThis();
 }
@@ -64,93 +70,222 @@ static void LoadHandModelsFromLua(std::vector<HandModelInfo> &out)
         return;
     }
 
-    lua_pushnil(Lstate); // first key
-    while (lua_next(Lstate, -2) != 0)
-    {
-        const char* topKey = nullptr;
-        if (lua_type(Lstate, -2) == LUA_TSTRING)
-        {
-            topKey = lua_tostring(Lstate, -2);
-        }
-        else
-        {
-            lua_tostring(Lstate, -2);
-            topKey = lua_tostring(Lstate, -1);
-            lua_pop(Lstate, 1); // remove tostring result
-        }
+    auto process_model_table = [&](const char *derivedKey) -> void {
+        if (!lua_istable(Lstate, -1))
+            return;
 
-        if (topKey && lua_istable(Lstate, -1))
+        lua_getfield(Lstate, -1, "model");
+        bool hasModel = lua_isstring(Lstate, -1);
+        lua_pop(Lstate, 1);
+
+        if (hasModel)
         {
-            lua_getfield(Lstate, -1, "model");
-            bool hasModel = lua_isstring(Lstate, -1);
+            HandModelInfo info;
+
+            // key: prefer explicit "key" field, otherwise derivedKey
+            lua_getfield(Lstate, -1, "key");
+            if (lua_isstring(Lstate, -1))
+                info.key = lua_tostring(Lstate, -1);
+            else
+                info.key = derivedKey ? derivedKey : "";
             lua_pop(Lstate, 1);
 
-            if (hasModel)
-            {
-                HandModelInfo info;
-                info.key = topKey;
+            // model
+            lua_getfield(Lstate, -1, "model");
+            info.model = lua_isstring(Lstate, -1) ? lua_tostring(Lstate, -1) : "";
+            lua_pop(Lstate, 1);
 
-                lua_getfield(Lstate, -1, "model");
-                info.model = lua_isstring(Lstate, -1) ? lua_tostring(Lstate, -1) : "";
-                lua_pop(Lstate, 1);
+            // skin
+            lua_getfield(Lstate, -1, "skin");
+            info.skin = lua_isnumber(Lstate, -1) ? (int)lua_tointeger(Lstate, -1) : 0;
+            lua_pop(Lstate, 1);
 
-                lua_getfield(Lstate, -1, "skin");
-                info.skin = lua_isnumber(Lstate, -1) ? (int)lua_tointeger(Lstate, -1) : 0;
-                lua_pop(Lstate, 1);
-
-                lua_getfield(Lstate, -1, "name");
-                info.name = lua_isstring(Lstate, -1) ? lua_tostring(Lstate, -1) : std::string(topKey);
-                lua_pop(Lstate, 1);
-
-                out.push_back(info);
-            }
+            // name
+            lua_getfield(Lstate, -1, "name");
+            if (lua_isstring(Lstate, -1))
+                info.name = lua_tostring(Lstate, -1);
             else
-            {
-                lua_pushnil(Lstate); // first subkey
-                while (lua_next(Lstate, -2) != 0)
-                {
-                    // -1 = subvalue table, -2 = subkey
-                    const char* subKey = nullptr;
-                    if (lua_type(Lstate, -2) == LUA_TSTRING)
-                        subKey = lua_tostring(Lstate, -2);
-                    else
-                    {
-                        lua_tostring(Lstate, -2);
-                        subKey = lua_tostring(Lstate, -1);
-                        lua_pop(Lstate, 1);
-                    }
+                info.name = info.key.size() ? info.key : (derivedKey ? std::string(derivedKey) : std::string());
+            lua_pop(Lstate, 1);
 
-                    if (subKey && lua_istable(Lstate, -1))
-                    {
-                        HandModelInfo info;
-                        info.key = subKey;
-
-                        lua_getfield(Lstate, -1, "model");
-                        info.model = lua_isstring(Lstate, -1) ? lua_tostring(Lstate, -1) : "";
-                        lua_pop(Lstate, 1);
-
-                        lua_getfield(Lstate, -1, "skin");
-                        info.skin = lua_isnumber(Lstate, -1) ? (int)lua_tointeger(Lstate, -1) : 0;
-                        lua_pop(Lstate, 1);
-
-                        lua_getfield(Lstate, -1, "name");
-                        std::string subName = lua_isstring(Lstate, -1) ? lua_tostring(Lstate, -1) : std::string(subKey);
-                        lua_pop(Lstate, 1);
-
-                        info.name = std::string(topKey) + " - " + subName;
-
-                        out.push_back(info);
-                    }
-
-                    lua_pop(Lstate, 1);
-                }
-            }
+            out.push_back(info);
         }
+    };
 
+    int seqLen = 0;
+    for (int i = 1; ; ++i)
+    {
+        lua_rawgeti(Lstate, -1, i); // push HandModels[i]
+        if (lua_isnil(Lstate, -1))
+        {
+            lua_pop(Lstate, 1);
+            break;
+        }
+        ++seqLen;
         lua_pop(Lstate, 1);
     }
 
-    lua_pop(Lstate, 1);
+    if (seqLen > 0)
+    {
+        for (int i = 1; i <= seqLen; ++i)
+        {
+            lua_rawgeti(Lstate, -1, i); // push element
+            if (lua_istable(Lstate, -1))
+            {
+                lua_getfield(Lstate, -1, "model");
+                bool hasModel = lua_isstring(Lstate, -1);
+                lua_pop(Lstate, 1);
+
+                if (hasModel)
+                {
+                    char idxKey[32];
+                    Q_snprintf(idxKey, sizeof(idxKey), "%d", i);
+                    process_model_table(idxKey);
+                }
+                else
+                {
+                    int subSeqLen = 0;
+                    for (int j = 1; ; ++j)
+                    {
+                        lua_rawgeti(Lstate, -1, j);
+                        if (lua_isnil(Lstate, -1))
+                        {
+                            lua_pop(Lstate, 1);
+                            break;
+                        }
+                        ++subSeqLen;
+                        lua_pop(Lstate, 1);
+                    }
+
+                    if (subSeqLen > 0)
+                    {
+                        for (int j = 1; j <= subSeqLen; ++j)
+                        {
+                            lua_rawgeti(Lstate, -1, j); // push sub-element
+                            if (lua_istable(Lstate, -1))
+                            {
+                                char composedKey[64];
+                                Q_snprintf(composedKey, sizeof(composedKey), "%d.%d", i, j);
+                                process_model_table(composedKey);
+                            }
+                            lua_pop(Lstate, 1); // pop sub-element
+                        }
+                    }
+                    else
+                    {
+                        lua_pushnil(Lstate); // first key
+                        while (lua_next(Lstate, -2) != 0)
+                        {
+                            const char* subKey = nullptr;
+                            if (lua_type(Lstate, -2) == LUA_TSTRING)
+                                subKey = lua_tostring(Lstate, -2);
+                            else
+                            {
+                                lua_tostring(Lstate, -2);
+                                subKey = lua_tostring(Lstate, -1);
+                                lua_pop(Lstate, 1);
+                            }
+
+                            if (subKey && lua_istable(Lstate, -1))
+                            {
+                                process_model_table(subKey);
+                            }
+                            lua_pop(Lstate, 1); // pop value, keep key for next
+                        }
+                    }
+                }
+            }
+            lua_pop(Lstate, 1); // pop element
+        }
+    }
+    else
+    {
+        lua_pushnil(Lstate); // first key
+        while (lua_next(Lstate, -2) != 0)
+        {
+            const char* topKey = nullptr;
+            if (lua_type(Lstate, -2) == LUA_TSTRING)
+            {
+                topKey = lua_tostring(Lstate, -2);
+            }
+            else
+            {
+                lua_tostring(Lstate, -2);
+                topKey = lua_tostring(Lstate, -1);
+                lua_pop(Lstate, 1);
+            }
+
+            if (topKey && lua_istable(Lstate, -1))
+            {
+                lua_getfield(Lstate, -1, "model");
+                bool hasModel = lua_isstring(Lstate, -1);
+                lua_pop(Lstate, 1);
+
+                if (hasModel)
+                {
+                    HandModelInfo info;
+                    info.key = topKey;
+
+                    lua_getfield(Lstate, -1, "model");
+                    info.model = lua_isstring(Lstate, -1) ? lua_tostring(Lstate, -1) : "";
+                    lua_pop(Lstate, 1);
+
+                    lua_getfield(Lstate, -1, "skin");
+                    info.skin = lua_isnumber(Lstate, -1) ? (int)lua_tointeger(Lstate, -1) : 0;
+                    lua_pop(Lstate, 1);
+
+                    lua_getfield(Lstate, -1, "name");
+                    info.name = lua_isstring(Lstate, -1) ? lua_tostring(Lstate, -1) : std::string(topKey);
+                    lua_pop(Lstate, 1);
+
+                    out.push_back(info);
+                }
+                else
+                {
+                    lua_pushnil(Lstate); // first subkey
+                    while (lua_next(Lstate, -2) != 0)
+                    {
+                        const char* subKey = nullptr;
+                        if (lua_type(Lstate, -2) == LUA_TSTRING)
+                            subKey = lua_tostring(Lstate, -2);
+                        else
+                        {
+                            lua_tostring(Lstate, -2);
+                            subKey = lua_tostring(Lstate, -1);
+                            lua_pop(Lstate, 1);
+                        }
+
+                        if (subKey && lua_istable(Lstate, -1))
+                        {
+                            HandModelInfo info;
+                            info.key = subKey;
+
+                            lua_getfield(Lstate, -1, "model");
+                            info.model = lua_isstring(Lstate, -1) ? lua_tostring(Lstate, -1) : "";
+                            lua_pop(Lstate, 1);
+
+                            lua_getfield(Lstate, -1, "skin");
+                            info.skin = lua_isnumber(Lstate, -1) ? (int)lua_tointeger(Lstate, -1) : 0;
+                            lua_pop(Lstate, 1);
+
+                            lua_getfield(Lstate, -1, "name");
+                            std::string subName = lua_isstring(Lstate, -1) ? lua_tostring(Lstate, -1) : std::string(subKey);
+                            lua_pop(Lstate, 1);
+
+                            info.name = std::string(topKey) + " - " + subName;
+
+                            out.push_back(info);
+                        }
+                        lua_pop(Lstate, 1); // pop value
+                    }
+                }
+            }
+
+            lua_pop(Lstate, 1); // pop value, keep key for next
+        }
+    }
+
+    lua_pop(Lstate, 1); // pop HandModels table
 }
 
 static void ApplyColorToConvarsByTarget( int target, int r, int g, int b )
@@ -388,7 +523,11 @@ void CAdvancedOptionsMultiplayer::OnTextChanged( KeyValues *pKeyValues )
 
     buf[ m_pNameEntry->GetMaximumCharCount() ] = '\0';
 
-    SavePlayerNameToFile( buf );
+	CUtlString dummyHand;
+	CUtlString currentName(buf);
+	CUtlString currentHand;
+	LoadSettingsFromFile(dummyHand, currentHand);
+	SaveSettingsToFile(currentName.Get(), currentHand.Get());
 
     ConVar* nameVar = cvar->FindVar( "name" );
     if ( nameVar )
@@ -424,11 +563,21 @@ void CAdvancedOptionsMultiplayer::OnTick()
     }
 
     sel = m_pHandModelSelector->GetActiveItem();
-    if (sel >= 0 && sel < (int)m_HandModels.size())
+    if ( sel >= 0 && sel < (int)m_HandModels.size() )
     {
-        char cmd[256];
-        Q_snprintf(cmd, sizeof(cmd), "c_handmodel %s", m_HandModels[sel].key.c_str());
-        engine->ClientCmd_Unrestricted(cmd);
+        if ( sel != s_iLastHandIndex )
+        {
+            s_iLastHandIndex = sel;
+
+            // apply selected handmodel
+            char cmd[256];
+            Q_snprintf(cmd, sizeof(cmd), "c_handmodel %s", m_HandModels[sel].key.c_str());
+            engine->ClientCmd_Unrestricted(cmd);
+
+			CUtlString savedName, dummy;
+			LoadSettingsFromFile(savedName, dummy);
+			SaveSettingsToFile(savedName.Get(), m_HandModels[sel].key.c_str());
+        }
     }
 }
 
@@ -593,14 +742,7 @@ void CAdvancedOptionsMultiplayer::PerformLayout()
     {
         struct HandModelEntry { const char* key; const char* path; const char* name; int skin; };
         HandModelEntry models[] = {
-            { "citizen",     "models/weapons/c_arms_citizen.mdl", "Citizen", 0 },
-            { "combine",     "models/weapons/c_arms_combine.mdl", "Combine", 0 },
-            { "refugee",     "models/weapons/c_arms_refugee.mdl", "Refugee", 0 },
-            { "cstrike",     "models/weapons/c_arms_cstrike.mdl", "CS:S", 0 },
-            { "dod",         "models/weapons/c_arms_dod.mdl", "DOD:S", 0 },
-            { "darkcitizen", "models/weapons/c_arms_citizen.mdl", "Dark Citizen", 1 },
-            { "zombie",      "models/weapons/c_arms_citizen.mdl", "Zombie", 2 },
-            { "default",     "", "Default", 0 }
+            { "citizen",     "models/weapons/c_arms_citizen.mdl", "Citizen", 0 }
         };
 
         for (int i = 0; i < ARRAYSIZE(models); ++i)
@@ -619,17 +761,36 @@ void CAdvancedOptionsMultiplayer::PerformLayout()
         m_pHandModelSelector->AddItem(m_HandModels[i].name.c_str(), nullptr);
     }
 
-    const char* c_handmodel = cvar->FindVar("c_handmodel")->GetString();
+	CUtlString dummyName, savedHandKey;
+	LoadSettingsFromFile(dummyName, savedHandKey);
+
     int selIndex = 0;
-    for (size_t i = 0; i < m_HandModels.size(); ++i)
+    if ( savedHandKey.Length() > 0 )
     {
-        if (Q_stricmp(c_handmodel, m_HandModels[i].key.c_str()) == 0)
+        for ( size_t i = 0; i < m_HandModels.size(); ++i )
         {
-            selIndex = (int)i;
-            break;
+            if ( Q_stricmp( savedHandKey.Get(), m_HandModels[i].key.c_str() ) == 0 )
+            {
+                selIndex = (int)i;
+                break;
+            }
         }
     }
+    else
+    {
+        const char* c_handmodel = cvar->FindVar("c_handmodel")->GetString();
+        for ( size_t i = 0; i < m_HandModels.size(); ++i )
+        {
+            if ( Q_stricmp( c_handmodel, m_HandModels[i].key.c_str() ) == 0 )
+            {
+                selIndex = (int)i;
+                break;
+            }
+        }
+    }
+
     m_pHandModelSelector->ActivateItem(selIndex);
+    s_iLastHandIndex = selIndex;
 
 	int handX = 10;
 	int handY = comboY + comboH + 80;
@@ -641,8 +802,8 @@ void CAdvancedOptionsMultiplayer::PerformLayout()
     m_pPMModel->SetGroundGrid( true );
 
 	s_bPopulatingNameField = true;
-	CUtlString fileLoadedName;
-	LoadPlayerNameFromFile( fileLoadedName );
+	CUtlString fileLoadedName, fileLoadedHand;
+	LoadSettingsFromFile(fileLoadedName, fileLoadedHand);
 
 	if ( fileLoadedName.Length() > 0 )
 	{

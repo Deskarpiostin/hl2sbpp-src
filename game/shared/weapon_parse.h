@@ -121,6 +121,8 @@ public:
 	float					flIronsightFOVOffset;
 	bool 					bCanUseIronsight;
 
+	float					fDeploySpeed;
+
 // CLIENT DLL
 	// Sprite data, read from the data file
 	int						iSpriteCount;

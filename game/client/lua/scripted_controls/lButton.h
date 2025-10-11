@@ -1,4 +1,4 @@
-//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
+//===== Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -28,6 +28,8 @@ public:
 	// You can optionally pass in the panel to send the click message to and the name of the command to send to that panel.
 	LButton(Panel *parent, const char *panelName, const char *text, Panel *pActionSignalTarget=NULL, const char *pCmd=NULL, lua_State *L=NULL);
 	~LButton();
+
+	virtual void PaintBackground();
 
 public:
 #if defined( LUA_SDK )

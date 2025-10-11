@@ -2428,6 +2428,15 @@ void CHL2_Player::Event_KilledOther( CBaseEntity *pVictim, const CTakeDamageInfo
 //-----------------------------------------------------------------------------
 void CHL2_Player::Event_Killed( const CTakeDamageInfo &info )
 {
+	if (GetActiveWeapon())
+	{
+		if (GetActiveWeapon()->IsScripted())
+		{
+			CBaseCombatWeapon *pWeapon = (CBaseCombatWeapon*)GiveNamedItem("weapon_crowbar");
+			Weapon_Switch( pWeapon );
+		}
+	}
+
 	BaseClass::Event_Killed( info );
 
 	FirePlayerProxyOutput( "PlayerDied", variant_t(), this, this );

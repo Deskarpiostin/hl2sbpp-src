@@ -465,11 +465,20 @@ void CStudioRender::DrawModel( const DrawModelInfo_t& info, const StudioRenderCo
 	m_VertexCache.StartModel();
 
 	m_pStudioHdr = info.m_pStudioHdr;
-	if ( !info.m_pHardwareData->m_pLODs )
+	if (!m_pStudioHdr)
+		return;
+			
+	if (!info.m_pHardwareData || !info.m_pHardwareData->m_pLODs)
 	{
-		// If we are missing LODs then print the model name before returning
-		// so we can perhaps correct the underlying problem.
-		Msg( "Missing LODs for %s, lod index is %d.\n", m_pStudioHdr->pszName(), info.m_Lod );
+		const char* name = nullptr;
+		if (m_pStudioHdr && (uintptr_t)m_pStudioHdr > 0x1000) // avoid null/small junk ptrs
+		{
+			if ((uintptr_t)m_pStudioHdr < 0x00007ffffffffff)
+				name = m_pStudioHdr->pszName();
+		}
+
+		Msg("Missing LODs for %s, lod index is %d.\n",
+			name ? name : "<invalid>", info.m_Lod);
 		return;
 	}
 	m_pStudioMeshes = info.m_pHardwareData->m_pLODs[info.m_Lod].m_pMeshData;

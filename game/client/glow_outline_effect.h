@@ -191,12 +191,14 @@ public:
 
 	bool IsRenderingWhenOccluded() const
 	{
-		return g_GlowObjectManager.IsRenderingWhenOccluded( m_nGlowObjectHandle );
+		return false;
+		//return g_GlowObjectManager.IsRenderingWhenOccluded( m_nGlowObjectHandle );
 	}
 
 	bool IsRenderingWhenUnoccluded() const
 	{
-		return g_GlowObjectManager.IsRenderingWhenUnoccluded( m_nGlowObjectHandle );
+		return true;
+		//return g_GlowObjectManager.IsRenderingWhenUnoccluded( m_nGlowObjectHandle );
 	}
 
 	bool IsRendering() const

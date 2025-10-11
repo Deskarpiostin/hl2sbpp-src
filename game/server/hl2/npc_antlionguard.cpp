@@ -2657,6 +2657,7 @@ inline void TraceHull_SkipPhysics( const Vector &vecAbsStart, const Vector &vecA
 //-----------------------------------------------------------------------------
 bool CNPC_AntlionGuard::EnemyIsRightInFrontOfMe( CBaseEntity **pEntity )
 {
+	*pEntity = nullptr;
 	if ( !GetEnemy() )
 		return false;
 
@@ -2725,7 +2726,7 @@ bool CNPC_AntlionGuard::HandleChargeImpact( Vector vecImpact, CBaseEntity *pEnti
 		EnemyIsRightInFrontOfMe( &pEntity );
 
 		// Did we manage to find him? If not, increment our charge miss count and abort.
-		if ( pEntity->IsWorld() )
+		if ( !pEntity || pEntity->IsWorld() )
 		{
 			m_iChargeMisses++;
 			return true;

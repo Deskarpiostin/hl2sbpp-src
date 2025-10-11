@@ -350,6 +350,7 @@ FileWeaponInfo_t::FileWeaponInfo_t()
 	iViewModelFOV = 0;
 	m_bPrimaryAutomatic = true;
 	m_bSecondaryAutomatic = true;
+	fDeploySpeed = 1.0f;
 }
 
 #ifdef CLIENT_DLL

@@ -1407,6 +1407,73 @@ void CBasePanel::OnLevelLoadingFinished()
 	}
 }
 
+struct ChangelogData
+{
+    CUtlString title;
+    CUtlString description;
+    CUtlString imagePath;
+    int textureID = -1;
+};
+
+ChangelogData g_Changelog;
+
+static void DrawChangelog(int wide, int tall, int alpha)
+{
+    if (g_Changelog.textureID < 0)
+        return;
+
+    int imgW = 512;
+    int imgH = 256;
+    int padding = 20;
+    int shadowOffset = 5;
+
+    int imgX = wide - imgW - padding;
+    int imgY = padding;
+
+    surface()->DrawSetTexture(g_Changelog.textureID);
+    surface()->DrawSetColor(0, 0, 0, alpha / 2);
+    surface()->DrawTexturedRect(imgX + shadowOffset, imgY + shadowOffset, imgX + imgW + shadowOffset, imgY + imgH + shadowOffset);
+
+    surface()->DrawSetTexture(g_Changelog.textureID);
+    surface()->DrawSetColor(255, 255, 255, alpha);
+    surface()->DrawTexturedRect(imgX, imgY, imgX + imgW, imgY + imgH);
+
+    IScheme* pScheme = vgui::scheme()->GetIScheme(vgui::scheme()->GetScheme("SourceScheme"));
+    HFont hTitleFont = pScheme->GetFont("DefaultLarge");
+
+    wchar_t wTitle[256];
+    g_pVGuiLocalize->ConvertANSIToUnicode(g_Changelog.title, wTitle, sizeof(wTitle));
+
+    int titleX = (imgX + padding) * 1.5;
+    int titleY = imgY + imgH - padding - 40;
+
+    surface()->DrawSetTextFont(hTitleFont);
+    surface()->DrawSetTextColor(0, 0, 0, alpha);
+    surface()->DrawSetTextPos(titleX + 2, titleY + 2);
+    surface()->DrawPrintText(wTitle, wcslen(wTitle));
+
+    surface()->DrawSetTextColor(255, 255, 255, alpha);
+    surface()->DrawSetTextPos(titleX, titleY);
+    surface()->DrawPrintText(wTitle, wcslen(wTitle));
+
+    HFont hDescFont = pScheme->GetFont("Default");
+    surface()->DrawSetTextFont(hDescFont);
+
+    wchar_t wDesc[512];
+    g_pVGuiLocalize->ConvertANSIToUnicode(g_Changelog.description, wDesc, sizeof(wDesc));
+
+    int descX = titleX / 1.4;
+    int descY = titleY + 30;
+
+    surface()->DrawSetTextColor(0, 0, 0, alpha);
+    surface()->DrawSetTextPos(descX + 1, descY + 1);
+    surface()->DrawPrintText(wDesc, wcslen(wDesc));
+
+    surface()->DrawSetTextColor(200, 200, 200, alpha);
+    surface()->DrawSetTextPos(descX, descY);
+    surface()->DrawPrintText(wDesc, wcslen(wDesc));
+}
+
 //-----------------------------------------------------------------------------
 // Draws the background image.
 //-----------------------------------------------------------------------------
@@ -1574,6 +1641,9 @@ void CBasePanel::DrawBackgroundImage()
 			}
 		}
 	}
+
+	// fixme: maybe put this in a different place?
+    DrawChangelog(wide, tall, alpha);
 }
 
 //-----------------------------------------------------------------------------
@@ -2029,6 +2099,21 @@ void CBasePanel::LoadBackgroundImages()
         EnsureBackgroundTextureLoaded((m_iCurrentBackground + 1) % m_BackgroundFiles.Count());
 
     DevMsg("Discovered %d background image files (textures loaded on demand)\n", m_BackgroundFiles.Count());
+
+	/// fixme: put this in a different place maybe?
+    KeyValues* pKV = new KeyValues("Changelog");
+    if (pKV->LoadFromFile(g_pFullFileSystem, "scripts/changelog.txt", "MOD"))
+    {
+        g_Changelog.title = pKV->GetString("Title", "No Title");
+        g_Changelog.description = pKV->GetString("Description", "No Description");
+        g_Changelog.imagePath = pKV->GetString("Image", "");
+
+        if (!g_Changelog.imagePath.IsEmpty())
+        {
+            g_Changelog.textureID = LoadImageAsTexture(g_Changelog.imagePath);
+        }
+    }
+    pKV->deleteThis();
 }
 
 const int MAX_BG_TEXTURE_SIZE = 2048;

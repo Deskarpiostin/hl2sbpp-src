@@ -29,6 +29,7 @@
 #include "lhl2mp_player_shared.h"
 #include "ltakedamageinfo.h"
 #endif
+#include "usermessages.h"
 
 #include "engine/IEngineSound.h"
 #include "SoundEmitterSystem/isoundemittersystembase.h"
@@ -916,6 +917,29 @@ bool CHL2MP_Player::HandleCommand_JoinTeam( int team )
 	return true;
 }
 
+void SendStartMessageMode( CBasePlayer *pPlayer, int mode )
+{
+    if ( !pPlayer )
+        return;
+
+    CSingleUserRecipientFilter filter( pPlayer );
+    filter.MakeReliable();
+
+    int msg_index = usermessages->LookupUserMessage( "StartMessageMode" );
+    if ( msg_index == -1 )
+    {
+        Warning( "Could not find StartMessageMode usermessage!\n" );
+        return;
+    }
+
+    bf_write *pBuf = engine->UserMessageBegin( &filter, msg_index );
+    if ( !pBuf )
+        return;
+
+    pBuf->WriteByte( mode );
+    engine->MessageEnd();
+}
+
 bool CHL2MP_Player::ClientCommand( const CCommand &args )
 {
 	if ( FStrEq( args[0], "spectate" ) )
@@ -943,6 +967,12 @@ bool CHL2MP_Player::ClientCommand( const CCommand &args )
 	}
 	else if ( FStrEq( args[0], "joingame" ) )
 	{
+		return true;
+	}
+	else if ( FStrEq( args[0], "messagemode" ) )
+	{
+		CBasePlayer *pPlayer = UTIL_GetCommandClient();
+    	SendStartMessageMode( pPlayer, 0 );
 		return true;
 	}
 

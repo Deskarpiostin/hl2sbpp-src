@@ -22,6 +22,12 @@ LUALIB_API int (luaopen_Effects) (lua_State *L );
 #define LUA_BASECOMBATWEAPONLIBNAME		"CBaseCombatWeapon"
 LUALIB_API int (luaopen_CBaseCombatWeapon) (lua_State *L);
 
+#define LUA_AMMODEFLIB_NAME "CAmmoDef"
+LUALIB_API int (luaopen_AmmoDef)(lua_State* L);
+
+#define LUA_HINTLIBNAME "hintlib"
+LUALIB_API int (luaopen_hintlib) (lua_State *L);
+
 #define LUA_BASEENTITYLIBNAME			"CBaseEntity"
 LUALIB_API int (luaopen_CBaseEntity) (lua_State *L);
 LUALIB_API int (luaopen_CBaseEntity_shared) (lua_State *L);
@@ -46,7 +52,7 @@ LUALIB_API int (luaopen_Color) (lua_State *L);
 #define LUA_CONCOMMANDLIBNAME			"ConCommand"
 LUALIB_API int (luaopen_ConCommand) (lua_State *L);
 
-#define LUA_SPAWNMENULIBNAME			"spawnmenu"
+#define LUA_SPAWNMENULIBNAME			"smlib_Private"
 LUALIB_API int (luaopen_sm)( lua_State* L );
 
 #define LUA_CONTENTSLIBNAME				"CONTENTS"

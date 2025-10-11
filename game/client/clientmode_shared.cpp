@@ -37,6 +37,7 @@
 #include <vgui/ILocalize.h>
 #include "hud_vote.h"
 #include "ienginevgui.h"
+#include "c_user_message_register.h"
 #include "sourcevr/isourcevirtualreality.h"
 #if defined( _X360 )
 #include "xbox/xbox_console.h"
@@ -787,6 +788,15 @@ void ClientModeShared::ProcessInput(bool bActive)
 {
 	gHUD.ProcessInput( bActive );
 }
+
+void __MsgFunc_StartMessageMode( bf_read &msg )
+{
+    int mode = msg.ReadByte();
+
+    GetClientModeNormal()->StartMessageMode( MM_SAY );
+}
+
+USER_MESSAGE_REGISTER( StartMessageMode );
 
 //-----------------------------------------------------------------------------
 // Purpose: We've received a keypress from the engine. Return 1 if the engine is allowed to handle it.

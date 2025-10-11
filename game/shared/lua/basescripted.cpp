@@ -18,6 +18,12 @@
 #include "lvphysics_interface.h"
 #include "ltakedamageinfo.h"
 #include "takedamageinfo.h"
+#include "mathlib/lvector.h"
+#ifdef GAME_DLL
+#include "variant_t.h"
+#endif
+
+ConVar sv_spawnmenu_allowed("sv_spawnmenu_allowed", "1", FCVAR_REPLICATED);
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -288,6 +294,85 @@ void CBaseScripted::Precache( void )
 
 	// InitScriptedEntity();
 }
+
+#ifdef GAME_DLL
+
+void lua_pushvariant(lua_State *L, const variant_t &value)
+{
+    switch (const_cast<variant_t&>(value).FieldType())
+    {
+        case FIELD_VOID:
+            lua_pushnil(L);
+            break;
+
+        case FIELD_STRING:
+            lua_pushstring(L, value.String());
+            break;
+
+        case FIELD_INTEGER:
+            lua_pushinteger(L, value.Int());
+            break;
+
+        case FIELD_FLOAT:
+            lua_pushnumber(L, value.Float());
+            break;
+
+        case FIELD_BOOLEAN:
+            lua_pushboolean(L, value.Bool());
+            break;
+
+        case FIELD_VECTOR: {
+            Vector vec;
+			value.Vector3D(vec);
+
+            lua_pushvector(L, vec);
+            break;
+        }
+
+        case FIELD_EHANDLE:
+        case FIELD_CLASSPTR:
+        case FIELD_EDICT:
+		{
+            CBaseEntity *ent = value.Entity();
+            if (ent)
+                lua_pushentity(L, ent);
+            else
+                lua_pushnil(L);
+            break;
+        }
+
+        default:
+            lua_pushnil(L);
+            break;
+    }
+}
+
+bool CBaseScripted::AcceptInput(const char *inputName, CBaseEntity *pActivator, CBaseEntity *pCaller, variant_t value, int outputID)
+{
+#ifdef LUA_SDK
+	if (m_nTableReference == LUA_NOREF)
+		return BaseClass::AcceptInput(inputName, pActivator, pCaller, value, outputID);
+
+	lua_rawgeti(L, LUA_REGISTRYINDEX, m_nTableReference);
+	if (!lua_istable(L, -1)) {
+		lua_pop(L, 1);
+		return BaseClass::AcceptInput(inputName, pActivator, pCaller, value, outputID);
+	}
+
+	BEGIN_LUA_CALL_ENTITY_METHOD("AcceptInput");
+		lua_pushstring(L, inputName);
+		lua_pushentity(L, pActivator);
+		lua_pushentity(L, pCaller);
+		lua_pushvariant(L, value);
+		lua_pushinteger(L, outputID);
+	END_LUA_CALL_ENTITY_METHOD(5, 1);
+
+	RETURN_LUA_BOOLEAN();
+#endif
+
+	return BaseClass::AcceptInput(inputName, pActivator, pCaller, value, outputID);
+}
+#endif
 
 #ifdef CLIENT_DLL
 void CBaseScripted::ClientThink()

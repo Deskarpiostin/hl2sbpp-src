@@ -313,6 +313,9 @@ void CommentarySystem_PePlayerRunCommand( CBasePlayer *player, CUserCmd *ucmd );
 //-----------------------------------------------------------------------------
 void CPlayerMove::RunCommand ( CBasePlayer *player, CUserCmd *ucmd, IMoveHelper *moveHelper )
 {
+	player->m_flMouseDeltaX = ucmd->mousedx;
+	player->m_flMouseDeltaY = ucmd->mousedy;
+
 	const int nTicksAllowedForProcessing = player->ConsumeMovementTicksForUserCmdProcessing( 1 );
 	if ( !player->IsBot() && !player->IsHLTV() && ( nTicksAllowedForProcessing < 1 ) )
 	{

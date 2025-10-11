@@ -262,7 +262,33 @@ int CStudioRender::R_StudioRenderModel( IMatRenderContext *pRenderContext, int s
 {
 	VPROF("CStudioRender::R_StudioRenderModel");
 
+
+    if (!pRenderContext)
+    {
+        //Warning("R_StudioRenderModel: pRenderContext is null!\n");
+        return 0;
+    }
+
+    if (!m_pStudioHdr)
+    {
+        //Warning("R_StudioRenderModel: m_pStudioHdr is null!\n");
+        return 0;
+    }
+
+    if (!ppMaterials || !pMaterialFlags)
+    {
+        //Warning("R_StudioRenderModel: materials or material flags are null!\n");
+        return 0;
+    }
+
 	int nDrawGroup = flags & STUDIORENDER_DRAW_GROUP_MASK;
+
+	if ( lod < 0 || lod >= m_pStudioHdr->numbodyparts )
+	{
+		// fallback to default LOD
+		lod = 0;
+		//Warning("Warning: Invalid LOD index (%d) in R_StudioRenderModel, forcing to 0.\n", lod);
+	}
 
 	if ( m_pRC->m_Config.drawEntities == 2 )
 	{
@@ -282,28 +308,21 @@ int CStudioRender::R_StudioRenderModel( IMatRenderContext *pRenderContext, int s
 		return 0;
 	}
 
-	// BUG: This method is crap, though less crap than before.  It should just sort 
-	// the materials though it'll need to sort at render time as "skin" 
-	// can change what materials a given mesh may use
 	int numTrianglesRendered = 0;
 
-	// don't try to use these if not supported
 	if ( IsPC() && !g_pMaterialSystemHardwareConfig->SupportsColorOnSecondStream() )
 	{
 		pColorMeshes = NULL;
 	}
 
-	// Build list of submodels
 	BodyPartInfo_t *pBodyPartInfo = (BodyPartInfo_t*)_alloca( m_pStudioHdr->numbodyparts * sizeof(BodyPartInfo_t) );
 	for ( int i=0 ; i < m_pStudioHdr->numbodyparts; ++i ) 
 	{
 		pBodyPartInfo[i].m_nSubModelIndex = R_StudioSetupModel( i, body, &pBodyPartInfo[i].m_pSubModel, m_pStudioHdr );
 	}
 
-	// mark possible translucent meshes
 	if ( nDrawGroup != STUDIORENDER_DRAW_TRANSLUCENT_ONLY )
 	{
-		// we're going to render the opaque meshes, so these will get counted in that pass
 		m_bSkippedMeshes = false;
 		m_bDrawTranslucentSubModels = false;
 		numTrianglesRendered += R_StudioRenderFinal( pRenderContext, skin, m_pStudioHdr->numbodyparts, pBodyPartInfo, 
@@ -320,6 +339,7 @@ int CStudioRender::R_StudioRenderModel( IMatRenderContext *pRenderContext, int s
 		numTrianglesRendered += R_StudioRenderFinal( pRenderContext, skin, m_pStudioHdr->numbodyparts, pBodyPartInfo, 
 			pEntity, ppMaterials, pMaterialFlags, boneMask, lod, pColorMeshes );
 	}
+
 	return numTrianglesRendered;
 }
 
@@ -2140,61 +2160,142 @@ template<VertexCompressionType_t T> void CStudioRender::R_StudioRestoreMesh( mst
 //-----------------------------------------------------------------------------
 // Draws a mesh using hardware + software skinning
 //-----------------------------------------------------------------------------
+// Defensive hardening for R_StudioDrawGroupHWSkin
 int CStudioRender::R_StudioDrawGroupHWSkin( IMatRenderContext *pRenderContext, studiomeshgroup_t* pGroup, IMesh* pMesh, ColorMeshInfo_t * pColorMeshInfo )
 {
-	PROFILE_STUDIO("HwSkin");
-	int numTrianglesRendered = 0;
+    PROFILE_STUDIO("HwSkin");
+    int numTrianglesRendered = 0;
+
+    if (!pGroup)
+        return 0;
 
 #if PIX_ENABLE
-	char szPIXEventName[128];
-	sprintf( szPIXEventName, "R_StudioDrawGroupHWSkin (%s)", m_pStudioHdr->name );	// PIX
-	PIXEVENT( pRenderContext, szPIXEventName );
+    if (m_pStudioHdr && m_pStudioHdr->name)
+    {
+        char szPIXEventName[128];
+        V_snprintf( szPIXEventName, sizeof(szPIXEventName), "R_StudioDrawGroupHWSkin (%s)", m_pStudioHdr->name ); // PIX
+        PIXEVENT( pRenderContext, szPIXEventName );
+    }
 #endif
 
-	if ( m_pStudioHdr->numbones == 1 )
-	{
-		pRenderContext->MatrixMode( MATERIAL_MODEL );
-		pRenderContext->LoadMatrix( m_PoseToWorld[0] );
+    if (!pMesh)
+    {
+        DevMsg("R_StudioDrawGroupHWSkin: NULL pMesh\n");
+        return 0;
+    }
 
-		// a single bone means all verts rigidly assigned
-		// any bonestatechange would needlessly re-load the same matrix
-		// xbox can skip further hw skinning, seems ok for pc too
-		pRenderContext->SetNumBoneWeights( 0 );
-	}
+    if ( m_pStudioHdr && m_pStudioHdr->numbones == 1 )
+    {
+        pRenderContext->MatrixMode( MATERIAL_MODEL );
+        pRenderContext->LoadMatrix( m_PoseToWorld[0] );
+        pRenderContext->SetNumBoneWeights( 0 );
+    }
 
-	if ( pColorMeshInfo )
-		pMesh->SetColorMesh( pColorMeshInfo->m_pMesh, pColorMeshInfo->m_nVertOffsetInBytes );
-	else
-		pMesh->SetColorMesh( NULL, 0 );
+    if ( pColorMeshInfo )
+        pMesh->SetColorMesh( pColorMeshInfo->m_pMesh, pColorMeshInfo->m_nVertOffsetInBytes );
+    else
+        pMesh->SetColorMesh( NULL, 0 );
 
-	for (int j = 0; j < pGroup->m_NumStrips; ++j)
-	{
-		OptimizedModel::StripHeader_t* pStrip = &pGroup->m_pStripData[j];
+    if (pGroup->m_NumStrips == 0)
+    {
+        pMesh->SetColorMesh( NULL, 0 );
+        return 0;
+    }
 
-		if ( m_pStudioHdr->numbones > 1 )
-		{
-			// Reset bone state if we're hardware skinning
-			pRenderContext->SetNumBoneWeights( pStrip->numBones );
+    if (!pGroup->m_pUniqueTris || !pGroup->m_pStripData)
+    {
+        DevMsg("R_StudioDrawGroupHWSkin: missing strip/uniqueTris arrays for group (uniqueTris=%p, stripData=%p)\n",
+               pGroup->m_pUniqueTris, pGroup->m_pStripData );
+        pMesh->SetColorMesh( NULL, 0 );
+        return 0;
+    }
 
-			for (int k = 0; k < pStrip->numBoneStateChanges; ++k)
-			{
-				OptimizedModel::BoneStateChangeHeader_t* pStateChange = pStrip->pBoneStateChange(k);
-				if ( pStateChange->newBoneID < 0 )
-					break;
+    const int MAX_REASONABLE_STRIPS = 1 << 20; // 1 million strips is absurd
+    if (pGroup->m_NumStrips <= 0 || pGroup->m_NumStrips > MAX_REASONABLE_STRIPS)
+    {
+        DevMsg("R_StudioDrawGroupHWSkin: suspicious m_NumStrips=%d\n", pGroup->m_NumStrips);
+        pMesh->SetColorMesh( NULL, 0 );
+        return 0;
+    }
 
-				pRenderContext->LoadBoneMatrix( pStateChange->hardwareID, m_PoseToWorld[pStateChange->newBoneID] );
-			}
-		}
+    for (int j = 0; j < pGroup->m_NumStrips; ++j)
+    {
+        OptimizedModel::StripHeader_t* pStrip = nullptr;
+        if (!pGroup->m_pStripData)
+        {
+            DevMsg("R_StudioDrawGroupHWSkin: pGroup->m_pStripData became NULL at j=%d\n", j);
+            return 0;
+        }
+        pStrip = &pGroup->m_pStripData[j];
 
-		pMesh->SetPrimitiveType( pStrip->flags & OptimizedModel::STRIP_IS_TRISTRIP ? 
-			MATERIAL_TRIANGLE_STRIP : MATERIAL_TRIANGLES );
+        if (pStrip->numIndices < 0 || pStrip->indexOffset < 0)
+        {
+            DevMsg("R_StudioDrawGroupHWSkin: bad strip indices (indexOffset=%d,numIndices=%d) j=%d\n",
+                   pStrip->indexOffset, pStrip->numIndices, j);
+            continue;
+        }
 
-		pMesh->Draw( pStrip->indexOffset, pStrip->numIndices );
-		numTrianglesRendered += pGroup->m_pUniqueTris[j];
-	}
-	pMesh->SetColorMesh( NULL, 0 );
+        if ( m_pStudioHdr && m_pStudioHdr->numbones > 1 )
+        {
+            pRenderContext->SetNumBoneWeights( pStrip->numBones );
 
-	return numTrianglesRendered;
+            for (int k = 0; k < pStrip->numBoneStateChanges; ++k)
+            {
+                OptimizedModel::BoneStateChangeHeader_t* pStateChange = pStrip->pBoneStateChange(k);
+                if (!pStateChange)
+                {
+                    DevMsg("R_StudioDrawGroupHWSkin: null pStateChange j=%d k=%d\n", j, k);
+                    break;
+                }
+                if ( pStateChange->newBoneID < 0 )
+                    break;
+
+				if (pStateChange->hardwareID < 0 || pStateChange->hardwareID >= MAX_NUM_BONES_PER_STRIP)
+				{
+					DevMsg("R_StudioDrawGroupHWSkin: suspicious hardwareID=%d (limit %d)\n",
+						pStateChange->hardwareID, MAX_NUM_BONES_PER_STRIP);
+					continue;
+				}
+
+				if (pStateChange->newBoneID < 0 || pStateChange->newBoneID >= m_pStudioHdr->numbones)
+				{
+					DevMsg("R_StudioDrawGroupHWSkin: bad newBoneID=%d (numbones=%d)\n",
+						pStateChange->newBoneID, m_pStudioHdr ? m_pStudioHdr->numbones : -1);
+					continue;
+				}
+
+                pRenderContext->LoadBoneMatrix( pStateChange->hardwareID, m_PoseToWorld[pStateChange->newBoneID] );
+            }
+        }
+
+        pMesh->SetPrimitiveType( pStrip->flags & OptimizedModel::STRIP_IS_TRISTRIP ? 
+            MATERIAL_TRIANGLE_STRIP : MATERIAL_TRIANGLES );
+
+        if (pStrip->numIndices > 0)
+        {
+            pMesh->Draw( pStrip->indexOffset, pStrip->numIndices );
+        }
+        else
+        {
+            DevMsg("R_StudioDrawGroupHWSkin: skipping pMesh->Draw with numIndices=%d\n", pStrip->numIndices);
+        }
+
+		if (!pGroup->m_pUniqueTris)
+			return 0;
+
+        int triCount = pGroup->m_pUniqueTris ? pGroup->m_pUniqueTris[j] : 0;
+        if (triCount > 0 && triCount < (1 << 24)) // protect from insane values
+        {
+            numTrianglesRendered += triCount;
+        }
+        else if (triCount != 0)
+        {
+            DevMsg("R_StudioDrawGroupHWSkin: suspicious triCount=%d at j=%d; skipping\n", triCount, j);
+        }
+    }
+
+    pMesh->SetColorMesh( NULL, 0 );
+    return numTrianglesRendered;
 }
 
 int CStudioRender::R_StudioDrawGroupSWSkin( studiomeshgroup_t* pGroup, IMesh* pMesh )
@@ -2375,7 +2476,7 @@ int CStudioRender::R_StudioDrawStaticMesh( IMatRenderContext *pRenderContext, ms
 		}
 		if ( bUseSOFlex )
 		{
-			pGroup->m_pMesh->DisableFlexMesh();	// clear flex stream
+//			pGroup->m_pMesh->DisableFlexMesh();	// clear flex stream
 		}
 	}
 
@@ -2774,10 +2875,21 @@ int CStudioRender::R_StudioDrawMesh( IMatRenderContext *pRenderContext, mstudiom
 
 	int numTrianglesRendered = 0;
 
+	if (pMeshData->m_NumGroup <= 0)
+		return 0;
+
 	// Draw all the various mesh groups...
 	for ( int j = 0; j < pMeshData->m_NumGroup; ++j )
 	{
+		if (!pMeshData->m_pMeshGroup || j < 0 || j >= pMeshData->m_NumGroup)
+    		return 0;
+
 		studiomeshgroup_t* pGroup = &pMeshData->m_pMeshGroup[j];
+		if (!pGroup)
+			return 0;
+
+		if (pGroup->m_Flags <= 0)
+			return 0;
 
 		// Older models are merely flexed while new ones are also delta flexed
 		bool bIsFlexed = (pGroup->m_Flags & MESHGROUP_IS_FLEXED) != 0;

@@ -1124,6 +1124,14 @@ void Panel::OnChildSettingsApplied( KeyValues *pInResourceData, Panel *pChild  )
 	}
 }
 
+static bool IsValidVPanel(VPANEL vpanel)
+{
+    if (vpanel == 0)
+        return false;
+
+    return true;
+}
+
 //-----------------------------------------------------------------------------
 // Purpose: 
 //-----------------------------------------------------------------------------
@@ -1159,6 +1167,8 @@ void Panel::PaintTraverse( bool repaint, bool allowForce )
 	}
 
 	VPANEL vpanel = GetVPanel();
+	if (!IsValidVPanel(vpanel))
+		return;
 
 	bool bPushedViewport = false;
 	if( GetForceStereoRenderToFrameBuffer()  )

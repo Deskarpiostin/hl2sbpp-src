@@ -194,7 +194,7 @@ void C_PropVehicleChair::GetVehicleViewPosition( int nRole, Vector *pAbsOrigin, 
 	if ( pAbsOrigin )
 	{
 		// uhh hacky hack
-		*pAbsOrigin += Vector( 0, 0, 32.0f );
+		*pAbsOrigin += Vector( 0, 0, 40.0f );
 	}
 }
 
@@ -206,6 +206,7 @@ void C_PropVehicleChair::GetVehicleViewPosition( int nRole, Vector *pAbsOrigin, 
 //-----------------------------------------------------------------------------
 void C_PropVehicleChair::UpdateViewAngles( C_BasePlayer *pLocalPlayer, CUserCmd *pCmd )
 {
+#if 0
 	int eyeAttachmentIndex = LookupAttachment( "vehicle_driver_eyes" );
 	Vector vehicleEyeOrigin;
 	QAngle vehicleEyeAngles;
@@ -220,6 +221,7 @@ void C_PropVehicleChair::UpdateViewAngles( C_BasePlayer *pLocalPlayer, CUserCmd 
 	//flAngleDiff = AngleDiff( pCmd->viewangles.x, vehicleEyeAngles.x );
 	//flAngleDiff = clamp( flAngleDiff, POD_VIEW_PITCH_MIN, POD_VIEW_PITCH_MAX );
 	//pCmd->viewangles.x = vehicleEyeAngles.x + flAngleDiff;
+#endif
 }
 
 

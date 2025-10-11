@@ -73,6 +73,10 @@ $Project "Server (HL2MP)"
 			$File	"$SRCDIR\game\shared\hl2mp\hl2mp_playeranimstate.cpp"
 			$File	"$SRCDIR\game\shared\hl2mp\hl2mp_playeranimstate.h"
 			$File	"$SRCDIR\game\shared\hl2sb\weapon_bugbait.cpp"
+			$File 	"lua\basescriptedvehicle.cpp"
+			$File 	"lua\basescriptedvehicle.h"
+			$File   "$SRCDIR\game\shared\lua\lammodef.cpp"
+			$File   "$SRCDIR\game\shared\lua\lammodef.h"
 		}
 
 		$Folder "Episodic"

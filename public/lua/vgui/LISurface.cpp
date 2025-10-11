@@ -22,24 +22,6 @@
 
 using namespace vgui;
 
-static int sm_CreateButton( lua_State* L ) {
-    CSMLMenu::CreateButton( luaL_checkstring( L, 1 ), luaL_checkstring( L, 2 ), luaL_checkstring( L, 3 ) );
-    return 0;
-}
-
-static const luaL_Reg smlib[] = {
-    { "CreateButton", sm_CreateButton },
-    { NULL, NULL }
-};
-
-/*
-** Open spawnmenu library
-*/
-LUALIB_API int luaopen_sm( lua_State* L ) {
-    luaL_register( L, LUA_SPAWNMENULIBNAME, smlib );
-    return 1;
-}
-
 static int surface_AddBitmapFontFile (lua_State *L) {
   lua_pushboolean(L, surface()->AddBitmapFontFile(luaL_checkstring(L, 1)));
   return 1;

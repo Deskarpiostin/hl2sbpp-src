@@ -1,4 +1,4 @@
-//===== Copyright © 1996-2005, Valve Corporation, All rights reserved. ======//
+//===== Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. ======//
 //
 // Purpose: 
 //
@@ -332,6 +332,29 @@ static int filesystem_Write (lua_State *L) {
   return 1;
 }
 
+static int filesystem_Find(lua_State *L) {
+    const char *pattern = luaL_checkstring(L, 1);
+    const char *pathID  = luaL_optstring(L, 2, "MOD");
+
+    CUtlVector<CUtlString> found;
+
+    FileFindHandle_t handle;
+    const char *file = filesystem->FindFirstEx(pattern, pathID, &handle);
+    if (file != NULL) {
+        do {
+            found.AddToTail(file);
+        } while ((file = filesystem->FindNext(handle)) != NULL);
+        filesystem->FindClose(handle);
+    }
+
+    lua_newtable(L);
+    for (int i = 0; i < found.Count(); ++i) {
+        lua_pushstring(L, found[i].String());
+        lua_rawseti(L, -2, i + 1);
+    }
+
+    return 1;
+}
 
 static const luaL_Reg filesystemlib[] = {
   {"AddPackFile",   filesystem_AddPackFile},
@@ -378,6 +401,7 @@ static const luaL_Reg filesystemlib[] = {
   {"UnzipFile",   filesystem_UnzipFile},
   {"WaitForResources",   filesystem_WaitForResources},
   {"Write",   filesystem_Write},
+  {"Find", filesystem_Find},
   {NULL, NULL}
 };
 

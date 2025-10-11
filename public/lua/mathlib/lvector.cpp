@@ -1,4 +1,4 @@
-//====== Copyright © 1996-2005, Valve Corporation, All rights reserved. =======//
+//====== Copyright ï¿½ 1996-2005, Valve Corporation, All rights reserved. =======//
 //
 // Purpose: 
 //
@@ -171,6 +171,11 @@ static int Vector_NormalizeInPlace (lua_State *L) {
   return 1;
 }
 
+static int Vector_GetNormalized (lua_State *L) {
+  lua_pushvector(L, luaL_checkvector(L, 1).Normalized());
+  return 1;
+}
+
 static int Vector_Random (lua_State *L) {
   luaL_checkvector(L, 1).Random(luaL_checknumber(L, 2), luaL_checknumber(L, 3));
   return 0;
@@ -277,6 +282,7 @@ static const luaL_Reg Vectormeta[] = {
   {"MulAdd", Vector_MulAdd},
   {"Negate", Vector_Negate},
   {"NormalizeInPlace", Vector_NormalizeInPlace},
+  {"GetNormalized", Vector_GetNormalized},
   {"Random", Vector_Random},
   {"WithinAABox", Vector_WithinAABox},
   {"Zero", Vector_Zero},
