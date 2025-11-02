@@ -1958,7 +1958,7 @@ void CShadowMgr::AddShadowsOnSurfaceToRenderList( ShadowDecalHandle_t decalHandl
 
 void CShadowMgr::ClearShadowRenderList()
 {
-	COMPILE_TIME_ASSERT( sizeof(ShadowDecalHandle_t) == 2 );
+//	COMPILE_TIME_ASSERT( sizeof(ShadowDecalHandle_t) == 2 );
 
 	// Clear out the render list
 	if (m_RenderQueue.Count() > 0)

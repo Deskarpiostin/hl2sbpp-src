@@ -879,7 +879,14 @@ CON_COMMAND( give, "Give item to player.\n\tArguments: <item_name>" )
 		}
 
 		string_t iszItem = AllocPooledString( item_to_give );	// Make a copy of the classname
-		pPlayer->GiveNamedItem( STRING(iszItem) );
+		CBaseEntity* pEnt = pPlayer->GiveNamedItem(STRING(iszItem));
+
+		if (pEnt && pEnt->IsWeapon())
+		{
+			CBaseCombatWeapon* pWeapon = dynamic_cast<CBaseCombatWeapon*>(pEnt);
+			if (pWeapon && pPlayer->Weapon_CanSwitchTo(pWeapon))
+				pPlayer->Weapon_Switch(pWeapon);
+		}
 	}
 }
 
@@ -1190,23 +1197,9 @@ static ConCommand noclip("noclip", CC_Player_NoClip, "Toggle. Player becomes non
 //------------------------------------------------------------------------------
 void CC_God_f (void)
 {
-	if ( !sv_cheats->GetBool() )
-		return;
-
 	CBasePlayer *pPlayer = ToBasePlayer( UTIL_GetCommandClient() ); 
 	if ( !pPlayer )
 		return;
-
-#ifdef TF_DLL
-   if ( TFGameRules() && ( TFGameRules()->IsPVEModeActive() == false ) )
-   {
-	   if ( gpGlobals->deathmatch )
-		   return;
-   }
-#else
-	if ( gpGlobals->deathmatch )
-		return;
-#endif
 
 	pPlayer->ToggleFlag( FL_GODMODE );
 	if (!(pPlayer->GetFlags() & FL_GODMODE ) )
@@ -1223,9 +1216,6 @@ static ConCommand god("god", CC_God_f, "Toggle. Player becomes invulnerable.", F
 //------------------------------------------------------------------------------
 CON_COMMAND_F( setpos, "Move player to specified origin (must have sv_cheats).", FCVAR_CHEAT )
 {
-	if ( !sv_cheats->GetBool() )
-		return;
-
 	CBasePlayer *pPlayer = ToBasePlayer( UTIL_GetCommandClient() ); 
 	if ( !pPlayer )
 		return;
@@ -1257,9 +1247,6 @@ CON_COMMAND_F( setpos, "Move player to specified origin (must have sv_cheats).",
 //------------------------------------------------------------------------------
 void CC_setang_f (const CCommand &args)
 {
-	if ( !sv_cheats->GetBool() )
-		return;
-
 	CBasePlayer *pPlayer = ToBasePlayer( UTIL_GetCommandClient() ); 
 	if ( !pPlayer )
 		return;
@@ -1298,9 +1285,6 @@ static float GetHexFloat( const char *pStr )
 //------------------------------------------------------------------------------
 CON_COMMAND_F( setpos_exact, "Move player to an exact specified origin (must have sv_cheats).", FCVAR_CHEAT )
 {
-	if ( !sv_cheats->GetBool() )
-		return;
-
 	CBasePlayer *pPlayer = ToBasePlayer( UTIL_GetCommandClient() ); 
 	if ( !pPlayer )
 		return;
@@ -1332,9 +1316,6 @@ CON_COMMAND_F( setpos_exact, "Move player to an exact specified origin (must hav
 
 CON_COMMAND_F( setang_exact, "Snap player eyes and orientation to specified pitch yaw <roll:optional> (must have sv_cheats).", FCVAR_CHEAT )
 {
-	if ( !sv_cheats->GetBool() )
-		return;
-
 	CBasePlayer *pPlayer = ToBasePlayer( UTIL_GetCommandClient() ); 
 	if ( !pPlayer )
 		return;
@@ -1366,14 +1347,8 @@ CON_COMMAND_F( setang_exact, "Snap player eyes and orientation to specified pitc
 //------------------------------------------------------------------------------
 void CC_Notarget_f (void)
 {
-	if ( !sv_cheats->GetBool() )
-		return;
-
 	CBasePlayer *pPlayer = ToBasePlayer( UTIL_GetCommandClient() ); 
 	if ( !pPlayer )
-		return;
-
-	if ( gpGlobals->deathmatch )
 		return;
 
 	pPlayer->ToggleFlag( FL_NOTARGET );
@@ -1390,9 +1365,6 @@ ConCommand notarget("notarget", CC_Notarget_f, "Toggle. Player becomes hidden to
 //------------------------------------------------------------------------------
 void CC_HurtMe_f(const CCommand &args)
 {
-	if ( !sv_cheats->GetBool() )
-		return;
-
 	CBasePlayer *pPlayer = ToBasePlayer( UTIL_GetCommandClient() ); 
 	if ( !pPlayer )
 		return;

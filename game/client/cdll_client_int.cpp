@@ -1442,6 +1442,8 @@ void CHLClient::Shutdown( void )
 	g_pSixenseInput = NULL;
 #endif
 
+	UnMountAddons();
+
 #ifdef LUA_SDK
 	luasrc_shutdown_gameui();
 #endif
@@ -1850,15 +1852,14 @@ void CHLClient::LevelInitPreEntity( char const* pMapName )
 	g_bLevelInitialized = true;
 
 #if defined ( LUA_SDK )	
-//	Not now
-//	lcf_recursivedeletefile( LUA_PATH_CACHE );
+	lcf_recursivedeletefile( LUA_PATH_CACHE );
 
 	// Add the Lua environment.
 	// Andrew; unarchive the Lua Cache File
-//	if ( gpGlobals->maxClients > 1 )
-//	{
-//		luasrc_ExtractLcf();
-//	}
+	if ( gpGlobals->maxClients > 1 )
+	{
+		luasrc_ExtractLcf();
+	}
 
 	luasrc_init();
 

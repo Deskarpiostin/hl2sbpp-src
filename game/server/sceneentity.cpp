@@ -3459,10 +3459,10 @@ CChoreoScene *CSceneEntity::LoadScene( const char *filename, IChoreoEventCallbac
 	Q_strncpy( loadfile, filename, sizeof( loadfile ) );
 	Q_SetExtension( loadfile, ".vcd", sizeof( loadfile ) );
 	Q_FixSlashes( loadfile );
- 
+	
 	void *pBuffer = 0;
 	CChoreoScene *pScene;
- 
+
 	int fileSize = filesystem->ReadFileEx( loadfile, "GAME", &pBuffer, true );
 	if (fileSize)
 	{
@@ -3486,13 +3486,13 @@ CChoreoScene *CSceneEntity::LoadScene( const char *filename, IChoreoEventCallbac
 			pScene = NULL;
 		}
 	}
- 
+	
 	if(pScene)
 	{
 		pScene->SetPrintFunc( LocalScene_Printf );
 		pScene->SetEventCallbackInterface( pCallback );
 	}
- 
+
 	FreeSceneFileMemory( pBuffer );
 	return pScene;
 }
@@ -4811,16 +4811,51 @@ void PrecacheInstancedScene( char const *pszScene )
 		g_pFullFileSystem->Size( pszScene );
 	}
 
-	// verify existence, cache is pre-populated, should be there
 	SceneCachedData_t sceneData;
-	if ( !scenefilecache->GetSceneCachedData( pszScene, &sceneData ) )
+
+	char loadfile[MAX_PATH];
+	Q_strncpy( loadfile, pszScene, sizeof( loadfile ) );
+	Q_SetExtension( loadfile, ".vcd", sizeof( loadfile ) );
+	Q_FixSlashes( loadfile );
+
+	// Attempt to precache manually
+	void *pBuffer = NULL;
+	if (filesystem->ReadFileEx( loadfile, "GAME", &pBuffer, false, true ))
 	{
-		// Scenes are sloppy and don't always exist.
-		// A scene that is not in the pre-built cache image, but on disk, is a true error.
-		if ( developer.GetInt() && ( IsX360() && ( g_pFullFileSystem->GetDVDMode() != DVDMODE_STRICT ) && g_pFullFileSystem->FileExists( pszScene, "GAME" ) ) )
+		g_TokenProcessor.SetBuffer((char*)pBuffer);
+		CChoreoScene *pScene = ChoreoLoadScene( loadfile, NULL, &g_TokenProcessor, LocalScene_Printf );
+		if (pScene)
 		{
-			Warning( "PrecacheInstancedScene: Missing scene '%s' from scene image cache.\nRebuild scene image cache!\n", pszScene );
+			for ( int i = 0; i < pScene->GetNumEvents(); i++ )
+			{
+				CChoreoEvent *pEvent = pScene->GetEvent(i);
+				if (pEvent && pEvent->GetType() == CChoreoEvent::SPEAK)
+				{
+					CBaseEntity::PrecacheScriptSound( pEvent->GetParameters() );
+
+					// Precache CC token
+					if ( pEvent->GetCloseCaptionType() == CChoreoEvent::CC_MASTER && 
+						 pEvent->GetNumSlaves() > 0 )
+					{
+						char tok[ CChoreoEvent::MAX_CCTOKEN_STRING ];
+						if ( pEvent->GetPlaybackCloseCaptionToken( tok, sizeof( tok ) ) )
+						{
+							CBaseEntity::PrecacheScriptSound( tok );
+						}
+					}
+				}
+			}
 		}
+	}
+	else if ( !scenefilecache->GetSceneCachedData( pszScene, &sceneData ) )
+	{
+		// This warning was meant for when scenes.image was supposed to be the sole method of loading scenes.
+		// It's been deactivated as part of the raw file support, as even if this was somehow on the Xbox 360,
+		// it would never trip anyway because if the file existed, it would've been read earlier.
+		//if ( developer.GetInt() && ( IsX360() && ( g_pFullFileSystem->GetDVDMode() != DVDMODE_STRICT ) && g_pFullFileSystem->FileExists( pszScene, "GAME" ) ) )
+		//{
+		//	Warning( "PrecacheInstancedScene: Missing scene '%s' from scene image cache.\nRebuild scene image cache!\n", pszScene );
+		//}
 	}
 	else
 	{

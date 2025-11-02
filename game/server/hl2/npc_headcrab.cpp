@@ -837,7 +837,7 @@ void CBaseHeadcrab::RunTask( const Task_t *pTask )
 
 		case TASK_HEADCRAB_CEILING_WAIT:
 			{	
-#ifdef HL2_EPISODIC
+#ifdef HL2SB
 				if ( DarknessLightSourceWithinRadius( this, DARKNESS_LIGHTSOURCE_SIZE ) )
 				{
 					DropFromCeiling();
@@ -1308,7 +1308,7 @@ void CBaseHeadcrab::JumpFromCanister()
 
 void CBaseHeadcrab::DropFromCeiling( void )
 {
-#ifdef HL2_EPISODIC
+#ifdef HL2SB
 #ifndef HL2SB
 	if ( HL2GameRules()->IsAlyxInDarknessMode() )
 #else
@@ -1344,7 +1344,7 @@ void CBaseHeadcrab::DropFromCeiling( void )
 			}
 		}
 	}
-#endif // HL2_EPISODIC
+#endif // HL2SB
 }
 
 //-----------------------------------------------------------------------------
@@ -1360,7 +1360,7 @@ void CBaseHeadcrab::PlayerHasIlluminatedNPC( CBasePlayer *pPlayer, float flDot )
 
 bool CBaseHeadcrab::CanBeAnEnemyOf( CBaseEntity *pEnemy )
 {
-#ifdef HL2_EPISODIC
+#ifdef HL2SB
 	if ( IsHangingFromCeiling() )
 		return false;
 #endif
@@ -1894,13 +1894,13 @@ int CBaseHeadcrab::SelectSchedule( void )
 	if ( IsHangingFromCeiling() )
 	{
 		bool bIsAlyxInDarknessMode = false;
-#ifdef HL2_EPISODIC
+#ifdef HL2SB
 #ifndef HL2SB
 		bIsAlyxInDarknessMode = HL2GameRules()->IsAlyxInDarknessMode();
 #else
 		bIsAlyxInDarknessMode = HL2MPRules()->IsAlyxInDarknessMode();
 #endif
-#endif // HL2_EPISODIC
+#endif // HL2SB
 
 		if ( bIsAlyxInDarknessMode == false && ( HasCondition( COND_CAN_RANGE_ATTACK1 ) || HasCondition( COND_NEW_ENEMY ) ) )
 			return SCHED_HEADCRAB_CEILING_DROP;
@@ -2067,20 +2067,20 @@ void CBaseHeadcrab::Ignite( float flFlameLifetime, bool bNPCOnly, float flSize, 
 
 	bool bWasOnFire = IsOnFire();
 
-#ifdef HL2_EPISODIC
+#ifdef HL2SB
 	if( GetHealth() > flFlameLifetime )
 	{
 		// Add some burn time to very healthy headcrabs to fix a bug where
 		// black headcrabs would sometimes spontaneously extinguish (and survive)
 		flFlameLifetime += 10.0f;
 	}
-#endif// HL2_EPISODIC
+#endif// HL2SB
 
  	BaseClass::Ignite( flFlameLifetime, bNPCOnly, flSize, bCalledByLevelDesigner );
 
 	if( !bWasOnFire )
 	{
-#ifdef HL2_EPISODIC
+#ifdef HL2SB
 #ifndef HL2SB
 		if ( HL2GameRules()->IsAlyxInDarknessMode() == true )
 #else
@@ -2089,7 +2089,7 @@ void CBaseHeadcrab::Ignite( float flFlameLifetime, bool bNPCOnly, float flSize, 
 		{
 			GetEffectEntity()->AddEffects( EF_DIMLIGHT );
 		}
-#endif // HL2_EPISODIC
+#endif // HL2SB
 
 		// For the poison headcrab, who runs around when ignited
 		SetActivity( TranslateActivity(GetIdealActivity()) );
@@ -3375,7 +3375,7 @@ void CBlackHeadcrab::Panic( float flDuration )
 }
 
 
-#if HL2_EPISODIC
+#if HL2SB
 //-----------------------------------------------------------------------------
 // Purpose: Black headcrabs have 360-degree vision when they are in the ambush
 //			schedule. This is because they ignore sounds when in ambush, and

@@ -13,6 +13,8 @@
 	#include "c_hl2mp_player.h"
 #else
 	#include "hl2mp_player.h"
+	#include "effect_dispatch_data.h"
+	#include "te_effect_dispatch.h"
 #endif
 
 #include "weapon_hl2mpbasehlmpcombatweapon.h"
@@ -31,6 +33,9 @@ class CWeapon357 : public CBaseHL2MPCombatWeapon
 public:
 
 	CWeapon357( void );
+#ifdef GAME_DLL
+	void	Operator_HandleAnimEvent( animevent_t *pEvent, CBaseCombatCharacter *pOperator );
+#endif
 
 	void	PrimaryAttack( void );
 	DECLARE_NETWORKCLASS(); 
@@ -166,3 +171,33 @@ void CWeapon357::PrimaryAttack( void )
 		pPlayer->SetSuitUpdate( "!HEV_AMO0", FALSE, 0 ); 
 	}
 }
+
+#ifdef GAME_DLL
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
+void CWeapon357::Operator_HandleAnimEvent( animevent_t *pEvent, CBaseCombatCharacter *pOperator )
+{
+	CBasePlayer *pOwner = ToBasePlayer( GetOwner() );
+
+	switch( pEvent->event )
+	{
+		case EVENT_WEAPON_RELOAD:
+			{
+				CEffectData data;
+
+				// Emit six spent shells
+				for ( int i = 0; i < 6; i++ )
+				{
+					data.m_vOrigin = pOwner->WorldSpaceCenter() + RandomVector( -4, 4 );
+					data.m_vAngles = QAngle( 90, random->RandomInt( 0, 360 ), 0 );
+					data.m_nEntIndex = entindex();
+
+					DispatchEffect( "ShellEject", data );
+				}
+
+				break;
+			}
+	}
+}
+#endif

@@ -2566,13 +2566,6 @@ bool CGameMovement::CheckJumpButton( void )
 
 	OnJump(mv->m_outJumpVel.z);
 
-	// Set jump time.
-	if ( gpGlobals->maxClients == 1 )
-	{
-		player->m_Local.m_flJumpTime = GAMEMOVEMENT_JUMP_TIME;
-		player->m_Local.m_bInDuckJump = true;
-	}
-
 #if defined( HL2_DLL )
 
 	if ( xc_uncrouch_on_jump.GetBool() )

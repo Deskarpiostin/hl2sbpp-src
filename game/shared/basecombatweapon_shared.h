@@ -276,6 +276,9 @@ public:
 #ifdef CLIENT_DLL
 	virtual void			CreateMove( float flInputSampleTime, CUserCmd *pCmd, const QAngle &vecOldViewAngles ) {}
 	virtual int				CalcOverrideModelIndex() OVERRIDE;
+
+	// misyl: If weapon mispred's don't reset all the player's variables.
+	virtual bool PredictionErrorShouldResetLatchedForAllPredictables( void ) OVERRIDE;
 #endif
 
 	virtual bool			IsWeaponZoomed() { return false; }		// Is this weapon in its 'zoomed in' mode?

@@ -1,8 +1,9 @@
-//========= Copyright Me idk lol, All rights reserved. ============//
+//========== Copyright (C) 2025, Team HL2SB++, All rights reserved. ===========//
 //
-// Purpose: 
+// Purpose:
 //
-//=============================================================================//
+//===========================================================================//
+
 #ifndef ADVANCED_OPTIONS_H
 #define ADVANCED_OPTIONS_H
 #ifdef _WIN32
@@ -32,31 +33,31 @@ class CAdvancedOptPanel : public vgui::Frame
 	DECLARE_CLASS_SIMPLE( CAdvancedOptPanel, vgui::Frame );
 
 	CAdvancedOptPanel( vgui::VPANEL parent );
-	~CAdvancedOptPanel() {};
+	~CAdvancedOptPanel(){};
 
 protected:
 	virtual void OnTick();
-	virtual void OnCommand( const char* pcCommand );
+	virtual void OnCommand( const char *pcCommand );
 
 	virtual void OnClose();
 
 public:
-    vgui::PropertySheet *m_pTabSheet;
+	vgui::PropertySheet			*m_pTabSheet;
 	CAdvancedOptionsMultiplayer *m_pMultiplayerPage;
 	CAdvancedOptionsGameplay	*m_pGameplayPage;
 	CAdvancedOptionsVisuals		*m_pVisualsPage;
 
-	vgui::Button		*m_pCloseButton;
+	vgui::Button *m_pCloseButton;
 };
 
 class AdvancedOptPanel
 {
 public:
-	virtual void		Create( vgui::VPANEL parent ) = 0;
-	virtual void		Destroy( void ) = 0;
-	virtual void		Activate( void ) = 0;
+	virtual void Create( vgui::VPANEL parent ) = 0;
+	virtual void Destroy( void ) = 0;
+	virtual void Activate( void ) = 0;
 };
 
-extern AdvancedOptPanel* advancedoptpanel;
+extern AdvancedOptPanel *advancedoptpanel;
 
 #endif // ADVANCED_OPTIONS_H

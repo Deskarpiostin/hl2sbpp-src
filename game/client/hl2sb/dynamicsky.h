@@ -1,6 +1,6 @@
 //========= Copyright Valve Corporation, All rights reserved. ============//
 //
-// Purpose: 
+// Purpose:
 //
 //=============================================================================//
 #ifndef __DYNAMICSKY_H
@@ -9,8 +9,8 @@
 #pragma once
 #endif
 
-void R_UnloadSkys(void);
-void R_LoadSkys(void);
-void R_DrawSkyBox(float zFar, int nDrawFlags = 0x3F);
+void R_UnloadSkys( void );
+void R_LoadSkys( void );
+void R_DrawSkyBox( float zFar, int nDrawFlags = 0x3F );
 
 #endif

@@ -1,6 +1,6 @@
 //========= Copyright Valve LLC, All rights reserved. ============
 //
-// Purpose: 
+// Purpose:
 //
 //=============================================================================
 
@@ -10,8 +10,11 @@
 class C_StickyBomb : public C_BaseAnimating
 {
 	DECLARE_CLASS( C_StickyBomb, C_BaseAnimating );
+
 public:
-	C_StickyBomb() {}
+	C_StickyBomb()
+	{
+	}
 
 	int InternalDrawModel( int flags )
 	{
@@ -40,16 +43,12 @@ public:
 	DECLARE_CLIENTCLASS();
 
 private:
-	int m_boneIndexAttached;
-	CUtlVector< matrix3x4_t >		m_CachedBones;
-	Vector m_bonePosition;
-	QAngle m_boneAngles;
+	int						  m_boneIndexAttached;
+	CUtlVector< matrix3x4_t > m_CachedBones;
+	Vector					  m_bonePosition;
+	QAngle					  m_boneAngles;
 };
 
-IMPLEMENT_CLIENTCLASS_DT( C_StickyBomb, DT_StickyBomb, CStickyBomb)
-	RecvPropInt( RECVINFO(m_boneIndexAttached) ),
-	RecvPropVector( RECVINFO(m_bonePosition) ),
-	RecvPropFloat(RECVINFO(m_boneAngles[0]) ),
-	RecvPropFloat(RECVINFO(m_boneAngles[1]) ),
-	RecvPropFloat(RECVINFO(m_boneAngles[2]) ),
-END_RECV_TABLE() 
+IMPLEMENT_CLIENTCLASS_DT( C_StickyBomb, DT_StickyBomb, CStickyBomb )
+RecvPropInt( RECVINFO( m_boneIndexAttached ) ), RecvPropVector( RECVINFO( m_bonePosition ) ), RecvPropFloat( RECVINFO( m_boneAngles[0] ) ), RecvPropFloat( RECVINFO( m_boneAngles[1] ) ), RecvPropFloat( RECVINFO( m_boneAngles[2] ) ),
+	END_RECV_TABLE()

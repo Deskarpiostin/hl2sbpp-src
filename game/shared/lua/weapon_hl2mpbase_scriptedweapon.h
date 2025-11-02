@@ -33,7 +33,7 @@ public:
 	bool			IsScripted( void ) const { return true; }
 	
 	DECLARE_NETWORKCLASS(); 
-	DECLARE_PREDICTABLE();
+	// DECLARE_PREDICTABLE();
 	// DECLARE_ACTTABLE();
 
 	acttable_t m_acttable[LUA_MAX_WEAPON_ACTIVITIES];

@@ -1,4 +1,9 @@
-// hud_watermark.cpp
+//========== Copyright (C) 2025, Team HL2SB++, All rights reserved. ===========//
+//
+// Purpose:
+//
+//===========================================================================//
+
 #include "cbase.h"
 #include "hud_watermark.h"
 #include "vgui/ISurface.h"
@@ -9,51 +14,50 @@
 #include "hud_macros.h"
 #include "clientmode_hl2mpnormal.h"
 
-DECLARE_HUDELEMENT(CHudWatermark);
+DECLARE_HUDELEMENT( CHudWatermark );
 
 using namespace vgui;
 
-CHudWatermark::CHudWatermark(const char* pElementName)
-    : CHudElement(pElementName), Panel(NULL, "HudWatermark")
+CHudWatermark::CHudWatermark( const char *pElementName ) : CHudElement( pElementName ), Panel( NULL, "HudWatermark" )
 {
-    SetHiddenBits(HIDEHUD_MISCSTATUS);
-    SetPaintBackgroundEnabled(false);
+	SetHiddenBits( HIDEHUD_MISCSTATUS );
+	SetPaintBackgroundEnabled( false );
 
-    SetParent(GetClientModeHL2MPNormal()->GetViewport());
-    SetPos(0, 0);
-    SetSize(ScreenWidth(), ScreenHeight());
+	SetParent( GetClientModeHL2MPNormal()->GetViewport() );
+	SetPos( 0, 0 );
+	SetSize( ScreenWidth(), ScreenHeight() );
 
-    wchar_t gameName[256];
-    g_pVGuiLocalize->ConvertANSIToUnicode("Half-Life 2: Sandbox++", gameName, sizeof(gameName));
-    m_pGameName = new Label(this, "GameNameLabel", gameName);
-    m_pGameName->SetAlpha(16);
-    m_pGameName->SetContentAlignment(Label::a_northeast);
-    m_pGameName->SetFont(vgui::scheme()->GetIScheme(vgui::scheme()->GetDefaultScheme())->GetFont("DefaultSmall", true));
+	wchar_t gameName[256];
+	g_pVGuiLocalize->ConvertANSIToUnicode( "Half-Life 2: Sandbox++", gameName, sizeof( gameName ) );
+	m_pGameName = new Label( this, "GameNameLabel", gameName );
+	m_pGameName->SetAlpha( 16 );
+	m_pGameName->SetContentAlignment( Label::a_northeast );
+	m_pGameName->SetFont( vgui::scheme()->GetIScheme( vgui::scheme()->GetDefaultScheme() )->GetFont( "DefaultSmall", true ) );
 
-    wchar_t discord[256];
-    g_pVGuiLocalize->ConvertANSIToUnicode("https://discord.gg/3DkET6fqXr", discord, sizeof(discord));
-    m_pDiscord = new Label(this, "DiscordLabel", discord);
-    m_pDiscord->SetAlpha(16);
-    m_pDiscord->SetContentAlignment(Label::a_northeast);
-    m_pDiscord->SetFont(vgui::scheme()->GetIScheme(vgui::scheme()->GetDefaultScheme())->GetFont("DefaultSmall", true));
+	wchar_t discord[256];
+	g_pVGuiLocalize->ConvertANSIToUnicode( "https://discord.gg/3DkET6fqXr", discord, sizeof( discord ) );
+	m_pDiscord = new Label( this, "DiscordLabel", discord );
+	m_pDiscord->SetAlpha( 16 );
+	m_pDiscord->SetContentAlignment( Label::a_northeast );
+	m_pDiscord->SetFont( vgui::scheme()->GetIScheme( vgui::scheme()->GetDefaultScheme() )->GetFont( "DefaultSmall", true ) );
 }
 
 void CHudWatermark::Paint()
 {
-    int padding = 10;
+	int padding = 10;
 
-    int screenWidth, screenHeight;
-    vgui::surface()->GetScreenSize(screenWidth, screenHeight);
+	int screenWidth, screenHeight;
+	vgui::surface()->GetScreenSize( screenWidth, screenHeight );
 
-	m_pGameName->SetFgColor(Color(255, 255, 255, 16));
-	m_pDiscord->SetFgColor(Color(255, 255, 255, 16));
+	m_pGameName->SetFgColor( Color( 255, 255, 255, 16 ) );
+	m_pDiscord->SetFgColor( Color( 255, 255, 255, 16 ) );
 
-    int gameWidth, gameHeight, discordWidth, discordHeight;
-    m_pGameName->GetContentSize(gameWidth, gameHeight);
-    m_pDiscord->GetContentSize(discordWidth, discordHeight);
+	int gameWidth, gameHeight, discordWidth, discordHeight;
+	m_pGameName->GetContentSize( gameWidth, gameHeight );
+	m_pDiscord->GetContentSize( discordWidth, discordHeight );
 
-    m_pGameName->SetBounds(screenWidth - gameWidth - padding, padding, gameWidth, gameHeight);
-    m_pDiscord->SetBounds(screenWidth - discordWidth - padding, padding + gameHeight + 2, discordWidth, discordHeight);
+	m_pGameName->SetBounds( screenWidth - gameWidth - padding, padding, gameWidth, gameHeight );
+	m_pDiscord->SetBounds( screenWidth - discordWidth - padding, padding + gameHeight + 2, discordWidth, discordHeight );
 
-    BaseClass::Paint();
+	BaseClass::Paint();
 }

@@ -81,11 +81,11 @@ ConVar	sk_dmg_inflict_scale3( "sk_dmg_inflict_scale3", "0.75", FCVAR_REPLICATED 
 // Damage scale for damage taken by the player on each skill level.
 ConVar	sk_dmg_take_scale1( "sk_dmg_take_scale1", "0.50", FCVAR_REPLICATED );
 ConVar	sk_dmg_take_scale2( "sk_dmg_take_scale2", "1.00", FCVAR_REPLICATED );
-#ifdef HL2_EPISODIC
+#ifdef HL2SB
 	ConVar	sk_dmg_take_scale3( "sk_dmg_take_scale3", "2.0", FCVAR_REPLICATED );
 #else
 	ConVar	sk_dmg_take_scale3( "sk_dmg_take_scale3", "1.50", FCVAR_REPLICATED );
-#endif//HL2_EPISODIC
+#endif//HL2SB
 
 ConVar	sk_allow_autoaim( "sk_allow_autoaim", "1", FCVAR_REPLICATED | FCVAR_ARCHIVE_XBOX );
 
@@ -147,7 +147,7 @@ ConVar	sk_plr_dmg_grenade		( "sk_plr_dmg_grenade","0", FCVAR_REPLICATED);
 ConVar	sk_npc_dmg_grenade		( "sk_npc_dmg_grenade","0", FCVAR_REPLICATED);
 ConVar	sk_max_grenade			( "sk_max_grenade","0", FCVAR_REPLICATED);
 
-#ifdef HL2_EPISODIC
+#ifdef HL2SB
 ConVar	sk_max_hopwire			( "sk_max_hopwire", "3", FCVAR_REPLICATED);
 ConVar	sk_max_striderbuster	( "sk_max_striderbuster", "3", FCVAR_REPLICATED);
 #endif
@@ -227,7 +227,7 @@ ConVar sk_mp_dmg_multiplier ( "sk_mp_dmg_multiplier", "2.0" );
 //-----------------------------------------------------------------------------
 int CHalfLife2::Damage_GetTimeBased( void )
 {
-#ifdef HL2_EPISODIC
+#ifdef HL2SB
 	int iDamage = ( DMG_PARALYZE | DMG_NERVEGAS | DMG_POISON | DMG_RADIATION | DMG_DROWNRECOVER | DMG_ACID | DMG_SLOWBURN );
 	return iDamage;
 #else
@@ -243,7 +243,7 @@ int CHalfLife2::Damage_GetTimeBased( void )
 bool CHalfLife2::Damage_IsTimeBased( int iDmgType )
 {
 	// Damage types that are time-based.
-#ifdef HL2_EPISODIC
+#ifdef HL2SB
 	// This makes me think EP2 should have its own rules, but they are #ifdef all over in here.
 	return ( ( iDmgType & ( DMG_PARALYZE | DMG_NERVEGAS | DMG_POISON | DMG_RADIATION | DMG_DROWNRECOVER | DMG_ACID | DMG_SLOWBURN ) ) != 0 );
 #else
@@ -254,9 +254,9 @@ bool CHalfLife2::Damage_IsTimeBased( int iDmgType )
 #ifdef CLIENT_DLL
 #else
 
-#ifdef HL2_EPISODIC
+#ifdef HL2SB
 ConVar  alyx_darkness_force( "alyx_darkness_force", "0", FCVAR_CHEAT | FCVAR_REPLICATED );
-#endif // HL2_EPISODIC
+#endif // HL2SB
 
 #endif // CLIENT_DLL
 
@@ -1777,7 +1777,7 @@ void CHalfLife2::LevelInitPreEntity()
 {
 	// Remove this if you fix the bug in ep1 where the striders need to touch
 	// triggers using their absbox instead of their bbox
-#ifdef HL2_EPISODIC
+#ifdef HL2SB
 	if ( !Q_strnicmp( gpGlobals->mapname.ToCStr(), "ep1_", 4 ) )
 	{
 		// episode 1 maps use the surrounding box trigger behavior
@@ -1792,14 +1792,14 @@ void CHalfLife2::LevelInitPreEntity()
 //-----------------------------------------------------------------------------
 bool CHalfLife2::IsAlyxInDarknessMode()
 {
-#ifdef HL2_EPISODIC
+#ifdef HL2SB
 	if ( alyx_darkness_force.GetBool() )
 		return true;
 
 	return ( GlobalEntity_GetState( "ep_alyx_darknessmode" ) == GLOBAL_ON );
 #else
 	return false;
-#endif // HL2_EPISODIC
+#endif // HL2SB
 }
 
 
@@ -1809,11 +1809,11 @@ bool CHalfLife2::IsAlyxInDarknessMode()
 //-----------------------------------------------------------------------------
 bool CHalfLife2::ShouldBurningPropsEmitLight()
 {
-#ifdef HL2_EPISODIC
+#ifdef HL2SB
 	return IsAlyxInDarknessMode();
 #else
 	return false;
-#endif // HL2_EPISODIC
+#endif // HL2SB
 }
 
 
@@ -1905,21 +1905,21 @@ CAmmoDef *GetAmmoDef()
 		// now that the AmmoDef code is behaving correctly.
 		//
 		//=====================================================================
-#ifdef HL2_EPISODIC
+#ifdef HL2SB
 		def.AddAmmoType("StriderMinigun",	DMG_BULLET,					TRACER_LINE,			5, 5, 15, 1.0 * 750 * 12, AMMO_FORCE_DROP_IF_CARRIED ); // hit like a 1.0kg weight at 750 ft/s
 #else
 		def.AddAmmoType("StriderMinigun",	DMG_BULLET,					TRACER_LINE,			5, 15,15, 1.0 * 750 * 12, AMMO_FORCE_DROP_IF_CARRIED ); // hit like a 1.0kg weight at 750 ft/s
-#endif//HL2_EPISODIC
+#endif//HL2SB
 
 		def.AddAmmoType("StriderMinigunDirect",	DMG_BULLET,				TRACER_LINE,			2, 2, 15, 1.0 * 750 * 12, AMMO_FORCE_DROP_IF_CARRIED ); // hit like a 1.0kg weight at 750 ft/s
 		def.AddAmmoType("HelicopterGun",	DMG_BULLET,					TRACER_LINE_AND_WHIZ,	"sk_npc_dmg_helicopter_to_plr", "sk_npc_dmg_helicopter",	"sk_max_smg1",	BULLET_IMPULSE(400, 1225), AMMO_FORCE_DROP_IF_CARRIED | AMMO_INTERPRET_PLRDAMAGE_AS_DAMAGE_TO_PLAYER );
 		def.AddAmmoType("AR2AltFire",		DMG_DISSOLVE,				TRACER_NONE,			0, 0, "sk_max_ar2_altfire", 0, 0 );
 		def.AddAmmoType("Grenade",			DMG_BURN,					TRACER_NONE,			"sk_plr_dmg_grenade",		"sk_npc_dmg_grenade",		"sk_max_grenade",		0, 0);
-#ifdef HL2_EPISODIC
+#ifdef HL2SB
 		def.AddAmmoType("Hopwire",			DMG_BLAST,					TRACER_NONE,			"sk_plr_dmg_grenade",		"sk_npc_dmg_grenade",		"sk_max_hopwire",		0, 0);
 		def.AddAmmoType("CombineHeavyCannon",	DMG_BULLET,				TRACER_LINE,			40,	40, NULL, 10 * 750 * 12, AMMO_FORCE_DROP_IF_CARRIED ); // hit like a 10 kg weight at 750 ft/s
 		def.AddAmmoType("ammo_proto1",			DMG_BULLET,				TRACER_LINE,			0, 0, 10, 0, 0 );
-#endif // HL2_EPISODIC
+#endif // HL2SB
 	}
 
 	return &def;

@@ -1,8 +1,9 @@
-//========= Copyright Me idk lol, All rights reserved. ============//
+//========== Copyright (C) 2025, Team HL2SB++, All rights reserved. ===========//
 //
-// Purpose: 
+// Purpose:
 //
-//=============================================================================//
+//===========================================================================//
+
 #ifndef ADVANCED_V_TAB_H
 #define ADVANCED_V_TAB_H
 #ifdef _WIN32
@@ -26,19 +27,21 @@
 
 class CAdvancedOptionsVisuals : public vgui::PropertyPage
 {
-    DECLARE_CLASS_SIMPLE( CAdvancedOptionsVisuals, vgui::PropertyPage );
+	DECLARE_CLASS_SIMPLE( CAdvancedOptionsVisuals, vgui::PropertyPage );
 
 public:
-    CAdvancedOptionsVisuals( vgui::Panel *parent, const char *panelName );
+	CAdvancedOptionsVisuals( vgui::Panel *parent, const char *panelName );
 
 protected:
-    virtual void OnCommand( const char *command );
-    virtual void PerformLayout();
+	virtual void OnCommand( const char *command );
+	virtual void PerformLayout();
 
 	virtual void OnTick();
 
 private:
-    vgui::CheckButton* m_pFPSCheckbox;
+	vgui::CheckButton *m_pFPSCheckbox;
+	vgui::CheckButton *m_pNetGraphCheckbox;
+	vgui::CheckButton *m_pCrosshairCheckbox;
 };
 
 #endif

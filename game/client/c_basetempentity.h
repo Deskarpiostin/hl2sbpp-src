@@ -55,6 +55,7 @@ public:
 	virtual void					NotifyShouldTransmit( ShouldTransmitState_t state );
 	virtual void					PreDataUpdate( DataUpdateType_t updateType );
 	virtual void					PostDataUpdate( DataUpdateType_t updateType );
+	virtual void					OnDataUnchangedInPVS( void ) { }
 	virtual void					OnPreDataChanged( DataUpdateType_t updateType );
 	virtual void					OnDataChanged( DataUpdateType_t updateType );
 	virtual void					SetDormant( bool bDormant );
@@ -69,6 +70,9 @@ public:
 	// Dummy for CNetworkVars.
 	void NetworkStateChanged() {}
 	void NetworkStateChanged( void *pVar ) {}
+
+	// Dummy for scripted weapons.
+	void SetClassname( const char *classname ) {}
 
 	virtual bool					Init(int entnum, int iSerialNum);
 

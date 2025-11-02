@@ -814,6 +814,7 @@ public:
 	bool							PostNetworkDataReceived( int commands_acknowledged );
 	bool							GetPredictionEligible( void ) const;
 	void							SetPredictionEligible( bool canpredict );
+	virtual bool					PredictionErrorShouldResetLatchedForAllPredictables( void ) { return true; } //legacy behavior is that any prediction error causes all predictables to reset latched
 
 	enum
 	{

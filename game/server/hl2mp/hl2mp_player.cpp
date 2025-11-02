@@ -699,6 +699,9 @@ void CHL2MP_Player::FireBullets ( const FireBulletsInfo_t &info )
 
 	// Move other players back to history positions based on local player's lag
 	lagcompensation->FinishLagCompensation( this );
+
+	if ( pWeapon )
+		this->OnMyWeaponFired( pWeapon );
 }
 
 void CHL2MP_Player::NoteWeaponFired( void )
@@ -1904,3 +1907,62 @@ void CC_PlayAct(const CCommand &args)
 }
 
 ConCommand act("act", CC_PlayAct, "Plays a specific animation, don't use this lmao", FCVAR_NONE);
+
+#include "cbase.h"
+#include "convar.h"
+#include "basecombatweapon.h"
+#include "basecombatcharacter.h"
+
+// ConCommand to print all activities of the current weapon
+void CC_PrintWeaponActivities(const CCommand &args)
+{
+    CBasePlayer *pPlayer = UTIL_GetCommandClient();
+    if (!pPlayer)
+    {
+        Msg("Command must be executed by a player\n");
+        return;
+    }
+
+    CBaseCombatWeapon *pWeapon = pPlayer->GetActiveWeapon();
+    if (!pWeapon)
+    {
+        Msg("No active weapon\n");
+        return;
+    }
+
+    Msg("=== Activities for weapon: %s ===\n", pWeapon->GetClassname());
+
+    // Get the weapon's view model
+    CBaseViewModel *pViewModel = pPlayer->GetViewModel();
+    if (!pViewModel)
+    {
+        Msg("No view model found\n");
+        return;
+    }
+
+    CStudioHdr *pStudioHdr = pViewModel->GetModelPtr();
+    if (!pStudioHdr)
+    {
+        Msg("No studio header found\n");
+        return;
+    }
+
+    // Iterate through all sequences and print their activities
+    int numSeq = pStudioHdr->GetNumSeq();
+    Msg("Total sequences: %d\n\n", numSeq);
+
+    for (int i = 0; i < numSeq; i++)
+    {
+        mstudioseqdesc_t &seqdesc = pStudioHdr->pSeqdesc(i);
+        int activity = pViewModel->GetSequenceActivity(i);
+        const char *seqName = seqdesc.pszLabel();
+
+        Msg("[%d] Sequence: '%s', act: '%d'\n", 
+            i, seqName, activity);
+    }
+
+    Msg("\n=== End of activities ===\n");
+}
+
+static ConCommand print_weapon_activities("print_weapon_activities", CC_PrintWeaponActivities, 
+    "Prints all activities of the currently held weapon", FCVAR_CHEAT);

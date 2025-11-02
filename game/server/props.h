@@ -195,9 +195,9 @@ public:
 	virtual AngularImpulse	PhysGunLaunchAngularImpulse();
 	virtual	CBasePlayer *HasPhysicsAttacker( float dt );
 
-#ifdef HL2_EPISODIC
+#ifdef HL2SB
 	void CreateFlare( float flLifetime );
-#endif //HL2_EPISODIC
+#endif //HL2SB
 
 protected:
 	void SetPhysicsAttacker( CBasePlayer *pEntity, float flTime );

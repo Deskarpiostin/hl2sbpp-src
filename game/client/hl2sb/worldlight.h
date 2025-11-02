@@ -19,26 +19,32 @@ class Vector;
 struct dworldlight_t;
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 class CWorldLights : public CAutoGameSystem
 {
 public:
 	CWorldLights();
-	~CWorldLights() { Clear(); }
+	~CWorldLights()
+	{
+		Clear();
+	}
 
 	bool GetBrightestLightSource( const Vector &vecPosition, Vector &vecLightPos, Vector &vecLightBrightness );
 
 	// CAutoGameSystem overrides
 	bool Init() OVERRIDE;
 	void LevelInitPreEntity() OVERRIDE;
-	void LevelShutdownPostEntity() OVERRIDE { Clear(); }
+	void LevelShutdownPostEntity() OVERRIDE
+	{
+		Clear();
+	}
 
 private:
 	void Clear();
 
 private:
-	int m_nWorldLights;
+	int			   m_nWorldLights;
 	dworldlight_t *m_pWorldLights;
 };
 

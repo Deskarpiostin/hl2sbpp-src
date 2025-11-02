@@ -1292,7 +1292,7 @@ bool CClientShadowMgr::Init()
 
 	SetShadowBlobbyCutoffArea( 0.005 );
 
-	m_nMaxDepthTextureShadows = 64; // HAHAHAHA
+	m_nMaxDepthTextureShadows = 2048; // HAHAHAHA
 
 	bool bLowEnd = ( g_pMaterialSystemHardwareConfig->GetDXSupportLevel() < 80 );
 

@@ -1,6 +1,6 @@
 //========= Copyleft iSquad Software, Some rights reserved.============//
 //
-// 
+// Purpose: not much
 //
 //=======================================================================//
 
@@ -9,24 +9,24 @@
 #include "filesystem.h"
 #include "tier0/platform.h"
 
-Color clr = Color(255, 255, 0, 255);
+Color clr = Color( 255, 255, 0, 255 );
 
 #ifdef ANDROID
-#define OpenGL "OpenGL ES"
+#define OpenGL "OpenGLES"
 #else
 #define OpenGL "OpenGL"
 #endif
 
-const char * GetArch()
+const char *GetArch()
 {
-#if defined( __x86_64__) || defined( _M_X64 )
+#if defined( __x86_64__ ) || defined( _M_X64 )
 	return "amd64";
-#elif defined(__i386__) || defined(_X86_) || defined(_M_IX86)
+#elif defined( __i386__ ) || defined( _X86_ ) || defined( _M_IX86 )
 	return "i386";
 #elif defined __aarch64__
-        return "aarch64";
+	return "aarch64";
 #elif defined __arm__ || defined _M_ARM
-        return "arm";
+	return "arm";
 #elif defined __e2k__ || defined E2K
 	return "e2k ( Elbrus )";
 #else
@@ -34,36 +34,29 @@ const char * GetArch()
 #endif
 }
 
-const char * GetProtoVersion()
+const char *GetProtoVersion()
 {
-
 #if defined CSTRIKE15 || defined SWARM_DLL
 	return "Source Engine (Left 4 Dead Branch)";
 #else
 	if ( PROTOCOL_VERSION == 25 )
-	{
-		return "Source Engine 25 / 1.17 (nillerusr's fork)";
-	}
+		return "Source Engine 1.17";
 	else if ( PROTOCOL_VERSION == 24 )
-	{
 		return "Source Engine 24 / 2013";
-	}
 	else if ( PROTOCOL_VERSION == 14 )
-	{
 		return "Source Engine 12 / 2007";
-	}
 	else if ( PROTOCOL_VERSION == 2 )
-	{
 		return "Source Engine 2 / 2003";
-	}
+	else
+		return "Fucker, what are you even playing on???!?!";
 #endif
 }
 
-const char * GetPlatform()
+const char *GetPlatform()
 {
-#ifdef LINUX	
+#ifdef LINUX
 	return "Linux";
-#elif ANDROID 
+#elif ANDROID
 	return "Android";
 #elif PLATFORM_FBSD
 	return "FreeBSD";
@@ -80,16 +73,16 @@ const char * GetPlatform()
 #endif
 }
 
-const char * GetGame()
+const char *GetGame()
 {
-	const char * var;
-	KeyValues *kv = new KeyValues("KeyValues");
+	const char *var;
+	KeyValues  *kv = new KeyValues( "KeyValues" );
 	kv->LoadFromFile( g_pFullFileSystem, "gameinfo.txt" );
-	
-	if ( kv )	
+
+	if ( kv )
 	{
 		for ( KeyValues *control = kv->GetFirstSubKey(); control != NULL; control = control->GetNextKey() )
-		{		
+		{
 			if ( !Q_strcasecmp( control->GetName(), "game" ) )
 			{
 				var = control->GetString();
@@ -99,49 +92,49 @@ const char * GetGame()
 	return var;
 }
 
-const char * GetArt( const char * game )
+const char *GetArt( const char *game )
 {
-	return  "@@@@@@&#BBGGGGGGGGGGGGGGGGGGGGGGGGG#&@@@\n"
-		"@&BPY?77!!!!!!!!!!!!!!!!!!!!!!!!!!!7?5#@\n"
-		"Y7!!!7?JY55555YJ?77!!!77777777777777!!7G\n"
-		"GJJ5B&@@@@@@@@@@@&#PY7!!77777777777777!?\n"
-		"@@@@@@@@&&&&&&&@@@@@@&GJ!!777777777777!Y\n"
-		"@@@@#GP555555555PG#@@@@@B?!7777777777!J&\n"
-		"@@&PYYY555PPPP5YYYY5#@@@@@5!77777777!?&@\n"
-		"@@PY5555B@@@@@&P55555#@@@@@5!777777!7#@@\n"
-		"@@PY5555PB&&@@@@&&&&&&@@@@@@J!7777!7B@@@\n"
-		"@@&P5YY5YY555PPGB#&@@@@@@@@@G!7777!P@@@@\n"
-		"@@@@#BGP555YYYYYYY55G&@@@@@@#7777!5@@@@@\n"
-		"@@@@@@@@@&&#BBP55555YP@@@@@@B!77!Y@@@@@@\n"
-		"@#PPPPPB@@@@@@@&555555&@@@@@Y!7!J@@@@@@@\n"
-		"@@PYYYY5G#&&&&#G5555YG@@@@@B77!?&@@@@@@@\n"
-		"@@@B55YYYY5555YYYY5PB@@@@@B7!!7#@@@@@@@@\n"
-		"@@@@@#BGPPPPPPPPGB#@@@@@&57!!?#@@@@@@@@@\n"
-		"@@@@@@@@@@@@@@@@@@@@@@&P?!!!Y&@@@@@@@@@@\n"
-		"@@@@@@@@@@@@@@@@@@@@@@P!!7JB@@@@@@@@@@@@\n"
-		"@@@@@@@@@@@@@@@@@@@@@@@BGB@@@@@@@@@@@@@@\n";
+	return "@@@@@@&#BBGGGGGGGGGGGGGGGGGGGGGGGGG#&@@@\n"
+		   "@&BPY?77!!!!!!!!!!!!!!!!!!!!!!!!!!!7?5#@\n"
+		   "Y7!!!7?JY55555YJ?77!!!77777777777777!!7G\n"
+		   "GJJ5B&@@@@@@@@@@@&#PY7!!77777777777777!?\n"
+		   "@@@@@@@@&&&&&&&@@@@@@&GJ!!777777777777!Y\n"
+		   "@@@@#GP555555555PG#@@@@@B?!7777777777!J&\n"
+		   "@@&PYYY555PPPP5YYYY5#@@@@@5!77777777!?&@\n"
+		   "@@PY5555B@@@@@&P55555#@@@@@5!777777!7#@@\n"
+		   "@@PY5555PB&&@@@@&&&&&&@@@@@@J!7777!7B@@@\n"
+		   "@@&P5YY5YY555PPGB#&@@@@@@@@@G!7777!P@@@@\n"
+		   "@@@@#BGP555YYYYYYY55G&@@@@@@#7777!5@@@@@\n"
+		   "@@@@@@@@@&&#BBP55555YP@@@@@@B!77!Y@@@@@@\n"
+		   "@#PPPPPB@@@@@@@&555555&@@@@@Y!7!J@@@@@@@\n"
+		   "@@PYYYY5G#&&&&#G5555YG@@@@@B77!?&@@@@@@@\n"
+		   "@@@B55YYYY5555YYYY5PB@@@@@B7!!7#@@@@@@@@\n"
+		   "@@@@@#BGPPPPPPPPGB#@@@@@&57!!?#@@@@@@@@@\n"
+		   "@@@@@@@@@@@@@@@@@@@@@@&P?!!!Y&@@@@@@@@@@\n"
+		   "@@@@@@@@@@@@@@@@@@@@@@P!!7JB@@@@@@@@@@@@\n"
+		   "@@@@@@@@@@@@@@@@@@@@@@@BGB@@@@@@@@@@@@@@\n";
 }
 
 CON_COMMAND_F( sourcefetch, "Print info about engine", FCVAR_NONE )
 {
 	//Use a monospaced fonts for this ASCII art!!!!!
 	ConColorMsg( clr, GetArt( GetGame() ) );
-	Msg("Half-Life 2: Sandbox++\n");
-	Msg("----------\n");
-	Msg("Engine Version: %s\n", GetProtoVersion() );
-	Msg("Platform: %s\n", GetPlatform());
-	Msg("Arch: %s\n", GetArch());
-	Msg("Game: %s\n", GetGame());
+	Msg( "Half-Life 2: Sandbox++\n" );
+	Msg( "----------\n" );
+	Msg( "Engine Version: %s\n", GetProtoVersion() );
+	Msg( "Platform: %s\n", GetPlatform() );
+	Msg( "Arch: %s\n", GetArch() );
+	Msg( "Game: %s\n", GetGame() );
 #ifdef LUA_SDK
-	Msg("Lua Version: %s\n", LUA_RELEASE);
+	Msg( "Lua Version: %s\n", LUA_RELEASE );
 #endif
 
 	if ( IsPlatformOpenGL() )
-		Msg("Renderer: %s\n", OpenGL );
+		Msg( "Renderer: %s\n", OpenGL );
 	else
-		Msg("Renderer Direct3D\n" );
+		Msg( "Renderer Direct3D\n" );
 
 #ifdef MAPBASE
-	Msg("Mapbase: %s\n", MAPBASE_VERSION );
+	Msg( "Mapbase: %s\n", MAPBASE_VERSION );
 #endif
 }

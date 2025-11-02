@@ -82,6 +82,11 @@ $Project "Client (HL2MP)"
 			$File	"hl2sb\vtfscreenshot.cpp"
 			$File   "$SRCDIR\game\shared\lua\lammodef.cpp"
 			$File   "$SRCDIR\game\shared\lua\lammodef.h"
+			$File "$SRCDIR\public\zip\miniz.c"
+			$File "$SRCDIR\public\zip\miniz.h"
+			$File "$SRCDIR\game\shared\lua\luacachefile.cpp"
+			$File "$SRCDIR\game\shared\lua\luacachefile.h"
+			$File "$SRCDIR\public\zip_utils.cpp"
 		}
 
 		$Folder	"HL2 DLL"
@@ -173,6 +178,9 @@ $Project "Client (HL2MP)"
 			$File	"episodic\episodic_screenspaceeffects.h"
 			$File	"episodic\flesh_internal_material_proxy.cpp"
             $File	"episodic\c_npc_puppet.cpp"
+			$File	"episodic\c_vehicle_jeep_episodic.cpp"
+			$File 	"hl2\hud_radar.cpp"
+			$File   "$SRCDIR/game/shared/hl2/survival_gamerules.cpp"
         }
 
 		$Folder	"HL2MP"

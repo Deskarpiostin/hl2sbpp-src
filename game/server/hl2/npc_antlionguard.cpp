@@ -46,11 +46,9 @@ ConVar	g_debug_antlionguard( "g_debug_antlionguard", "0" );
 ConVar	sk_antlionguard_dmg_charge( "sk_antlionguard_dmg_charge", "0" );
 ConVar	sk_antlionguard_dmg_shove( "sk_antlionguard_dmg_shove", "0" );
 
-#if HL2_EPISODIC
 // When enabled, add code to have the antlion bleed profusely as it is badly injured.
 #define ANTLIONGUARD_BLOOD_EFFECTS 2
 ConVar	g_antlionguard_hemorrhage( "g_antlionguard_hemorrhage", "1", FCVAR_NONE, "If 1, guard will emit a bleeding particle effect when wounded." );
-#endif
 
 // Spawnflags 
 #define	SF_ANTLIONGUARD_SERVERSIDE_RAGDOLL	( 1 << 16 )
@@ -84,9 +82,7 @@ ConVar	g_antlionguard_hemorrhage( "g_antlionguard_hemorrhage", "1", FCVAR_NONE, 
 #define	ANTLIONGUARD_FOV_NORMAL			-0.4f
 
 // cavern guard's poisoning behavior
-#if HL2_EPISODIC
 #define ANTLIONGUARD_POISON_TO			12 // we only poison Gordon down to twelve to give him a chance to regen up to 20 by the next charge
-#endif
 
 #define	ANTLIONGUARD_CHARGE_MIN			256
 #define	ANTLIONGUARD_CHARGE_MAX			2048
@@ -683,7 +679,6 @@ void CNPC_AntlionGuard::Precache( void )
 		PrecacheScriptSound( "NPC_AntlionGuard.StepHeavy" );
 	}
 
-#if HL2_EPISODIC
 	PrecacheScriptSound( "NPC_AntlionGuard.NearStepLight" );
 	PrecacheScriptSound( "NPC_AntlionGuard.NearStepHeavy" );
 	PrecacheScriptSound( "NPC_AntlionGuard.FarStepLight" );
@@ -692,7 +687,6 @@ void CNPC_AntlionGuard::Precache( void )
 	PrecacheScriptSound( "NPC_AntlionGuard.ShellCrack" );
 	PrecacheScriptSound( "NPC_AntlionGuard.Pain_Roar" );
 	PrecacheModel( "sprites/grubflare1.vmt" );
-#endif // HL2_EPISODIC
 
 	PrecacheScriptSound( "NPC_AntlionGuard.Anger" );
 	PrecacheScriptSound( "NPC_AntlionGuard.Roar" );
@@ -1482,14 +1476,12 @@ void CNPC_AntlionGuard::Shove( void )
 			pHurt->ApplyAbsVelocityImpulse( forward * 400 + up * 150 );
 
 			// in the episodes, the cavern guard poisons the player
-#if HL2_EPISODIC
 			// If I am a cavern guard attacking the player, and he still lives, then poison him too.
 			if ( m_bInCavern && pHurt->IsPlayer() && pHurt->IsAlive() && pHurt->m_iHealth > ANTLIONGUARD_POISON_TO)
 			{
 				// That didn't finish them. Take them down to one point with poison damage. It'll heal.
 				pHurt->TakeDamage( CTakeDamageInfo( this, this, pHurt->m_iHealth - ANTLIONGUARD_POISON_TO, DMG_POISON ) );
 			}
-#endif
 
 		}	
 		else
@@ -2568,7 +2560,6 @@ void ApplyChargeDamage( CBaseEntity *pAntlionGuard, CBaseEntity *pTarget, float 
 	CTakeDamageInfo	info( pAntlionGuard, pAntlionGuard, vecForce, offset, flDamage, DMG_CLUB );
 	pTarget->TakeDamage( info );
 
-#if HL2_EPISODIC
 	// If I am a cavern guard attacking the player, and he still lives, then poison him too.
 	Assert( dynamic_cast<CNPC_AntlionGuard *>(pAntlionGuard) );
 
@@ -2577,7 +2568,6 @@ void ApplyChargeDamage( CBaseEntity *pAntlionGuard, CBaseEntity *pTarget, float 
 		// That didn't finish them. Take them down to one point with poison damage. It'll heal.
 		pTarget->TakeDamage( CTakeDamageInfo( pAntlionGuard, pAntlionGuard, pTarget->m_iHealth - ANTLIONGUARD_POISON_TO, DMG_POISON ) );
 	}
-#endif
 
 }
 
@@ -4418,7 +4408,6 @@ bool CNPC_AntlionGuard::OverrideMoveFacing( const AILocalMoveGoal_t &move, float
 		pFaceTarget = m_hChargeTarget;
 		bFaceTarget = true;
 	}
-#ifdef HL2_EPISODIC
 	else if ( GetEnemy() && IsCurSchedule( SCHED_ANTLIONGUARD_CANT_ATTACK ) )
 	{
 		// Always face our enemy when randomly patrolling around
@@ -4426,7 +4415,6 @@ bool CNPC_AntlionGuard::OverrideMoveFacing( const AILocalMoveGoal_t &move, float
 		pFaceTarget = GetEnemy();
 		bFaceTarget = true;
 	}
-#endif	// HL2_EPISODIC
 	else if ( GetEnemy() && GetNavigator()->GetMovementActivity() == ACT_RUN )
   	{
 		Vector vecEnemyLKP = GetEnemyLKP();

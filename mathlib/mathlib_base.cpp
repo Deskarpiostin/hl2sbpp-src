@@ -4015,33 +4015,41 @@ void RGBtoHSV( const Vector &rgb, Vector &hsv )
 // Convert HSV to RGB
 //-----------------------------------------------------------------------------
 void HSVtoRGB( const Vector &hsv, Vector &rgb )
-{         
-	if ( hsv.y == 0.0F )
-	{
-		rgb.Init( hsv.z, hsv.z, hsv.z );
-		return;
-	}
+{
+    if ( hsv.y == 0.0F || hsv.x == -1.0F )
+    {
+        rgb.Init( hsv.z, hsv.z, hsv.z );
+        return;
+    }
+    
+    float32 hue = hsv.x;
+    if (hue == 360.0F)
+    {
+        hue = 0.0F;
+    }
 
-	float32 hue = hsv.x;
-	if (hue == 360.0F) 
-	{	
-		hue = 0.0F;
-	}
-	hue /= 60.0F;
-	int     i = hue;        // integer part
-	float32 f = hue - i;    // fractional part
-	float32 p = hsv.z * (1.0F - hsv.y);
-	float32 q = hsv.z * (1.0F - hsv.y * f);
-	float32 t = hsv.z * (1.0F - hsv.y * (1.0F - f));
-	switch(i)
-	{
-	case 0: rgb.Init( hsv.z, t, p ); break;
-	case 1: rgb.Init( q, hsv.z, p ); break;
-	case 2: rgb.Init( p, hsv.z, t ); break;
-	case 3: rgb.Init( p, q, hsv.z ); break;
-	case 4: rgb.Init( t, p, hsv.z ); break;
-	case 5: rgb.Init( hsv.z, p, q ); break;
-	}
+    hue = fmod( hue, 360.0F );
+    if ( hue < 0.0F ) hue += 360.0F;
+    
+    hue /= 60.0F;
+    int i = (int)hue; // integer part
+    i = clamp( i, 0, 5 );
+    
+    float32 f = hue - i;
+    float32 p = hsv.z * (1.0F - hsv.y);
+    float32 q = hsv.z * (1.0F - hsv.y * f);
+    float32 t = hsv.z * (1.0F - hsv.y * (1.0F - f));
+    
+    switch(i)
+    {
+        case 0: rgb.Init( hsv.z, t, p ); break;
+        case 1: rgb.Init( q, hsv.z, p ); break;
+        case 2: rgb.Init( p, hsv.z, t ); break;
+        case 3: rgb.Init( p, q, hsv.z ); break;
+        case 4: rgb.Init( t, p, hsv.z ); break;
+        case 5: rgb.Init( hsv.z, p, q ); break;
+        default: rgb.Init( hsv.z, hsv.z, hsv.z ); break;
+    }
 }
 
 

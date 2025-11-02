@@ -20,42 +20,35 @@ void LaunchStickyBomb( CBaseCombatCharacter *pOwner, const Vector &origin, const
 
 LINK_ENTITY_TO_CLASS( grenade_stickybomb, CStickyBomb );
 
-IMPLEMENT_SERVERCLASS_ST(CStickyBomb, DT_StickyBomb)
-	SendPropInt( SENDINFO( m_boneIndexAttached ), MAXSTUDIOBONEBITS, SPROP_UNSIGNED ),
-	SendPropVector(SENDINFO(m_bonePosition), -1,  SPROP_COORD ),
-	SendPropAngle(SENDINFO_VECTORELEM(m_boneAngles, 0), 13 ),
-	SendPropAngle(SENDINFO_VECTORELEM(m_boneAngles, 1), 13 ),
-	SendPropAngle(SENDINFO_VECTORELEM(m_boneAngles, 2), 13 ),
+IMPLEMENT_SERVERCLASS_ST( CStickyBomb, DT_StickyBomb )
+	SendPropInt( SENDINFO( m_boneIndexAttached ), MAXSTUDIOBONEBITS, SPROP_UNSIGNED ), SendPropVector( SENDINFO( m_bonePosition ), -1, SPROP_COORD ), SendPropAngle( SENDINFO_VECTORELEM( m_boneAngles, 0 ), 13 ),
+		SendPropAngle( SENDINFO_VECTORELEM( m_boneAngles, 1 ), 13 ), SendPropAngle( SENDINFO_VECTORELEM( m_boneAngles, 2 ), 13 ),
 END_SEND_TABLE()
-
 
 //---------------------------------------------------------
 // Save/Restore
 //---------------------------------------------------------
 BEGIN_DATADESC( CStickyBomb )
-	DEFINE_FIELD( m_hOperator,			FIELD_EHANDLE ),
-	DEFINE_FIELD( m_boneIndexAttached,	FIELD_INTEGER ),
-	DEFINE_FIELD( m_bonePosition,		FIELD_VECTOR ),
-	DEFINE_FIELD( m_boneAngles,			FIELD_VECTOR ),
+	DEFINE_FIELD( m_hOperator, FIELD_EHANDLE ), DEFINE_FIELD( m_boneIndexAttached, FIELD_INTEGER ), DEFINE_FIELD( m_bonePosition, FIELD_VECTOR ), DEFINE_FIELD( m_boneAngles, FIELD_VECTOR ),
 END_DATADESC()
 
 // global list for fast searching
-CUtlVector<CStickyBomb *> CStickyBomb::m_stickyList;
+CUtlVector< CStickyBomb * > CStickyBomb::m_stickyList;
 
 //-----------------------------------------------------------------------------
 // Purpose: Sticky bomb class
 //-----------------------------------------------------------------------------
 CStickyBomb::CStickyBomb()
 {
-	m_stickyList.AddToTail(this);
+	m_stickyList.AddToTail( this );
 }
 
 CStickyBomb::~CStickyBomb()
 {
-	int index = m_stickyList.Find(this);
-	if ( m_stickyList.IsValidIndex(index) )
+	int index = m_stickyList.Find( this );
+	if ( m_stickyList.IsValidIndex( index ) )
 	{
-		m_stickyList.FastRemove(index);
+		m_stickyList.FastRemove( index );
 	}
 }
 
@@ -64,16 +57,16 @@ void CStickyBomb::Precache()
 	KeyValues *kv = new KeyValues( "SMenu" );
 	if ( kv )
 	{
-		if ( kv->LoadFromFile(g_pFullFileSystem, "addons/toolgun/dynamite.txt") )
+		if ( kv->LoadFromFile( g_pFullFileSystem, "addons/toolgun/dynamite.txt" ) )
 		{
 			kv->GetFirstSubKey();
-			modelName = kv->GetString("modelname", "");
+			modelName = kv->GetString( "modelname", "" );
 		}
 	}
 	PrecacheModel( modelName );
-	
+
 	BaseClass::Precache();
-	Assert( (1<<MAXSTUDIOBONEBITS) >= MAXSTUDIOBONES );
+	Assert( ( 1 << MAXSTUDIOBONEBITS ) >= MAXSTUDIOBONES );
 }
 
 void CStickyBomb::Spawn()
@@ -90,7 +83,7 @@ void CStickyBomb::Spawn()
 	m_flPlaybackRate = 0.0;
 	UTIL_SetSize( this, vec3_origin, vec3_origin );
 	// no shadows, please.
-	AddEffects( EF_NOSHADOW|EF_NORECEIVESHADOW );
+	AddEffects( EF_NOSHADOW | EF_NORECEIVESHADOW );
 }
 void CStickyBomb::SetVelocity( const Vector &velocity, const AngularImpulse &angVelocity )
 {
@@ -99,7 +92,7 @@ void CStickyBomb::SetVelocity( const Vector &velocity, const AngularImpulse &ang
 
 void CStickyBomb::DetonateByOperator( CBaseEntity *pOperator )
 {
-	for ( int i = m_stickyList.Count()-1; i >= 0; --i )
+	for ( int i = m_stickyList.Count() - 1; i >= 0; --i )
 	{
 		if ( m_stickyList[i]->m_hOperator == pOperator || m_stickyList[i]->m_hOperator.Get() == NULL )
 		{
@@ -115,14 +108,14 @@ void CStickyBomb::SetBombOrigin()
 {
 	if ( IsFollowingEntity() )
 	{
-		CBaseAnimating *pOtherAnim = dynamic_cast<CBaseAnimating *>(GetFollowedEntity());
+		CBaseAnimating *pOtherAnim = dynamic_cast< CBaseAnimating * >( GetFollowedEntity() );
 		if ( pOtherAnim )
 		{
-			Vector origin;
+			Vector		origin;
 			matrix3x4_t boneToWorld;
 			pOtherAnim->GetBoneTransform( m_boneIndexAttached, boneToWorld );
 			VectorTransform( m_bonePosition, boneToWorld, origin );
-			StopFollowingEntity( );
+			StopFollowingEntity();
 			SetMoveType( MOVETYPE_NONE );
 			SetAbsOrigin( origin );
 		}
@@ -160,17 +153,17 @@ void CStickyBomb::Touch( CBaseEntity *pOther )
 	// Don't stick if already stuck
 	if ( GetMoveType() == MOVETYPE_FLYGRAVITY )
 	{
-		trace_t tr; 
+		trace_t tr;
 		GetTouchTrace();
 		// stickies don't stick to each other or sky
-		if ( FClassnameIs(pOther, "grenade_stickybomb") || (tr.surface.flags & SURF_SKY) )
+		if ( FClassnameIs( pOther, "grenade_stickybomb" ) || ( tr.surface.flags & SURF_SKY ) )
 		{
 			// bounce
 			Vector vecNewVelocity;
 			PhysicsClipVelocity( GetAbsVelocity(), tr.plane.normal, vecNewVelocity, 1.0 );
 			SetAbsVelocity( vecNewVelocity );
 		}
-		else 
+		else
 		{
 			SetAbsVelocity( vec3_origin );
 			SetMoveType( MOVETYPE_NONE );
@@ -179,9 +172,9 @@ void CStickyBomb::Touch( CBaseEntity *pOther )
 				// set up notification if the parent is deleted before we explode
 				g_pNotify->AddEntity( this, pOther );
 
-				if ( (tr.surface.flags & SURF_HITBOX) && modelinfo->GetModelType( pOther->GetModel() ) == mod_studio )
+				if ( ( tr.surface.flags & SURF_HITBOX ) && modelinfo->GetModelType( pOther->GetModel() ) == mod_studio )
 				{
-					CBaseAnimating *pOtherAnim = dynamic_cast<CBaseAnimating *>(pOther);
+					CBaseAnimating *pOtherAnim = dynamic_cast< CBaseAnimating * >( pOther );
 					if ( pOtherAnim )
 					{
 						matrix3x4_t bombWorldSpace;

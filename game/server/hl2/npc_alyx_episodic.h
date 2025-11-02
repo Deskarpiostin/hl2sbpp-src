@@ -9,6 +9,7 @@
 #include "ai_behavior_holster.h"
 #include "ai_behavior_functank.h"
 #include "soundenvelope.h"
+#include "ai_behavior_passenger.h"
 
 extern ConVar npc_alyx_readiness;
 

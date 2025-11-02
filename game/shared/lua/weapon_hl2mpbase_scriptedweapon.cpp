@@ -37,9 +37,6 @@ BEGIN_NETWORK_TABLE( CHL2MPScriptedWeapon, DT_HL2MPScriptedWeapon )
 #endif
 END_NETWORK_TABLE()
 
-BEGIN_PREDICTION_DATA( CHL2MPScriptedWeapon )
-END_PREDICTION_DATA()
-
 //=========================================================
 //	>> CHLSelectFireScriptedWeapon
 //=========================================================
@@ -1355,27 +1352,36 @@ bool CHL2MPScriptedWeapon::Reload( void )
 bool CHL2MPScriptedWeapon::Deploy( void )
 {
 #ifdef HL2SB
+	CHL2MP_Player *pPlayer = ToHL2MPPlayer( GetOwner() );
+	if (!pPlayer)
+		return;
+
 	if (!UseHands)
 	{
-		CHL2MP_Player *pPlayer = ToHL2MPPlayer( GetOwner() );
-		if ( pPlayer )
-		{
-			CBaseViewModel *pHandModel = pPlayer->GetViewModel(1);
-			if ( pHandModel )
-			{ 
-				pHandModel->SetModel("");
-				pHandModel->m_nSkin = 0;
-			}
+		CBaseViewModel *pHandModel = pPlayer->GetViewModel(1);
+		if ( pHandModel )
+		{ 
+			pHandModel->SetModel("");
+			pHandModel->m_nSkin = 0;
 		}
 	}
+
+#ifdef GAME_DLL
+	// dirty hack
+	pPlayer->m_bPredictWeapons  = false;
+#endif
 #endif
 
 	//if (m_nTableReference == LUA_NOREF)
 	// @ThePixelMoon: way too dumb to not execute the original one if
 	// lua one exists
-	BaseClass::Deploy();
 
 #if defined ( LUA_SDK )
+	if ( !PushTableFromRef( L, m_nTableReference ) )
+		return BaseClass::Deploy();
+	else
+		BaseClass::Deploy();
+
 	BEGIN_LUA_CALL_WEAPON_METHOD( "Deploy" );
 	END_LUA_CALL_WEAPON_METHOD( 0, 1 );
 
@@ -1439,6 +1445,15 @@ bool CHL2MPScriptedWeapon::Holster( CBaseCombatWeapon *pSwitchingTo )
 				pPlayer->m_CurrentHandModel = desiredModel;
 			}
 		}
+
+#ifdef GAME_DLL
+		#define QUICKGETCVARVALUE(v) (engine->GetClientConVarValue( pPlayer->entindex(), v ))
+
+		if ( gpGlobals->maxClients == 1 )
+			pPlayer->m_bPredictWeapons  = false;
+		else
+			pPlayer->m_bPredictWeapons  = Q_atoi( QUICKGETCVARVALUE("cl_predictweapons")) != 0;
+#endif
 	}
 #endif
 	}
@@ -1447,9 +1462,13 @@ bool CHL2MPScriptedWeapon::Holster( CBaseCombatWeapon *pSwitchingTo )
 	//if (m_nTableReference == LUA_NOREF)
 	// @ThePixelMoon: way too dumb to not execute the original one if
 	// lua one exists
-	BaseClass::Holster( pSwitchingTo );
 
 #if defined ( LUA_SDK )
+	if (m_nTableReference == LUA_NOREF)
+		return BaseClass::Holster( pSwitchingTo );
+	else
+		BaseClass::Holster( pSwitchingTo );
+
 	BEGIN_LUA_CALL_WEAPON_METHOD( "Holster" );
 		lua_pushweapon( L, pSwitchingTo );
 	END_LUA_CALL_WEAPON_METHOD( 1, 1 );

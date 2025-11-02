@@ -1,4 +1,4 @@
-//========== Copyleft © 2011, Team Sandbox, Some rights reserved. ===========//
+//========== Copyleft ï¿½ 2011, Team Sandbox, Some rights reserved. ===========//
 //
 // Purpose: 
 //
@@ -12,5 +12,6 @@
 #endif
 
 void MountAddons();
+void UnMountAddons();
 
 #endif // MOUNTADDONS_H

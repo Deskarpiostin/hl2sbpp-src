@@ -17,42 +17,41 @@ using namespace vgui;
 
 enum NotifyType
 {
-    NOTIFY_GENERIC = 0,
-    NOTIFY_ERROR,
-    NOTIFY_UNDO,
-    NOTIFY_HINT,
-    NOTIFY_CLEANUP
+	NOTIFY_GENERIC = 0,
+	NOTIFY_ERROR,
+	NOTIFY_UNDO,
+	NOTIFY_HINT,
+	NOTIFY_CLEANUP
 };
 
 class NoticePanel : public Panel
 {
-    DECLARE_CLASS_SIMPLE( NoticePanel, Panel );
+	DECLARE_CLASS_SIMPLE( NoticePanel, Panel );
 
 public:
-    NoticePanel( Panel *parent );
-    virtual ~NoticePanel();
+	NoticePanel( Panel *parent );
+	virtual ~NoticePanel();
 
-    void    SetText( const char *text );
-    void    SetLegacyType( int t );
-    void    SetProgress( float frac );
-    bool    KillSelf(); // returns true if removed
-    void    Start( float length ); // set start time/length
+	void SetText( const char *text );
+	void SetLegacyType( int t );
+	void SetProgress( float frac );
+	bool KillSelf();			// returns true if removed
+	void Start( float length ); // set start time/length
 
-    virtual void PerformLayout() override;
-    virtual void Paint() override;
+	virtual void PerformLayout() override;
+	virtual void Paint() override;
 
-    // public so CHudHints can animate
-    float fx, fy;
-    float VelX, VelY;
-    float StartTime;
-    float Length; // seconds; negative = infinite
-    bool  Progress;
-    float ProgressFrac;
+	float fx, fy;
+	float VelX, VelY;
+	float StartTime;
+	float Length; // seconds; negative = infinite
+	bool  Progress;
+	float ProgressFrac;
 
 private:
-    Label *m_pLabel;
-    ImagePanel *m_pImage;
-    int m_nType;
+	Label	   *m_pLabel;
+	ImagePanel *m_pImage;
+	int			m_nType;
 };
 
 #endif

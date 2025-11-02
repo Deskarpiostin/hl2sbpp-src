@@ -1,23 +1,20 @@
-//========= Copyright Me idk lol, All rights reserved. ============//
+//========== Copyright (C) 2025, Team HL2SB++, All rights reserved. ===========//
 //
-// Purpose: 
+// Purpose:
 //
-//=============================================================================//
+//===========================================================================//
+
 #include "cbase.h"
 #include "advanced_gameplay_tab.h"
 
-CAdvancedOptionsGameplay::CAdvancedOptionsGameplay( Panel *parent, const char *panelName )
-    : BaseClass( parent, panelName )
+CAdvancedOptionsGameplay::CAdvancedOptionsGameplay( Panel *parent, const char *panelName ) : BaseClass( parent, panelName )
 {
-
 }
 
 void CAdvancedOptionsGameplay::PerformLayout()
 {
-
 }
 
-void CAdvancedOptionsGameplay::OnCommand( const char* command )
+void CAdvancedOptionsGameplay::OnCommand( const char *command )
 {
-
 }

@@ -27,7 +27,7 @@ class CDispInfo;
 //-----------------------------------------------------------------------------
 // Shadow decals are applied to a single surface
 //-----------------------------------------------------------------------------
-typedef unsigned short ShadowDecalHandle_t;
+typedef unsigned int ShadowDecalHandle_t;
 
 enum
 {

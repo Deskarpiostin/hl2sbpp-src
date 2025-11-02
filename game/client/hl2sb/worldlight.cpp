@@ -21,7 +21,7 @@
 #include "cbase.h"
 #include "bspfile.h"
 #include "client_factorylist.h" // FactoryList_Retrieve
-#include "eiface.h" // IVEngineServer
+#include "eiface.h"				// IVEngineServer
 #include "filesystem.h"
 #include "worldlight.h"
 
@@ -65,18 +65,18 @@ static float Engine_WorldLightDistanceFalloff( const dworldlight_t *wl, const Ve
 
 	case emit_point:
 	case emit_spotlight: // Directional & positional
-		{
-			float dist2, dist;
+	{
+		float dist2, dist;
 
-			dist2 = DotProduct( delta, delta );
-			dist = FastSqrt( dist2 );
+		dist2 = DotProduct( delta, delta );
+		dist = FastSqrt( dist2 );
 
-			// Cull out stuff that's too far
-			if ( wl->radius != 0 && dist > wl->radius )
-				return 0.0f;
+		// Cull out stuff that's too far
+		if ( wl->radius != 0 && dist > wl->radius )
+			return 0.0f;
 
-			return 1.0f / ( wl->constant_attn + wl->linear_attn * dist + wl->quadratic_attn * dist2 );
-		}
+		return 1.0f / ( wl->constant_attn + wl->linear_attn * dist + wl->quadratic_attn * dist2 );
+	}
 	}
 
 	return 1.0f;
@@ -113,7 +113,7 @@ bool CWorldLights::Init()
 	factorylist_t factories;
 	FactoryList_Retrieve( factories );
 
-	if ( ( g_pEngineServer = static_cast<IVEngineServer *>( factories.appSystemFactory( INTERFACEVERSION_VENGINESERVER, nullptr ) ) ) == nullptr )
+	if ( ( g_pEngineServer = static_cast< IVEngineServer * >( factories.appSystemFactory( INTERFACEVERSION_VENGINESERVER, nullptr ) ) ) == nullptr )
 		return false;
 
 	return true;
@@ -243,8 +243,8 @@ bool CWorldLights::GetBrightestLightSource( const Vector &vecPosition, Vector &v
 
 		// Calculate square distance to this worldlight
 		Vector vecDelta = light->origin - vecPosition;
-		float flDistSqr = vecDelta.LengthSqr();
-		float flRadiusSqr = light->radius * light->radius;
+		float  flDistSqr = vecDelta.LengthSqr();
+		float  flRadiusSqr = light->radius * light->radius;
 
 		// Skip lights that are out of our radius
 		if ( flRadiusSqr > 0 && flDistSqr >= flRadiusSqr )
@@ -261,7 +261,7 @@ bool CWorldLights::GetBrightestLightSource( const Vector &vecPosition, Vector &v
 		}
 
 		// Calculate intensity at our position
-		float flRatio = Engine_WorldLightDistanceFalloff( light, vecDelta );
+		float  flRatio = Engine_WorldLightDistanceFalloff( light, vecDelta );
 		Vector vecIntensity = light->intensity * flRatio;
 
 		// Is this light more intense than the one we already found?
@@ -273,7 +273,7 @@ bool CWorldLights::GetBrightestLightSource( const Vector &vecPosition, Vector &v
 
 		// Can we see the light?
 		trace_t tr;
-		Vector vecAbsStart = vecPosition + Vector( 0, 0, 30 );
+		Vector	vecAbsStart = vecPosition + Vector( 0, 0, 30 );
 		UTIL_TraceLine( vecAbsStart, light->origin, MASK_OPAQUE, nullptr, COLLISION_GROUP_NONE, &tr );
 
 		if ( tr.DidHit() )
@@ -298,4 +298,4 @@ bool CWorldLights::GetBrightestLightSource( const Vector &vecPosition, Vector &v
 // Singleton accessor
 //-----------------------------------------------------------------------------
 static CWorldLights s_WorldLights;
-CWorldLights *g_pWorldLights = &s_WorldLights;
+CWorldLights	   *g_pWorldLights = &s_WorldLights;

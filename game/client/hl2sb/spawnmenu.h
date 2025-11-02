@@ -1,9 +1,8 @@
-//========= Copyright OpenMod, All rights reserved. ============//
+//========== Copyright (C) 2025, Team HL2SB++, All rights reserved. ===========//
 //
 // Purpose:
 //
-// $NoKeywords: $
-//=============================================================================//
+//===========================================================================//
 
 #ifndef SPAWNMENU_H
 #define SPAWNMENU_H
@@ -33,78 +32,84 @@ using namespace vgui;
 class SMLPanel
 {
 public:
-	virtual void		Create(vgui::VPANEL parent) = 0;
-	virtual void		Destroy(void) = 0;
-	virtual void		Activate(void) = 0;
+	virtual void Create( vgui::VPANEL parent ) = 0;
+	virtual void Destroy( void ) = 0;
+	virtual void Activate( void ) = 0;
 };
 
-extern SMLPanel* smlmenu;
+extern SMLPanel *smlmenu;
 
-class CSMLButton : public MenuButton {
+class CSMLButton : public MenuButton
+{
 public:
-    CSMLButton( Panel* parent, const char* panelName, const char* text );
-    ~CSMLButton() override;
+	CSMLButton( Panel *parent, const char *panelName, const char *text );
+	~CSMLButton() override;
 
 private:
-    Menu* m_pMenu;
+	Menu *m_pMenu;
 };
 
-class CSMLCommandButton : public Button {
+class CSMLCommandButton : public Button
+{
 public:
-    CSMLCommandButton( Panel* parent, const char* panelName, const char* labelText, const char* command );
-    void OnCommand( const char* command ) override;
-    ~CSMLCommandButton() override;
+	CSMLCommandButton( Panel *parent, const char *panelName, const char *labelText, const char *command );
+	void OnCommand( const char *command ) override;
+	~CSMLCommandButton() override;
 };
 
-class CSMLPage : public PropertyPage {
+class CSMLPage : public PropertyPage
+{
 	DECLARE_CLASS_SIMPLE( CSMLPage, PropertyPage );
-public:
-    CSMLPage( Panel* parent, const char* panelName );
-    ~CSMLPage() override;
-    void OnTick() override;
-    void PerformLayout() override;
-    void Init( KeyValues* kv );
-    static void CreateButtonX( CSMLPage* page, const char* label, const char* command );
 
-	virtual void OnCommand(const char* command) override;
-	virtual void OnMouseWheeled(int delta) override;
+public:
+	CSMLPage( Panel *parent, const char *panelName );
+	~CSMLPage() override;
+	void		OnTick() override;
+	void		PerformLayout() override;
+	void		Init( KeyValues *kv );
+	static void CreateButtonX( CSMLPage *page, const char *label, const char *command );
+
+	virtual void OnCommand( const char *command ) override;
+	virtual void OnMouseWheeled( int delta ) override;
 
 	MESSAGE_FUNC_INT( OnSliderMoved, "ScrollBarSliderMoved", position );
 
 private:
-    bool m_bInScrollUpdate;
-    CUtlVector<Panel*> m_LayoutItems;
-    Panel* m_pContentPanel;
-    ScrollBar* m_pScrollBar;
+	bool				  m_bInScrollUpdate;
+	CUtlVector< Panel * > m_LayoutItems;
+	Panel				 *m_pContentPanel;
+	ScrollBar			 *m_pScrollBar;
 };
 
-class CSMLMenu : public PropertyDialog {
+class CSMLMenu : public PropertyDialog
+{
 public:
-    CSMLMenu( vgui::VPANEL* parent, const char* panelName );
-    ~CSMLMenu() override;
-    static void CreateButton( const char* pageName, const char* label, const char* command );
-    CSMLPage* FindOrCreatePage( const char* pageName );
-    void OnTick() override;
+	CSMLMenu( vgui::VPANEL *parent, const char *panelName );
+	~CSMLMenu() override;
+	static void CreateButton( const char *pageName, const char *label, const char *command );
+	CSMLPage   *FindOrCreatePage( const char *pageName );
+	void		OnTick() override;
 
 	virtual void OnClose() override;
 
 public:
-    static CSMLMenu* s_Instance;
-    std::unordered_map<std::string, CSMLPage*> m_PageRegistry;
+	static CSMLMenu								 *s_Instance;
+	std::unordered_map< std::string, CSMLPage * > m_PageRegistry;
 };
 
-class CSMLPanelInterface : public SMLPanel {
+class CSMLPanelInterface : public SMLPanel
+{
 public:
-    CSMLPanelInterface();
-    ~CSMLPanelInterface();
-    void Create( vgui::VPANEL parent );
-    void Destroy();
-    void Activate();
+	CSMLPanelInterface();
+	~CSMLPanelInterface();
+	void Create( vgui::VPANEL parent );
+	void Destroy();
+	void Activate();
 
 private:
-    CSMLMenu* SMLPanel;
+	CSMLMenu *SMLPanel;
 };
 
-void CreateButton( const char* pageName, const char* label, const char* command );
+void CreateButton( const char *pageName, const char *label, const char *command );
 
 #endif

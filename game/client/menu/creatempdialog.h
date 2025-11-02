@@ -16,7 +16,8 @@ using namespace vgui;
 
 class MapListPanel : public vgui::PanelListPanel
 {
-	typedef vgui::PanelListPanel BaseClass;
+	DECLARE_CLASS( MapListPanel, vgui::PanelListPanel );
+
 public:
 	MapListPanel( vgui::Panel *parent, const char *pName );
 	virtual void OnTick( void );
@@ -28,21 +29,24 @@ public:
 	virtual int ComputeVPixelsNeeded() override;
 
 private:
-	CUtlVector< vgui::Panel * >		layoutItems;
+	CUtlVector< vgui::Panel * > layoutItems;
 
 	ImageExtButton *m_pSelectedButton;
-	bool m_bMapsLoaded;
+	bool			m_bMapsLoaded;
 };
 
 class GameMapsPanel : public MapListPanel
 {
+	DECLARE_CLASS( GameMapsPanel, MapListPanel );
+
 public:
-    GameMapsPanel(vgui::Panel *parent, const char *pName);
+	GameMapsPanel( vgui::Panel *parent, const char *pName );
 };
 
 class ServerSettingsPanel : public vgui::PanelListPanel
 {
-	typedef vgui::PanelListPanel BaseClass;
+	DECLARE_CLASS( ServerSettingsPanel, vgui::PanelListPanel );
+
 public:
 	ServerSettingsPanel( vgui::Panel *parent, const char *pName );
 	virtual void OnTick( void );
@@ -52,35 +56,34 @@ public:
 
 	void LoadGamemodes();
 
-	vgui::TextEntry* m_pMaxPlayers;
-	vgui::TextEntry* m_pHostname;
-	vgui::TextEntry* m_pPassword;
+	vgui::TextEntry *m_pMaxPlayers;
+	vgui::TextEntry *m_pHostname;
+	vgui::TextEntry *m_pPassword;
 
 	vgui::ComboBox *m_pGamemodeCombo;
 };
 
 class MapList : public vgui::PropertyDialog
 {
-	typedef vgui::PropertyDialog BaseClass;
-public:
+	DECLARE_CLASS( MapList, vgui::PropertyDialog );
 
+public:
 	MapList( vgui::VPANEL *parent, const char *pName );
 	void OnTick();
 
-	virtual bool OnOK(bool applyOnly);
+	virtual bool OnOK( bool applyOnly );
 	virtual void OnClose();
 	virtual void OnCancel();
-
 };
 
 class CMapList
 {
 public:
-	virtual void		Create( vgui::VPANEL parent) = 0;
-	virtual void		Destroy( void ) = 0;
-	virtual void		Activate( void ) = 0;
+	virtual void Create( vgui::VPANEL parent ) = 0;
+	virtual void Destroy( void ) = 0;
+	virtual void Activate( void ) = 0;
 };
 
-extern CMapList* maplist;
+extern CMapList *maplist;
 
 #endif

@@ -62,9 +62,9 @@ enum InvalidatePhysicsBits_t
 #else
 #include "baseentity.h"
 
-#ifdef HL2_EPISODIC
+#ifdef HL2SB
 	#include "info_darknessmode_lightsource.h"
-#endif // HL2_EPISODIC
+#endif // HL2SB
 
 #endif
 
@@ -195,7 +195,7 @@ inline int CBaseEntity::GetEffects( void ) const
 inline void CBaseEntity::RemoveEffects( int nEffects ) 
 { 
 #if !defined( CLIENT_DLL )
-#ifdef HL2_EPISODIC
+#ifdef HL2SB
 	if ( nEffects & (EF_BRIGHTLIGHT|EF_DIMLIGHT) )
 	{
 		// Hack for now, to avoid player emitting radius with his flashlight
@@ -204,7 +204,7 @@ inline void CBaseEntity::RemoveEffects( int nEffects )
 			RemoveEntityFromDarknessCheck( this );
 		}
 	}
-#endif // HL2_EPISODIC
+#endif // HL2SB
 #endif // !CLIENT_DLL
 
 	m_fEffects &= ~nEffects;
@@ -222,7 +222,7 @@ inline void CBaseEntity::RemoveEffects( int nEffects )
 inline void CBaseEntity::ClearEffects( void ) 
 { 
 #if !defined( CLIENT_DLL )
-#ifdef HL2_EPISODIC
+#ifdef HL2SB
 	if ( m_fEffects & (EF_BRIGHTLIGHT|EF_DIMLIGHT) )
 	{
 		// Hack for now, to avoid player emitting radius with his flashlight
@@ -231,7 +231,7 @@ inline void CBaseEntity::ClearEffects( void )
 			RemoveEntityFromDarknessCheck( this );
 		}
 	}
-#endif // HL2_EPISODIC
+#endif // HL2SB
 #endif // !CLIENT_DLL
 
 	m_fEffects = 0;

@@ -1,4 +1,9 @@
-// TODO: fix this
+//========== Copyright (C) 2025, Team HL2SB++, All rights reserved. ===========//
+//
+// Purpose:
+//
+//===========================================================================//
+
 #include "cbase.h"
 #include "npcevent.h"
 #include "vehicle_base.h"
@@ -16,55 +21,53 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-#define	VEHICLE_HITBOX_DRIVER		1
-
+#define VEHICLE_HITBOX_DRIVER 1
 
 //
 // Anim events.
 //
 enum
 {
-	AE_POD_OPEN = 1,	// The pod is now open and can be entered or exited.
-	AE_POD_CLOSE = 2,	// The pod is now closed and cannot be entered or exited.
+	AE_POD_OPEN = 1,  // The pod is now open and can be entered or exited.
+	AE_POD_CLOSE = 2, // The pod is now closed and cannot be entered or exited.
 };
-
 
 extern ConVar g_debug_vehicledriver;
 
-
 class CPropVehicleChair;
 
-
 // Pod bones that have physics followers
-static const char *pPodFollowerBoneNames[] =
-{
+static const char *pPodFollowerBoneNames[] = {
 	"base",
 };
 
-
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 class CChairServerVehicle : public CBaseServerVehicle
 {
 	typedef CBaseServerVehicle BaseClass;
 
-// IServerVehicle
+	// IServerVehicle
 public:
-	void GetVehicleViewPosition( int nRole, Vector *pAbsOrigin, QAngle *pAbsAngles, float *pFOV = NULL );
+	void		 GetVehicleViewPosition( int nRole, Vector *pAbsOrigin, QAngle *pAbsAngles, float *pFOV = NULL );
 	virtual void ItemPostFrame( CBasePlayer *pPlayer );
 
-	virtual bool	IsPassengerEntering( void ) { return false; }	// NOTE: This mimics the scenario HL2 would have seen
-	virtual bool	IsPassengerExiting( void ) { return false; }
+	virtual bool IsPassengerEntering( void )
+	{
+		return false;
+	} // NOTE: This mimics the scenario HL2 would have seen
+	virtual bool IsPassengerExiting( void )
+	{
+		return false;
+	}
 
 protected:
-
 	CPropVehicleChair *GetPod( void );
 };
 
-
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 class CPropVehicleChair : public CPhysicsProp, public IDrivableVehicle
 {
@@ -84,27 +87,39 @@ public:
 	}
 
 	// CBaseEntity
-	virtual void	Precache( void );
-	void			Spawn( void );
-	void			Think(void);
-	virtual int		ObjectCaps( void ) { return BaseClass::ObjectCaps() | FCAP_IMPULSE_USE; };
-	virtual void	Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
-	virtual void	DrawDebugGeometryOverlays( void );
+	virtual void Precache( void );
+	void		 Spawn( void );
+	void		 Think( void );
+	virtual int	 ObjectCaps( void )
+	{
+		return BaseClass::ObjectCaps() | FCAP_IMPULSE_USE;
+	};
+	virtual void Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
+	virtual void DrawDebugGeometryOverlays( void );
 
-	virtual Vector	BodyTarget( const Vector &posSrc, bool bNoisy = true );
-	virtual void	TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, trace_t *ptr, CDmgAccumulator *pAccumulator );
-	virtual int		OnTakeDamage( const CTakeDamageInfo &info );
+	virtual Vector BodyTarget( const Vector &posSrc, bool bNoisy = true );
+	virtual void   TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, trace_t *ptr, CDmgAccumulator *pAccumulator );
+	virtual int	   OnTakeDamage( const CTakeDamageInfo &info );
 
-	void			PlayerControlInit( CBasePlayer *pPlayer );
-	void			PlayerControlShutdown( void );
-	void			ResetUseKey( CBasePlayer *pPlayer );
+	void PlayerControlInit( CBasePlayer *pPlayer );
+	void PlayerControlShutdown( void );
+	void ResetUseKey( CBasePlayer *pPlayer );
 
-	virtual bool OverridePropdata() { return true; }
+	virtual bool OverridePropdata()
+	{
+		return true;
+	}
 
-	void			GetVectors(Vector* pForward, Vector* pRight, Vector* pUp) const;
+	void GetVectors( Vector *pForward, Vector *pRight, Vector *pUp ) const;
 
-	bool ShouldForceExit() { return m_bForcedExit; }
-	void ClearForcedExit() { m_bForcedExit = false; }
+	bool ShouldForceExit()
+	{
+		return m_bForcedExit;
+	}
+	void ClearForcedExit()
+	{
+		m_bForcedExit = false;
+	}
 
 	// CBaseAnimating
 	void HandleAnimEvent( animevent_t *pEvent );
@@ -120,100 +135,110 @@ public:
 
 	CNetworkHandle( CBasePlayer, m_hPlayer );
 
-// IDrivableVehicle
+	// IDrivableVehicle
 public:
-
-	virtual bool PassengerShouldReceiveDamage( CTakeDamageInfo &info ) 
-	{ 
+	virtual bool PassengerShouldReceiveDamage( CTakeDamageInfo &info )
+	{
 		if ( info.GetDamageType() & DMG_VEHICLE )
 			return true;
 
-		return (info.GetDamageType() & (DMG_RADIATION|DMG_BLAST) ) == 0; 
+		return ( info.GetDamageType() & ( DMG_RADIATION | DMG_BLAST ) ) == 0;
 	}
 
 	virtual CBaseEntity *GetDriver( void );
-	virtual void ProcessMovement( CBasePlayer *pPlayer, CMoveData *pMoveData ) { return; }
-	virtual void FinishMove( CBasePlayer *player, CUserCmd *ucmd, CMoveData *move ) { return; }
+	virtual void		 ProcessMovement( CBasePlayer *pPlayer, CMoveData *pMoveData )
+	{
+		return;
+	}
+	virtual void FinishMove( CBasePlayer *player, CUserCmd *ucmd, CMoveData *move )
+	{
+		return;
+	}
 	virtual bool CanEnterVehicle( CBaseEntity *pEntity );
 	virtual bool CanExitVehicle( CBaseEntity *pEntity );
 	virtual void SetVehicleEntryAnim( bool bOn );
-	virtual void SetVehicleExitAnim( bool bOn, Vector vecEyeExitEndpoint ) { m_bExitAnimOn = bOn; if ( bOn ) m_vecEyeExitEndpoint = vecEyeExitEndpoint; }
+	virtual void SetVehicleExitAnim( bool bOn, Vector vecEyeExitEndpoint )
+	{
+		m_bExitAnimOn = bOn;
+		if ( bOn )
+			m_vecEyeExitEndpoint = vecEyeExitEndpoint;
+	}
 	virtual void EnterVehicle( CBaseCombatCharacter *pPassenger );
 
-	virtual bool AllowBlockedExit( CBaseCombatCharacter *pPassenger, int nRole ) { return true; }
-	virtual bool AllowMidairExit( CBaseCombatCharacter *pPassenger, int nRole ) { return true; }
-	virtual void PreExitVehicle( CBaseCombatCharacter *pPassenger, int nRole ) {}
+	virtual bool AllowBlockedExit( CBaseCombatCharacter *pPassenger, int nRole )
+	{
+		return true;
+	}
+	virtual bool AllowMidairExit( CBaseCombatCharacter *pPassenger, int nRole )
+	{
+		return true;
+	}
+	virtual void PreExitVehicle( CBaseCombatCharacter *pPassenger, int nRole )
+	{
+	}
 	virtual void ExitVehicle( int nRole );
 
-	virtual void ItemPostFrame( CBasePlayer *pPlayer ) {}
-	virtual void SetupMove( CBasePlayer *player, CUserCmd *ucmd, IMoveHelper *pHelper, CMoveData *move ) {}
-	virtual string_t GetVehicleScriptName() { return m_vehicleScript; }
-	
+	virtual void ItemPostFrame( CBasePlayer *pPlayer )
+	{
+	}
+	virtual void SetupMove( CBasePlayer *player, CUserCmd *ucmd, IMoveHelper *pHelper, CMoveData *move )
+	{
+	}
+	virtual string_t GetVehicleScriptName()
+	{
+		return m_vehicleScript;
+	}
+
 	// If this is a vehicle, returns the vehicle interface
-	virtual IServerVehicle *GetServerVehicle() { return &m_ServerVehicle; }
+	virtual IServerVehicle *GetServerVehicle()
+	{
+		return &m_ServerVehicle;
+	}
 
 protected:
-
 	// Contained IServerVehicle
 	CChairServerVehicle m_ServerVehicle;
 
 private:
-
 	// Entering / Exiting
-	bool				m_bLocked;
-	CNetworkVar( bool,	m_bEnterAnimOn );
-	CNetworkVar( bool,	m_bExitAnimOn );
-	CNetworkVector(		m_vecEyeExitEndpoint );
-	bool				m_bForcedExit;
+	bool m_bLocked;
+	CNetworkVar( bool, m_bEnterAnimOn );
+	CNetworkVar( bool, m_bExitAnimOn );
+	CNetworkVector( m_vecEyeExitEndpoint );
+	bool m_bForcedExit;
 
 	// Vehicle script filename
-	string_t			m_vehicleScript;
+	string_t m_vehicleScript;
 
-	COutputEvent		m_playerOn;
-	COutputEvent		m_playerOff;
-	COutputEvent		m_OnOpen;
-	COutputEvent		m_OnClose;
+	COutputEvent m_playerOn;
+	COutputEvent m_playerOff;
+	COutputEvent m_OnOpen;
+	COutputEvent m_OnClose;
 };
 
 LINK_ENTITY_TO_CLASS( prop_vehicle_chair, CPropVehicleChair );
 
-
 BEGIN_DATADESC( CPropVehicleChair )
 
-	// Inputs
-	DEFINE_INPUTFUNC( FIELD_VOID, "Lock",	InputLock ),
-	DEFINE_INPUTFUNC( FIELD_VOID, "Unlock",	InputUnlock ),
-	DEFINE_INPUTFUNC( FIELD_VOID, "EnterVehicle", InputEnterVehicle ),
-	DEFINE_INPUTFUNC( FIELD_VOID, "EnterVehicleImmediate", InputEnterVehicleImmediate ),
-	DEFINE_INPUTFUNC( FIELD_VOID, "ExitVehicle", InputExitVehicle ),
-	DEFINE_INPUTFUNC( FIELD_VOID, "Open", InputOpen ),
+// Inputs
+DEFINE_INPUTFUNC( FIELD_VOID, "Lock", InputLock ), DEFINE_INPUTFUNC( FIELD_VOID, "Unlock", InputUnlock ), DEFINE_INPUTFUNC( FIELD_VOID, "EnterVehicle", InputEnterVehicle ),
+	DEFINE_INPUTFUNC( FIELD_VOID, "EnterVehicleImmediate", InputEnterVehicleImmediate ), DEFINE_INPUTFUNC( FIELD_VOID, "ExitVehicle", InputExitVehicle ), DEFINE_INPUTFUNC( FIELD_VOID, "Open", InputOpen ),
 	DEFINE_INPUTFUNC( FIELD_VOID, "Close", InputClose ),
 
 	// Keys
 	DEFINE_EMBEDDED( m_ServerVehicle ),
 
-	DEFINE_FIELD( m_hPlayer, FIELD_EHANDLE ),
-	DEFINE_FIELD( m_bEnterAnimOn, FIELD_BOOLEAN ),
-	DEFINE_FIELD( m_bExitAnimOn, FIELD_BOOLEAN ),
-	DEFINE_FIELD( m_bForcedExit, FIELD_BOOLEAN ),
- 	DEFINE_FIELD( m_vecEyeExitEndpoint, FIELD_POSITION_VECTOR ),
+	DEFINE_FIELD( m_hPlayer, FIELD_EHANDLE ), DEFINE_FIELD( m_bEnterAnimOn, FIELD_BOOLEAN ), DEFINE_FIELD( m_bExitAnimOn, FIELD_BOOLEAN ), DEFINE_FIELD( m_bForcedExit, FIELD_BOOLEAN ),
+	DEFINE_FIELD( m_vecEyeExitEndpoint, FIELD_POSITION_VECTOR ),
 
-	DEFINE_KEYFIELD( m_vehicleScript, FIELD_STRING, "vehiclescript" ),
-	DEFINE_KEYFIELD( m_bLocked, FIELD_BOOLEAN, "vehiclelocked" ),
+	DEFINE_KEYFIELD( m_vehicleScript, FIELD_STRING, "vehiclescript" ), DEFINE_KEYFIELD( m_bLocked, FIELD_BOOLEAN, "vehiclelocked" ),
 
-	DEFINE_OUTPUT( m_playerOn, "PlayerOn" ),
-	DEFINE_OUTPUT( m_playerOff, "PlayerOff" ),
-	DEFINE_OUTPUT( m_OnOpen, "OnOpen" ),
-	DEFINE_OUTPUT( m_OnClose, "OnClose" ),
+	DEFINE_OUTPUT( m_playerOn, "PlayerOn" ), DEFINE_OUTPUT( m_playerOff, "PlayerOff" ), DEFINE_OUTPUT( m_OnOpen, "OnOpen" ), DEFINE_OUTPUT( m_OnClose, "OnClose" ),
 
-END_DATADESC()
+	END_DATADESC()
 
-IMPLEMENT_SERVERCLASS_ST(CPropVehicleChair, DT_PropVehicleChair)
-	SendPropEHandle(SENDINFO(m_hPlayer)),
-	SendPropBool(SENDINFO(m_bEnterAnimOn)),
-	SendPropBool(SENDINFO(m_bExitAnimOn)),
-	SendPropVector(SENDINFO(m_vecEyeExitEndpoint), -1, SPROP_COORD),
-END_SEND_TABLE();
+		IMPLEMENT_SERVERCLASS_ST( CPropVehicleChair, DT_PropVehicleChair ) SendPropEHandle( SENDINFO( m_hPlayer ) ),
+	SendPropBool( SENDINFO( m_bEnterAnimOn ) ), SendPropBool( SENDINFO( m_bExitAnimOn ) ), SendPropVector( SENDINFO( m_vecEyeExitEndpoint ), -1, SPROP_COORD ), END_SEND_TABLE();
 
 //------------------------------------------------
 // Precache
@@ -228,22 +253,21 @@ void CPropVehicleChair::Precache( void )
 	m_ServerVehicle.Initialize( "scripts/vehicles/chair.txt" );
 }
 
-
 //------------------------------------------------
 // Spawn
 //------------------------------------------------
 void CPropVehicleChair::Spawn( void )
 {
 	Precache();
-	if ( STRING(GetModelName())[0] == '\0' )
+	if ( STRING( GetModelName() )[0] == '\0' )
 	{
 		PrecacheModel( "models/props_interiors/furniture_chair01a.mdl" );
 		SetModel( "models/props_interiors/furniture_chair01a.mdl" );
 	}
 	else
 	{
-		PrecacheModel( STRING(GetModelName()) );
-		SetModel( STRING(GetModelName()) );
+		PrecacheModel( STRING( GetModelName() ) );
+		SetModel( STRING( GetModelName() ) );
 	}
 	SetCollisionGroup( COLLISION_GROUP_VEHICLE );
 
@@ -254,9 +278,8 @@ void CPropVehicleChair::Spawn( void )
 	SetNextThink( gpGlobals->curtime );
 }
 
-
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CPropVehicleChair::TraceAttack( const CTakeDamageInfo &info, const Vector &vecDir, trace_t *ptr, CDmgAccumulator *pAccumulator )
 {
@@ -269,9 +292,8 @@ void CPropVehicleChair::TraceAttack( const CTakeDamageInfo &info, const Vector &
 	}
 }
 
-
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 int CPropVehicleChair::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 {
@@ -296,16 +318,15 @@ int CPropVehicleChair::OnTakeDamage( const CTakeDamageInfo &inputInfo )
 	return 0;
 }
 
-
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 Vector CPropVehicleChair::BodyTarget( const Vector &posSrc, bool bNoisy )
 {
-	Vector	shotPos;
-	matrix3x4_t	matrix;
+	Vector		shotPos;
+	matrix3x4_t matrix;
 
-	int eyeAttachmentIndex = LookupAttachment("vehicle_driver_eyes");
+	int eyeAttachmentIndex = LookupAttachment( "vehicle_driver_eyes" );
 	GetAttachment( eyeAttachmentIndex, matrix );
 	MatrixGetColumn( matrix, 3, shotPos );
 
@@ -319,20 +340,19 @@ Vector CPropVehicleChair::BodyTarget( const Vector &posSrc, bool bNoisy )
 	return shotPos;
 }
 
-
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
-void CPropVehicleChair::Think(void)
+void CPropVehicleChair::Think( void )
 {
 	SetNextThink( gpGlobals->curtime + 0.1 );
 
 	if ( GetDriver() )
 	{
 		BaseClass::Think();
-		
+
 		// If the enter or exit animation has finished, tell the server vehicle
-		if ( IsSequenceFinished() && (m_bExitAnimOn || m_bEnterAnimOn) )
+		if ( IsSequenceFinished() && ( m_bExitAnimOn || m_bEnterAnimOn ) )
 		{
 			GetServerVehicle()->HandleEntryExitFinish( m_bExitAnimOn, true );
 		}
@@ -341,7 +361,6 @@ void CPropVehicleChair::Think(void)
 	StudioFrameAdvance();
 	DispatchAnimEvents( this );
 }
-
 
 //------------------------------------------------------------------------------
 // Purpose:
@@ -366,7 +385,6 @@ void CPropVehicleChair::InputOpen( inputdata_t &inputdata )
 		SetSequence( 0 );
 	}
 }
-
 
 //------------------------------------------------------------------------------
 // Purpose:
@@ -396,9 +414,8 @@ void CPropVehicleChair::InputClose( inputdata_t &inputdata )
 	}
 }
 
-
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CPropVehicleChair::HandleAnimEvent( animevent_t *pEvent )
 {
@@ -414,9 +431,8 @@ void CPropVehicleChair::HandleAnimEvent( animevent_t *pEvent )
 	}
 }
 
-
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CPropVehicleChair::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value )
 {
@@ -426,9 +442,8 @@ void CPropVehicleChair::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_
 
 	ResetUseKey( pPlayer );
 
-	GetServerVehicle()->HandlePassengerEntry( pPlayer, (value > 0) );
+	GetServerVehicle()->HandlePassengerEntry( pPlayer, ( value > 0 ) );
 }
-
 
 //-----------------------------------------------------------------------------
 // Purpose: Return true of the player's allowed to enter / exit the vehicle
@@ -443,21 +458,19 @@ bool CPropVehicleChair::CanEnterVehicle( CBaseEntity *pEntity )
 	return !m_bLocked;
 }
 
-
 //-----------------------------------------------------------------------------
 // Purpose: Return true of the player is allowed to exit the vehicle.
 //-----------------------------------------------------------------------------
 bool CPropVehicleChair::CanExitVehicle( CBaseEntity *pEntity )
 {
 	// Prevent exiting if the vehicle's locked, rotating, or playing an entry/exit anim.
-	return ( !m_bLocked && (GetLocalAngularVelocity() == vec3_angle) && !m_bEnterAnimOn && !m_bExitAnimOn );
+	return ( !m_bLocked && ( GetLocalAngularVelocity() == vec3_angle ) && !m_bEnterAnimOn && !m_bExitAnimOn );
 }
 
-
 //-----------------------------------------------------------------------------
-// Purpose: Override base class to add display 
+// Purpose: Override base class to add display
 //-----------------------------------------------------------------------------
-void CPropVehicleChair::DrawDebugGeometryOverlays(void) 
+void CPropVehicleChair::DrawDebugGeometryOverlays( void )
 {
 	// Draw if BBOX is on
 	if ( m_debugOverlays & OVERLAY_BBOX_BIT )
@@ -467,9 +480,8 @@ void CPropVehicleChair::DrawDebugGeometryOverlays(void)
 	BaseClass::DrawDebugGeometryOverlays();
 }
 
-
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CPropVehicleChair::EnterVehicle( CBaseCombatCharacter *pPassenger )
 {
@@ -497,18 +509,16 @@ void CPropVehicleChair::EnterVehicle( CBaseCombatCharacter *pPassenger )
 	}
 }
 
-
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CPropVehicleChair::SetVehicleEntryAnim( bool bOn )
 {
 	m_bEnterAnimOn = bOn;
 }
 
-
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CPropVehicleChair::ExitVehicle( int nRole )
 {
@@ -525,47 +535,44 @@ void CPropVehicleChair::ExitVehicle( int nRole )
 	m_ServerVehicle.SoundShutdown( 1.0 );
 }
 
-
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CPropVehicleChair::ResetUseKey( CBasePlayer *pPlayer )
 {
 	pPlayer->m_afButtonPressed &= ~IN_USE;
 }
 
-
 //-----------------------------------------------------------------------------
 // Purpose: Vehicles are permanently oriented off angle for vphysics.
 //-----------------------------------------------------------------------------
-void CPropVehicleChair::GetVectors(Vector* pForward, Vector* pRight, Vector* pUp) const
+void CPropVehicleChair::GetVectors( Vector *pForward, Vector *pRight, Vector *pUp ) const
 {
 	// This call is necessary to cause m_rgflCoordinateFrame to be recomputed
 	const matrix3x4_t &entityToWorld = EntityToWorldTransform();
 
-	if (pForward != NULL)
+	if ( pForward != NULL )
 	{
-		MatrixGetColumn( entityToWorld, 1, *pForward ); 
+		MatrixGetColumn( entityToWorld, 1, *pForward );
 	}
 
-	if (pRight != NULL)
+	if ( pRight != NULL )
 	{
-		MatrixGetColumn( entityToWorld, 0, *pRight ); 
+		MatrixGetColumn( entityToWorld, 0, *pRight );
 	}
 
-	if (pUp != NULL)
+	if ( pUp != NULL )
 	{
-		MatrixGetColumn( entityToWorld, 2, *pUp ); 
+		MatrixGetColumn( entityToWorld, 2, *pUp );
 	}
 }
 
-
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
-CBaseEntity *CPropVehicleChair::GetDriver( void ) 
-{ 
-	return m_hPlayer; 
+CBaseEntity *CPropVehicleChair::GetDriver( void )
+{
+	return m_hPlayer;
 }
 
 //-----------------------------------------------------------------------------
@@ -576,7 +583,6 @@ void CPropVehicleChair::InputLock( inputdata_t &inputdata )
 	m_bLocked = true;
 }
 
-
 //-----------------------------------------------------------------------------
 // Purpose: Allow the player to enter / exit the vehicle
 //-----------------------------------------------------------------------------
@@ -584,7 +590,6 @@ void CPropVehicleChair::InputUnlock( inputdata_t &inputdata )
 {
 	m_bLocked = false;
 }
-
 
 //-----------------------------------------------------------------------------
 // Purpose: Force the player to enter the vehicle.
@@ -613,8 +618,8 @@ void CPropVehicleChair::InputEnterVehicle( inputdata_t &inputdata )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : &inputdata - 
+// Purpose:
+// Input  : &inputdata -
 //-----------------------------------------------------------------------------
 void CPropVehicleChair::InputEnterVehicleImmediate( inputdata_t &inputdata )
 {
@@ -639,7 +644,7 @@ void CPropVehicleChair::InputEnterVehicleImmediate( inputdata_t &inputdata )
 			// Force the player out of whatever vehicle they are in.
 			pPlayer->LeaveVehicle();
 		}
-		
+
 		pPlayer->GetInVehicle( GetServerVehicle(), VEHICLE_ROLE_DRIVER );
 	}
 	else
@@ -657,7 +662,6 @@ void CPropVehicleChair::InputExitVehicle( inputdata_t &inputdata )
 	m_bForcedExit = true;
 }
 
-
 //========================================================================================================================================
 // CRANE VEHICLE SERVER VEHICLE
 //========================================================================================================================================
@@ -666,10 +670,9 @@ CPropVehicleChair *CChairServerVehicle::GetPod( void )
 	return (CPropVehicleChair *)GetDrivableVehicle();
 }
 
-
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : pPlayer - 
+// Purpose:
+// Input  : pPlayer -
 //-----------------------------------------------------------------------------
 void CChairServerVehicle::ItemPostFrame( CBasePlayer *player )
 {
@@ -677,10 +680,10 @@ void CChairServerVehicle::ItemPostFrame( CBasePlayer *player )
 
 	GetDrivableVehicle()->ItemPostFrame( player );
 
-	if (( player->m_afButtonPressed & IN_USE ) || GetPod()->ShouldForceExit() )
+	if ( ( player->m_afButtonPressed & IN_USE ) || GetPod()->ShouldForceExit() )
 	{
 		GetPod()->ClearForcedExit();
-		if ( GetDrivableVehicle()->CanExitVehicle(player) )
+		if ( GetDrivableVehicle()->CanExitVehicle( player ) )
 		{
 			// Let the vehicle try to play the exit animation
 			if ( !HandlePassengerExit( player ) && ( player != NULL ) )
@@ -693,24 +696,24 @@ void CChairServerVehicle::ItemPostFrame( CBasePlayer *player )
 
 void CChairServerVehicle::GetVehicleViewPosition( int nRole, Vector *pAbsOrigin, QAngle *pAbsAngles, float *pFOV /*= NULL*/ )
 {
-    Assert( nRole == VEHICLE_ROLE_DRIVER );
-    CBasePlayer *pPlayer = ToBasePlayer( GetDrivableVehicle()->GetDriver() );
-    Assert( pPlayer );
+	Assert( nRole == VEHICLE_ROLE_DRIVER );
+	CBasePlayer *pPlayer = ToBasePlayer( GetDrivableVehicle()->GetDriver() );
+	Assert( pPlayer );
 
-    Vector vehicleEyeOrigin;
-    QAngle vehicleEyeAngles;
-    
-    int eyeAttachmentIndex = GetPod()->LookupAttachment("vehicle_driver_eyes");
-    if (eyeAttachmentIndex > 0)
-    {
-        GetPod()->GetAttachment(eyeAttachmentIndex, vehicleEyeOrigin, vehicleEyeAngles);
-    }
-    else
-    {
-        vehicleEyeOrigin = GetPod()->GetAbsOrigin() + Vector(0, 0, 48);
-        vehicleEyeAngles = GetPod()->GetAbsAngles();
-    }
-    
-    *pAbsOrigin = vehicleEyeOrigin;
-    *pAbsAngles = pPlayer->EyeAngles();
+	Vector vehicleEyeOrigin;
+	QAngle vehicleEyeAngles;
+
+	int eyeAttachmentIndex = GetPod()->LookupAttachment( "vehicle_driver_eyes" );
+	if ( eyeAttachmentIndex > 0 )
+	{
+		GetPod()->GetAttachment( eyeAttachmentIndex, vehicleEyeOrigin, vehicleEyeAngles );
+	}
+	else
+	{
+		vehicleEyeOrigin = GetPod()->GetAbsOrigin() + Vector( 0, 0, 48 );
+		vehicleEyeAngles = GetPod()->GetAbsAngles();
+	}
+
+	*pAbsOrigin = vehicleEyeOrigin;
+	*pAbsAngles = pPlayer->EyeAngles();
 }

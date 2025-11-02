@@ -155,6 +155,7 @@ CColorXYPreview::CColorXYPreview( vgui::Panel *pParent, const char *pName ) : Ba
 	m_CurrentColor.r = m_CurrentColor.g = m_CurrentColor.b = 255;
 	SetMode( COLOR_TYPE_HSV, CHANNEL_HUE );
 	SetMouseInputEnabled( true );
+	m_CurrentHSVColor.Init( 0.0f, 0.0f, 1.0f );
 	m_hPickerCursor = surface()->CreateCursorFromFile( "resource/colorpicker.cur" );
 	SetCursor( m_hPickerCursor );
 	m_bDraggingMouse = false;
@@ -251,7 +252,7 @@ void CColorXYPreview::RegenerateTextureBits( ITexture *pTexture, IVTFTexture *pV
 				ComputeColorForPoint( x, y, color );
 			}
 
-			pixelWriter.WritePixel( color.r, color.g, color.b, 255 );
+			pixelWriter.WritePixel(color.b, color.g, color.r, 255);
 		}
 	}
 }
@@ -558,7 +559,7 @@ void CColorZPreview::RegenerateTextureBits( ITexture *pTexture, IVTFTexture *pVT
 
 		for ( int x = 0; x < nWidth; ++x )
 		{
-			pixelWriter.WritePixel( color.r, color.g, color.b, 255 );
+			pixelWriter.WritePixel(color.b, color.g, color.r, 255);
 		}
 	}
 }

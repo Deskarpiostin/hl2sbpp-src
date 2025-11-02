@@ -49,9 +49,9 @@ BEGIN_DATADESC( CPropVehicle )
 	DEFINE_FIELD( m_hPhysicsAttacker, FIELD_EHANDLE ),
 	DEFINE_FIELD( m_flLastPhysicsInfluenceTime, FIELD_TIME ),
 
-#ifdef HL2_EPISODIC
+#ifdef HL2SB
 	DEFINE_UTLVECTOR( m_hPhysicsChildren, FIELD_EHANDLE ),
-#endif // HL2_EPISODIC
+#endif // HL2SB
 
 	// Keys
 	DEFINE_KEYFIELD( m_vehicleScript, FIELD_STRING, "VehicleScript" ),
@@ -275,7 +275,7 @@ Vector CPropVehicle::GetSmoothedVelocity( void )
 }
 
 //=============================================================================
-#ifdef HL2_EPISODIC
+#ifdef HL2SB
 
 //-----------------------------------------------------------------------------
 // Purpose: Add an entity to a list which receives physics callbacks from the vehicle
@@ -302,7 +302,7 @@ void CPropVehicle::RemovePhysicsChild( CBaseEntity *pChild )
 	}
 }
 
-#endif //HL2_EPISODIC
+#endif //HL2SB
 //=============================================================================
 
 //-----------------------------------------------------------------------------
@@ -884,7 +884,7 @@ void CPropVehicleDriveable::VPhysicsCollision( int index, gamevcollisionevent_t 
 {
 
 //=============================================================================
-#ifdef HL2_EPISODIC
+#ifdef HL2SB
 
 	// Notify all children
 	for ( int i = 0; i < m_hPhysicsChildren.Count(); i++ )
@@ -895,7 +895,7 @@ void CPropVehicleDriveable::VPhysicsCollision( int index, gamevcollisionevent_t 
 		m_hPhysicsChildren[i]->VPhysicsCollision( index, pEvent );
 	}
 
-#endif // HL2_EPISODIC
+#endif // HL2SB
 //=============================================================================
 
 	// Don't care if we don't have a driver
@@ -992,7 +992,7 @@ void CPropVehicleDriveable::TraceAttack( const CTakeDamageInfo &info, const Vect
 			SetNextThink( gpGlobals->curtime );
 		}
 
-#ifdef HL2_EPISODIC
+#ifdef HL2SB
 		// Notify all children
 		for ( int i = 0; i < m_hPhysicsChildren.Count(); i++ )
 		{
@@ -1002,7 +1002,7 @@ void CPropVehicleDriveable::TraceAttack( const CTakeDamageInfo &info, const Vect
 			variant_t emptyVariant;
 			m_hPhysicsChildren[i]->AcceptInput( "VehiclePunted", info.GetAttacker(), this, emptyVariant, USE_TOGGLE );
 		}
-#endif // HL2_EPISODIC
+#endif // HL2SB
 
 	}
 
@@ -1105,11 +1105,11 @@ CFourWheelServerVehicle::CFourWheelServerVehicle( void )
 	m_ViewSmoothing.flRollCurveLinear	= ROLL_CURVE_LINEAR;
 }
 
-#ifdef HL2_EPISODIC
+#ifdef HL2SB
 ConVar r_JeepFOV( "r_JeepFOV", "82", FCVAR_CHEAT | FCVAR_REPLICATED );
 #else
 ConVar r_JeepFOV( "r_JeepFOV", "90", FCVAR_CHEAT | FCVAR_REPLICATED );
-#endif // HL2_EPISODIC
+#endif // HL2SB
 
 //-----------------------------------------------------------------------------
 // Purpose: Setup our view smoothing information

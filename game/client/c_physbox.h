@@ -15,13 +15,13 @@
 #pragma once
 
 
-#include "c_baseentity.h"
+#include "c_baseanimating.h"
 
 
-class C_PhysBox : public C_BaseEntity
+class C_PhysBox : public C_BaseAnimating
 {
 public:
-	DECLARE_CLASS( C_PhysBox, C_BaseEntity );
+	DECLARE_CLASS( C_PhysBox, C_BaseAnimating );
 	DECLARE_CLIENTCLASS();
 
 					C_PhysBox();

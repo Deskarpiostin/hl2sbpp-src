@@ -57,9 +57,9 @@
 	#include "hl2mp_bot_temp.h"
 #endif
 
-#ifdef HL2_EPISODIC
+#ifdef HL2SB
 extern ConVar  alyx_darkness_force;
-#endif // HL2_EPISODIC
+#endif // HL2SB
 
 extern void respawn(CBaseEntity *pEdict, bool fCopyCorpse);
 
@@ -1468,14 +1468,14 @@ bool CHL2MPRules::ShouldCollide( int collisionGroup0, int collisionGroup1 )
 //-----------------------------------------------------------------------------
 bool CHL2MPRules::IsAlyxInDarknessMode()
 {
-#ifdef HL2_EPISODIC
+#ifdef HL2SB
 	if ( alyx_darkness_force.GetBool() )
 		return true;
 
 	return ( GlobalEntity_GetState( "ep_alyx_darknessmode" ) == GLOBAL_ON );
 #else
 	return false;
-#endif // HL2_EPISODIC
+#endif // HL2SB
 }
 #endif
 
@@ -1574,11 +1574,11 @@ CAmmoDef *GetAmmoDef()
 		// now that the AmmoDef code is behaving correctly.
 		//
 		//=====================================================================
-#ifdef HL2_EPISODIC
+#ifdef HL2SB
 		def.AddAmmoType("StriderMinigun",	DMG_BULLET,					TRACER_LINE,			5, 5, 15, 1.0 * 750 * 12, AMMO_FORCE_DROP_IF_CARRIED ); // hit like a 1.0kg weight at 750 ft/s
 #else
 		def.AddAmmoType("StriderMinigun",	DMG_BULLET,					TRACER_LINE,			5, 15,15, 1.0 * 750 * 12, AMMO_FORCE_DROP_IF_CARRIED ); // hit like a 1.0kg weight at 750 ft/s
-#endif//HL2_EPISODIC
+#endif//HL2SB
 
 		def.AddAmmoType("StriderMinigunDirect",	DMG_BULLET,				TRACER_LINE,			2, 2, 15, 1.0 * 750 * 12, AMMO_FORCE_DROP_IF_CARRIED ); // hit like a 1.0kg weight at 750 ft/s
 		def.AddAmmoType("HelicopterGun",	DMG_BULLET,					TRACER_LINE_AND_WHIZ,	"sk_npc_dmg_helicopter_to_plr", "sk_npc_dmg_helicopter",	"sk_max_smg1",	BULLET_IMPULSE(400, 1225), AMMO_FORCE_DROP_IF_CARRIED | AMMO_INTERPRET_PLRDAMAGE_AS_DAMAGE_TO_PLAYER );

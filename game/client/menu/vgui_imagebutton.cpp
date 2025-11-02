@@ -4,12 +4,11 @@
 
 using namespace vgui;
 
-ImageButton::ImageButton( vgui::Panel *parent, const char *panelName, const char *normalImage, const char *mouseOverImage, const char *mouseClickImage, const char *pCmd )
- : ImagePanel( parent, panelName ) 
+ImageButton::ImageButton( vgui::Panel *parent, const char *panelName, const char *normalImage, const char *mouseOverImage, const char *mouseClickImage, const char *pCmd ) : ImagePanel( parent, panelName )
 {
 	m_pParent = parent;
-	
-	SetParent(parent);
+
+	SetParent( parent );
 
 	m_bScaleImage = true;
 
@@ -75,19 +74,19 @@ void ImageButton::OnMousePressed( vgui::MouseCode code )
 
 void ImageButton::SetNormalImage( void )
 {
-	SetImage(i_normalImage);
+	SetImage( i_normalImage );
 	Repaint();
 }
 
 void ImageButton::SetMouseOverImage( void )
 {
-	SetImage(i_mouseOverImage);
+	SetImage( i_mouseOverImage );
 	Repaint();
 }
 
 void ImageButton::SetMouseClickImage( void )
 {
-	SetImage(i_mouseClickImage);
+	SetImage( i_mouseClickImage );
 	Repaint();
 }
 

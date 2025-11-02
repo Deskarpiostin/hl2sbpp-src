@@ -26,7 +26,7 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
-ConVar gamemode( "gamemode", "sandbox", FCVAR_ARCHIVE | FCVAR_REPLICATED );
+ConVar gamemode( "gamemode", "sandbox", /*FCVAR_ARCHIVE |*/ FCVAR_REPLICATED );
 static char contentSearchPath[MAX_PATH];
 
 static void tag_error (lua_State *L, int narg, int tag) {
@@ -241,7 +241,7 @@ void luasrc_init (void) {
 
   luaL_openlibs(L);
   base_open(L);
-  //lcf_open(L);
+  lcf_open(L);
 
   // Andrew; Someone set us up the path for great justice
   luasrc_setmodulepaths(L);
@@ -271,7 +271,7 @@ void luasrc_shutdown (void) {
   ResetEntityFactoryDatabase();
   ResetWeaponFactoryDatabase();
 
-//  lcf_close(L);
+  lcf_close(L);
   lua_close(L);
 }
 
@@ -344,16 +344,27 @@ LUA_API int luasrc_pcall (lua_State *L, int nargs, int nresults, int errfunc) {
         }
         
         const char *errorMsg = lua_tostring(L, -1);
+        const char *side = 
+#ifdef CLIENT_DLL
+            "CLIENT";
+#else
+            "SERVER";
+#endif
         
+        Warning("[Lua %s] [%s] %s\n", errorType, side, errorMsg ? errorMsg : "(no message)");
+        
+        // ful stack case mafaka
         lua_Debug ar;
-        if (lua_getstack(L, 0, &ar) && lua_getinfo(L, "Sl", &ar)) {
-            Warning("[Lua %s] %s:%d: %s\n", 
-                    errorType,
-                    ar.short_src, 
+        int level = 0;
+        while (lua_getstack(L, level, &ar)) {
+            lua_getinfo(L, "Sln", &ar);
+            Warning("  [%d] %s:%d in function '%s'\n", 
+                    level,
+                    ar.short_src,
                     ar.currentline,
-                    errorMsg ? errorMsg : "(no message)");
-        } else
-            Warning("[Lua %s] %s\n", errorType, errorMsg ? errorMsg : "(no message)");
+                    ar.name ? ar.name : "?");
+            level++;
+        }
         
         lua_pop(L, 1);
     }

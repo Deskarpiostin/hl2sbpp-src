@@ -1,8 +1,8 @@
-//========= Copyright [[BIG SHOT!!!]], All rights reserved. ============//
+//========== Copyright (C) 2025, Team HL2SB++, All rights reserved. ===========//
 //
-// Purpose: 
+// Purpose:
 //
-//=============================================================================//
+//===========================================================================//
 #ifndef SIGNATURE_H
 #define SIGNATURE_H
 #ifdef _WIN32

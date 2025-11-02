@@ -94,8 +94,10 @@ static int CHL2MP_Player_CalcView (lua_State *L) {
 }
 
 static int CHL2MP_Player_FireBullets (lua_State *L) {
-  // quite a hacky hack, but we do this for the fucking prediction to work normally
-  luaL_checkhl2mpplayer(L, 1)->FireBullets(lua_tofirebulletsinfo(L, 2));
+  if( CHL2MP_Player *pPlayer = luaL_checkhl2mpplayer(L, 1) )
+  {
+		pPlayer->FireBullets(lua_tofirebulletsinfo(L, 2));
+  }
   return 0;
 }
 

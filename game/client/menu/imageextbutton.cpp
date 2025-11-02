@@ -6,264 +6,304 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-std::unordered_map<std::string, TexInfo> ImageExtButton::s_textureCache;
+std::unordered_map< std::string, TexInfo > ImageExtButton::s_textureCache;
 
-ImageExtButton::ImageExtButton(vgui::Panel* parent, const char* panelName,
-                               const char* normalImage, const char* mouseOverImage,
-                               const char* mouseClickImage, const char* pCmd)
-    : vgui::Panel(parent, panelName),
-      m_hasMouseOverImage(false),
-      m_hasMouseClickImage(false),
-      m_hasCommand(false),
-      m_bScaleImage(true),
-      m_currentImage(nullptr),
-      m_pParent(parent)
+ImageExtButton::ImageExtButton( vgui::Panel *parent, const char *panelName, const char *normalImage, const char *mouseOverImage, const char *mouseClickImage, const char *pCmd ) :
+	vgui::Panel( parent, panelName ),
+	m_hasMouseOverImage( false ),
+	m_hasMouseClickImage( false ),
+	m_hasCommand( false ),
+	m_bScaleImage( true ),
+	m_currentImage( nullptr ),
+	m_pParent( parent )
 {
-    Q_strncpy(m_normalImagePath, normalImage ? normalImage : "", sizeof(m_normalImagePath));
-    Q_strncpy(m_mouseOverImagePath, mouseOverImage ? mouseOverImage : "", sizeof(m_mouseOverImagePath));
-    Q_strncpy(m_mouseClickImagePath, mouseClickImage ? mouseClickImage : "", sizeof(m_mouseClickImagePath));
-    Q_strncpy(m_command, pCmd ? pCmd : "", sizeof(m_command));
+	Q_strncpy( m_normalImagePath, normalImage ? normalImage : "", sizeof( m_normalImagePath ) );
+	Q_strncpy( m_mouseOverImagePath, mouseOverImage ? mouseOverImage : "", sizeof( m_mouseOverImagePath ) );
+	Q_strncpy( m_mouseClickImagePath, mouseClickImage ? mouseClickImage : "", sizeof( m_mouseClickImagePath ) );
+	Q_strncpy( m_command, pCmd ? pCmd : "", sizeof( m_command ) );
 
-    m_hasMouseOverImage = (mouseOverImage && mouseOverImage[0] != '\0');
-    m_hasMouseClickImage = (mouseClickImage && mouseClickImage[0] != '\0');
-    m_hasCommand = (pCmd && pCmd[0] != '\0');
+	m_hasMouseOverImage = ( mouseOverImage && mouseOverImage[0] != '\0' );
+	m_hasMouseClickImage = ( mouseClickImage && mouseClickImage[0] != '\0' );
+	m_hasCommand = ( pCmd && pCmd[0] != '\0' );
 
-    if (m_normalImagePath[0] != '\0')
-        LoadImage(m_normalImagePath, m_normalImage);
+	if ( m_normalImagePath[0] != '\0' )
+		LoadImage( m_normalImagePath, m_normalImage );
 
-    if (m_hasMouseOverImage && m_mouseOverImagePath[0] != '\0')
-        LoadImage(m_mouseOverImagePath, m_mouseOverImage);
+	if ( m_hasMouseOverImage && m_mouseOverImagePath[0] != '\0' )
+		LoadImage( m_mouseOverImagePath, m_mouseOverImage );
 
-    if (m_hasMouseClickImage && m_mouseClickImagePath[0] != '\0')
-        LoadImage(m_mouseClickImagePath, m_mouseClickImage);
+	if ( m_hasMouseClickImage && m_mouseClickImagePath[0] != '\0' )
+		LoadImage( m_mouseClickImagePath, m_mouseClickImage );
 
-    SetNormalImage();
+	SetNormalImage();
 }
 
-ImageExtButton::~ImageExtButton() {
-    if (m_normalImage.textureId != -1) ReleaseTextureByKey(m_normalImagePath);
-    if (m_mouseOverImage.textureId != -1) ReleaseTextureByKey(m_mouseOverImagePath);
-    if (m_mouseClickImage.textureId != -1) ReleaseTextureByKey(m_mouseClickImagePath);
-}
-
-int ImageExtButton::NextPowerOfTwo(int value) {
-    if (value <= 0) return 1;
-    if ((value & (value - 1)) == 0) return value; // already power of 2
-    
-    int power = 1;
-    while (power < value) {
-        power <<= 1;
-    }
-    return power;
-}
-
-unsigned char* ImageExtButton::ResizeImageToPowerOfTwo(unsigned char* originalData, 
-                                                      int originalWidth, int originalHeight,
-                                                      int& newWidth, int& newHeight) {
-    newWidth = NextPowerOfTwo(originalWidth);
-    newHeight = NextPowerOfTwo(originalHeight);
-    
-    if (newWidth == originalWidth && newHeight == originalHeight) {
-        return originalData;
-    }
-    
-    unsigned char* newData = (unsigned char*)malloc(newWidth * newHeight * 4);
-    if (!newData) return originalData;
-    
-    memset(newData, 0, newWidth * newHeight * 4);
-    
-    for (int y = 0; y < originalHeight && y < newHeight; y++) {
-        for (int x = 0; x < originalWidth && x < newWidth; x++) {
-            int srcIdx = (y * originalWidth + x) * 4;
-            int dstIdx = (y * newWidth + x) * 4;
-            
-            newData[dstIdx + 0] = originalData[srcIdx + 0]; // R
-            newData[dstIdx + 1] = originalData[srcIdx + 1]; // G  
-            newData[dstIdx + 2] = originalData[srcIdx + 2]; // B
-            newData[dstIdx + 3] = originalData[srcIdx + 3]; // A
-        }
-    }
-    
-    return newData;
-}
-
-bool ImageExtButton::LoadImage(const char* filename, ImageData& imageData) {
-    if (!filename || filename[0] == '\0')
-        return false;
-
-    CUtlBuffer buf;
-    if (!g_pFullFileSystem->ReadFile(filename, "MOD", buf)) {
-        Warning("ImageExtButton: Could not open image file: %s\n", filename);
-        return false;
-    }
-
-    int originalWidth = 0, originalHeight = 0, channels = 0;
-    
-    unsigned char* originalData = stbi_load_from_memory(
-        reinterpret_cast<unsigned char*>(buf.Base()),
-        buf.TellPut(),
-        &originalWidth,
-        &originalHeight,
-        &channels,
-        4 // force RGBA
-    );
-
-    if (!originalData) {
-        Warning("ImageExtButton: Failed to decode '%s' (%s)\n", filename, stbi_failure_reason());
-        return false;
-    }
-
-    if (originalWidth <= 0 || originalHeight <= 0 || originalWidth > 4096 || originalHeight > 4096) {
-        Warning("ImageExtButton: Invalid image dimensions %dx%d for '%s'\n", originalWidth, originalHeight, filename);
-        stbi_image_free(originalData);
-        return false;
-    }
-
-    int textureWidth, textureHeight;
-    unsigned char* textureData = ResizeImageToPowerOfTwo(originalData, originalWidth, originalHeight, 
-                                                        textureWidth, textureHeight);
-    
-    bool needsFreeing = (textureData != originalData);
-
-    Msg("ImageExtButton: Loaded '%s' - Original: %dx%d, Texture: %dx%d\n", 
-        filename, originalWidth, originalHeight, textureWidth, textureHeight);
-
-    imageData.textureId = CreateOrGetTextureFromImageData(filename, textureData, textureWidth, textureHeight);
-    imageData.width = originalWidth;   
-    imageData.height = originalHeight;
-    imageData.isValid = (imageData.textureId != -1);
-
-    // Clean up
-    if (needsFreeing) {
-        free(textureData);
-    }
-    stbi_image_free(originalData);
-    
-    return imageData.isValid;
-}
-
-int ImageExtButton::CreateOrGetTextureFromImageData(const char* key,
-                                                    unsigned char* data,
-                                                    int width, int height)
+ImageExtButton::~ImageExtButton()
 {
-    std::string keyStr(key ? key : "");
-    auto it = s_textureCache.find(keyStr);
-    if (it != s_textureCache.end()) {
-        it->second.refCount++;
-        return it->second.texId;
-    }
-
-    int texId = vgui::surface()->CreateNewTextureID(true);
-    vgui::surface()->DrawSetTextureRGBA(texId, data, width, height, 1, false);
-    TexInfo texInfo(texId, width, height, 1);
-    s_textureCache[keyStr] = texInfo;
-    return texId;
+	if ( m_normalImage.textureId != -1 )
+		ReleaseTextureByKey( m_normalImagePath );
+	if ( m_mouseOverImage.textureId != -1 )
+		ReleaseTextureByKey( m_mouseOverImagePath );
+	if ( m_mouseClickImage.textureId != -1 )
+		ReleaseTextureByKey( m_mouseClickImagePath );
 }
 
-void ImageExtButton::ReleaseTextureByKey(const char* key) {
-    if (!key || key[0] == '\0') return;
+int ImageExtButton::NextPowerOfTwo( int value )
+{
+	if ( value <= 0 )
+		return 1;
+	if ( ( value & ( value - 1 ) ) == 0 )
+		return value; // already power of 2
 
-    std::string keyStr(key);
-    auto it = s_textureCache.find(keyStr);
-    if (it != s_textureCache.end()) {
-        it->second.refCount--;
-        if (it->second.refCount <= 0) {
-            vgui::surface()->DestroyTextureID(it->second.texId);
-            s_textureCache.erase(it);
-        }
-    }
+	int power = 1;
+	while ( power < value )
+	{
+		power <<= 1;
+	}
+	return power;
 }
 
-bool ImageExtButton::LoadImageIfNeeded(ImageData& imageData, const char* path, bool& flag) {
-    if (!imageData.isValid && path && path[0] != '\0') {
-        flag = LoadImage(path, imageData);
-        return flag;
-    }
-    return false;
+unsigned char *ImageExtButton::ResizeImageToPowerOfTwo( unsigned char *originalData, int originalWidth, int originalHeight, int &newWidth, int &newHeight )
+{
+	newWidth = NextPowerOfTwo( originalWidth );
+	newHeight = NextPowerOfTwo( originalHeight );
+
+	if ( newWidth == originalWidth && newHeight == originalHeight )
+	{
+		return originalData;
+	}
+
+	unsigned char *newData = (unsigned char *)malloc( newWidth * newHeight * 4 );
+	if ( !newData )
+		return originalData;
+
+	memset( newData, 0, newWidth * newHeight * 4 );
+
+	for ( int y = 0; y < originalHeight && y < newHeight; y++ )
+	{
+		for ( int x = 0; x < originalWidth && x < newWidth; x++ )
+		{
+			int srcIdx = ( y * originalWidth + x ) * 4;
+			int dstIdx = ( y * newWidth + x ) * 4;
+
+			newData[dstIdx + 0] = originalData[srcIdx + 0]; // R
+			newData[dstIdx + 1] = originalData[srcIdx + 1]; // G
+			newData[dstIdx + 2] = originalData[srcIdx + 2]; // B
+			newData[dstIdx + 3] = originalData[srcIdx + 3]; // A
+		}
+	}
+
+	return newData;
 }
 
-void ImageExtButton::SetCurrentImage(ImageData* image) {
-    m_currentImage = image;
+bool ImageExtButton::LoadImage( const char *filename, ImageData &imageData )
+{
+	if ( !filename || filename[0] == '\0' )
+		return false;
 
-    if (m_currentImage && m_currentImage->isValid && !m_bScaleImage) {
-        if (m_currentImage->width > 0 && m_currentImage->height > 0) {
-            SetSize(m_currentImage->width, m_currentImage->height);
-        }
-    }
+	CUtlBuffer buf;
+	if ( !g_pFullFileSystem->ReadFile( filename, "MOD", buf ) )
+	{
+		Warning( "ImageExtButton: Could not open image file: %s\n", filename );
+		return false;
+	}
 
-    InvalidateLayout();
-    Repaint();
+	int originalWidth = 0, originalHeight = 0, channels = 0;
+
+	unsigned char *originalData = stbi_load_from_memory( reinterpret_cast< unsigned char * >( buf.Base() ), buf.TellPut(), &originalWidth, &originalHeight, &channels,
+		4 // force RGBA
+	);
+
+	if ( !originalData )
+	{
+		Warning( "ImageExtButton: Failed to decode '%s' (%s)\n", filename, stbi_failure_reason() );
+		return false;
+	}
+
+	if ( originalWidth <= 0 || originalHeight <= 0 || originalWidth > 4096 || originalHeight > 4096 )
+	{
+		Warning( "ImageExtButton: Invalid image dimensions %dx%d for '%s'\n", originalWidth, originalHeight, filename );
+		stbi_image_free( originalData );
+		return false;
+	}
+
+	int			   textureWidth, textureHeight;
+	unsigned char *textureData = ResizeImageToPowerOfTwo( originalData, originalWidth, originalHeight, textureWidth, textureHeight );
+
+	bool needsFreeing = ( textureData != originalData );
+
+	Msg( "ImageExtButton: Loaded '%s' - Original: %dx%d, Texture: %dx%d\n", filename, originalWidth, originalHeight, textureWidth, textureHeight );
+
+	imageData.textureId = CreateOrGetTextureFromImageData( filename, textureData, textureWidth, textureHeight );
+	imageData.width = originalWidth;
+	imageData.height = originalHeight;
+	imageData.isValid = ( imageData.textureId != -1 );
+
+	// Clean up
+	if ( needsFreeing )
+	{
+		free( textureData );
+	}
+	stbi_image_free( originalData );
+
+	return imageData.isValid;
 }
 
-void ImageExtButton::SetNormalImage() {
-    if (!m_normalImage.isValid && m_normalImagePath[0] != '\0') {
-        LoadImage(m_normalImagePath, m_normalImage);
-    }
-    SetCurrentImage(&m_normalImage);
+int ImageExtButton::CreateOrGetTextureFromImageData( const char *key, unsigned char *data, int width, int height )
+{
+	std::string keyStr( key ? key : "" );
+	auto		it = s_textureCache.find( keyStr );
+	if ( it != s_textureCache.end() )
+	{
+		it->second.refCount++;
+		return it->second.texId;
+	}
+
+	int texId = vgui::surface()->CreateNewTextureID( true );
+	vgui::surface()->DrawSetTextureRGBA( texId, data, width, height, 1, false );
+	TexInfo texInfo( texId, width, height, 1 );
+	s_textureCache[keyStr] = texInfo;
+	return texId;
 }
 
-void ImageExtButton::SetMouseOverImage() {
-    if (m_hasMouseOverImage && !m_mouseOverImage.isValid && m_mouseOverImagePath[0] != '\0') {
-        LoadImage(m_mouseOverImagePath, m_mouseOverImage);
-    }
-    SetCurrentImage(&m_mouseOverImage);
+void ImageExtButton::ReleaseTextureByKey( const char *key )
+{
+	if ( !key || key[0] == '\0' )
+		return;
+
+	std::string keyStr( key );
+	auto		it = s_textureCache.find( keyStr );
+	if ( it != s_textureCache.end() )
+	{
+		it->second.refCount--;
+		if ( it->second.refCount <= 0 )
+		{
+			vgui::surface()->DestroyTextureID( it->second.texId );
+			s_textureCache.erase( it );
+		}
+	}
 }
 
-void ImageExtButton::SetMouseClickImage() {
-    if (m_hasMouseClickImage && !m_mouseClickImage.isValid && m_mouseClickImagePath[0] != '\0') {
-        LoadImage(m_mouseClickImagePath, m_mouseClickImage);
-    }
-    SetCurrentImage(&m_mouseClickImage);
+bool ImageExtButton::LoadImageIfNeeded( ImageData &imageData, const char *path, bool &flag )
+{
+	if ( !imageData.isValid && path && path[0] != '\0' )
+	{
+		flag = LoadImage( path, imageData );
+		return flag;
+	}
+	return false;
 }
 
-void ImageExtButton::Paint() {
-    if (!m_currentImage) return;
+void ImageExtButton::SetCurrentImage( ImageData *image )
+{
+	m_currentImage = image;
 
-    if (m_currentImage->isValid) {
-        vgui::surface()->DrawSetTexture(m_currentImage->textureId);
-        vgui::surface()->DrawSetColor(Color(255, 255, 255, 255));
+	if ( m_currentImage && m_currentImage->isValid && !m_bScaleImage )
+	{
+		if ( m_currentImage->width > 0 && m_currentImage->height > 0 )
+		{
+			SetSize( m_currentImage->width, m_currentImage->height );
+		}
+	}
 
-        if (m_bScaleImage) {
-            vgui::surface()->DrawTexturedRect(0, 0, GetWide(), GetTall());
-        } else {
-            int w = m_currentImage->width;
-            int h = m_currentImage->height;
-            vgui::surface()->DrawTexturedRect(0, 0, w, h);
-        }
-    }
+	InvalidateLayout();
+	Repaint();
 }
 
-void ImageExtButton::OnCursorEntered() {
-    if (m_hasMouseOverImage) SetMouseOverImage();
+void ImageExtButton::SetNormalImage()
+{
+	if ( !m_normalImage.isValid && m_normalImagePath[0] != '\0' )
+	{
+		LoadImage( m_normalImagePath, m_normalImage );
+	}
+	SetCurrentImage( &m_normalImage );
 }
 
-void ImageExtButton::OnCursorExited() {
-    SetNormalImage();
+void ImageExtButton::SetMouseOverImage()
+{
+	if ( m_hasMouseOverImage && !m_mouseOverImage.isValid && m_mouseOverImagePath[0] != '\0' )
+	{
+		LoadImage( m_mouseOverImagePath, m_mouseOverImage );
+	}
+	SetCurrentImage( &m_mouseOverImage );
 }
 
-void ImageExtButton::OnMousePressed(vgui::MouseCode code) {
-    if (m_hasMouseClickImage) SetMouseClickImage();
+void ImageExtButton::SetMouseClickImage()
+{
+	if ( m_hasMouseClickImage && !m_mouseClickImage.isValid && m_mouseClickImagePath[0] != '\0' )
+	{
+		LoadImage( m_mouseClickImagePath, m_mouseClickImage );
+	}
+	SetCurrentImage( &m_mouseClickImage );
 }
 
-void ImageExtButton::OnMouseReleased(vgui::MouseCode code) {
-    if (m_hasMouseOverImage) {
-        SetMouseOverImage();
-    } else {
-        SetNormalImage();
-    }
+void ImageExtButton::Paint()
+{
+	if ( !m_currentImage )
+		return;
 
-    if (m_hasCommand) {
-        PostActionSignal(new KeyValues("Command", "command", m_command));
-    }
+	if ( m_currentImage->isValid )
+	{
+		vgui::surface()->DrawSetTexture( m_currentImage->textureId );
+		vgui::surface()->DrawSetColor( Color( 255, 255, 255, 255 ) );
+
+		if ( m_bScaleImage )
+		{
+			vgui::surface()->DrawTexturedRect( 0, 0, GetWide(), GetTall() );
+		}
+		else
+		{
+			int w = m_currentImage->width;
+			int h = m_currentImage->height;
+			vgui::surface()->DrawTexturedRect( 0, 0, w, h );
+		}
+	}
 }
 
-void ImageExtButton::ApplySchemeSettings(vgui::IScheme* pScheme) {
-    BaseClass::ApplySchemeSettings(pScheme);
+void ImageExtButton::OnCursorEntered()
+{
+	if ( m_hasMouseOverImage )
+		SetMouseOverImage();
 }
 
-void ImageExtButton::OnCommand(KeyValues *data) {
-    const char *command = data->GetString("command", "");
-    if (m_pParent) {
-        m_pParent->OnCommand(command);
-    }
+void ImageExtButton::OnCursorExited()
+{
+	SetNormalImage();
+}
+
+void ImageExtButton::OnMousePressed( vgui::MouseCode code )
+{
+	if ( m_hasMouseClickImage )
+		SetMouseClickImage();
+}
+
+void ImageExtButton::OnMouseReleased( vgui::MouseCode code )
+{
+	if ( m_hasMouseOverImage )
+	{
+		SetMouseOverImage();
+	}
+	else
+	{
+		SetNormalImage();
+	}
+
+	if ( m_hasCommand )
+	{
+		PostActionSignal( new KeyValues( "Command", "command", m_command ) );
+	}
+}
+
+void ImageExtButton::ApplySchemeSettings( vgui::IScheme *pScheme )
+{
+	BaseClass::ApplySchemeSettings( pScheme );
+}
+
+void ImageExtButton::OnCommand( KeyValues *data )
+{
+	const char *command = data->GetString( "command", "" );
+	if ( m_pParent )
+	{
+		m_pParent->OnCommand( command );
+	}
 }

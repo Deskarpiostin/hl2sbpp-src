@@ -1,8 +1,8 @@
-//========= Copyright Alter Collective, All rights reserved. ============//
+//========== Copyright (C) 2025, Team HL2SB++, All rights reserved. ===========//
 //
-// Purpose: port of hl2 bugbait to hl2mp
+// Purpose:
 //
-//=============================================================================//
+//===========================================================================//
 
 #include "cbase.h"
 #include "npcevent.h"
@@ -40,23 +40,23 @@ public:
 	DECLARE_NETWORKCLASS();
 	DECLARE_PREDICTABLE();
 
-	void	Precache( void );
-	void	ItemPostFrame( void );
-	void	PrimaryAttack( void );
-	void	SecondaryAttack( void );
+	void Precache( void );
+	void ItemPostFrame( void );
+	void PrimaryAttack( void );
+	void SecondaryAttack( void );
 
-	bool	Deploy( void );
-	bool	Holster( CBaseCombatWeapon *pSwitchingTo );
+	bool Deploy( void );
+	bool Holster( CBaseCombatWeapon *pSwitchingTo );
 
-	void	OnPickedUp( CBaseCombatCharacter *pNewOwner );
+	void OnPickedUp( CBaseCombatCharacter *pNewOwner );
 #ifndef CLIENT_DLL
-	void	Spawn( void );
-	void	FallInit( void );
-	void	Drop( const Vector &vecVelocity );
-	void	BugbaitStickyTouch( CBaseEntity *pOther );
+	void Spawn( void );
+	void FallInit( void );
+	void Drop( const Vector &vecVelocity );
+	void BugbaitStickyTouch( CBaseEntity *pOther );
 
-	void	ThrowGrenade( CBasePlayer *pPlayer );
-	void	Operator_HandleAnimEvent( animevent_t *pEvent, CBaseCombatCharacter *pOperator );
+	void ThrowGrenade( CBasePlayer *pPlayer );
+	void Operator_HandleAnimEvent( animevent_t *pEvent, CBaseCombatCharacter *pOperator );
 #endif
 
 	virtual bool Reload( void );
@@ -78,55 +78,48 @@ IMPLEMENT_NETWORKCLASS_ALIASED( WeaponBugbait, DT_WeaponBugbait )
 
 BEGIN_NETWORK_TABLE( CWeaponBugbait, DT_WeaponBugbait )
 #ifdef CLIENT_DLL
-	RecvPropTime( RECVINFO( m_bRedraw ) ),
-	RecvPropFloat( RECVINFO( m_bEmitSpores ) ),
-	RecvPropInt( RECVINFO( m_bDrawBackFinished ) ),
+RecvPropTime( RECVINFO( m_bRedraw ) ), RecvPropFloat( RECVINFO( m_bEmitSpores ) ), RecvPropInt( RECVINFO( m_bDrawBackFinished ) ),
 #else
-	SendPropTime( SENDINFO( m_bRedraw ) ),
-	SendPropFloat( SENDINFO( m_bEmitSpores ) ),
-	SendPropInt( SENDINFO( m_bDrawBackFinished ) ),
+SendPropTime( SENDINFO( m_bRedraw ) ), SendPropFloat( SENDINFO( m_bEmitSpores ) ), SendPropInt( SENDINFO( m_bDrawBackFinished ) ),
 #endif
-END_NETWORK_TABLE()
+	END_NETWORK_TABLE()
 
-BEGIN_PREDICTION_DATA( CWeaponBugbait )
-END_PREDICTION_DATA()
+		BEGIN_PREDICTION_DATA( CWeaponBugbait ) END_PREDICTION_DATA()
 
-BEGIN_DATADESC( CWeaponBugbait )
+			BEGIN_DATADESC( CWeaponBugbait )
 
-	DEFINE_FIELD( m_hSporeTrail, FIELD_EHANDLE ),
-	DEFINE_FIELD( m_bRedraw, FIELD_BOOLEAN ),
-	DEFINE_FIELD( m_bEmitSpores, FIELD_BOOLEAN ),
-	DEFINE_FIELD( m_bDrawBackFinished, FIELD_BOOLEAN ),
+				DEFINE_FIELD( m_hSporeTrail, FIELD_EHANDLE ),
+	DEFINE_FIELD( m_bRedraw, FIELD_BOOLEAN ), DEFINE_FIELD( m_bEmitSpores, FIELD_BOOLEAN ), DEFINE_FIELD( m_bDrawBackFinished, FIELD_BOOLEAN ),
 
 #ifndef CLIENT_DLL
 	DEFINE_FUNCTION( BugbaitStickyTouch ),
 #endif
 
-END_DATADESC()
+END_DATADESC
+()
 
-LINK_ENTITY_TO_CLASS( weapon_bugbait, CWeaponBugbait );
+	LINK_ENTITY_TO_CLASS( weapon_bugbait, CWeaponBugbait );
 PRECACHE_WEAPON_REGISTER( weapon_bugbait );
 
-acttable_t	CWeaponBugbait::m_acttable[] =
-{
+acttable_t CWeaponBugbait::m_acttable[] = {
 	{ ACT_RANGE_ATTACK1, ACT_RANGE_ATTACK_SLAM, true },
 
-	{ ACT_MP_STAND_IDLE,				ACT_HL2MP_IDLE_GRENADE,					false },
-	{ ACT_MP_CROUCH_IDLE,				ACT_HL2MP_IDLE_CROUCH_GRENADE,			false },
+	{ ACT_MP_STAND_IDLE, ACT_HL2MP_IDLE_GRENADE, false },
+	{ ACT_MP_CROUCH_IDLE, ACT_HL2MP_IDLE_CROUCH_GRENADE, false },
 
-	{ ACT_MP_RUN,						ACT_HL2MP_RUN_GRENADE,					false },
-	{ ACT_MP_CROUCHWALK,				ACT_HL2MP_WALK_CROUCH_GRENADE,			false },
+	{ ACT_MP_RUN, ACT_HL2MP_RUN_GRENADE, false },
+	{ ACT_MP_CROUCHWALK, ACT_HL2MP_WALK_CROUCH_GRENADE, false },
 
-	{ ACT_MP_ATTACK_STAND_PRIMARYFIRE,	ACT_HL2MP_GESTURE_RANGE_ATTACK_GRENADE,	false },
-	{ ACT_MP_ATTACK_CROUCH_PRIMARYFIRE,	ACT_HL2MP_GESTURE_RANGE_ATTACK_GRENADE,	false },
+	{ ACT_MP_ATTACK_STAND_PRIMARYFIRE, ACT_HL2MP_GESTURE_RANGE_ATTACK_GRENADE, false },
+	{ ACT_MP_ATTACK_CROUCH_PRIMARYFIRE, ACT_HL2MP_GESTURE_RANGE_ATTACK_GRENADE, false },
 
-	{ ACT_MP_RELOAD_STAND,				ACT_HL2MP_GESTURE_RELOAD_GRENADE,		false },
-	{ ACT_MP_RELOAD_CROUCH,				ACT_HL2MP_GESTURE_RELOAD_GRENADE,		false },
+	{ ACT_MP_RELOAD_STAND, ACT_HL2MP_GESTURE_RELOAD_GRENADE, false },
+	{ ACT_MP_RELOAD_CROUCH, ACT_HL2MP_GESTURE_RELOAD_GRENADE, false },
 
-	{ ACT_MP_JUMP,						ACT_HL2MP_JUMP_GRENADE,					false },
+	{ ACT_MP_JUMP, ACT_HL2MP_JUMP_GRENADE, false },
 
-	{ ACT_MP_SWIM_IDLE,					ACT_HL2MP_SWIM_IDLE_GRENADE,				false },
-	{ ACT_MP_SWIM,						ACT_HL2MP_SWIM_GRENADE,						false },
+	{ ACT_MP_SWIM_IDLE, ACT_HL2MP_SWIM_IDLE_GRENADE, false },
+	{ ACT_MP_SWIM, ACT_HL2MP_SWIM_GRENADE, false },
 };
 
 IMPLEMENT_ACTTABLE( CWeaponBugbait );
@@ -150,7 +143,7 @@ CWeaponBugbait::CWeaponBugbait( void )
 
 #ifndef CLIENT_DLL
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CWeaponBugbait::Spawn( void )
 {
@@ -163,7 +156,7 @@ void CWeaponBugbait::Spawn( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CWeaponBugbait::FallInit( void )
 {
@@ -184,7 +177,7 @@ void CWeaponBugbait::FallInit( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CWeaponBugbait::Drop( const Vector &vecVelocity )
 {
@@ -197,9 +190,9 @@ void CWeaponBugbait::Drop( const Vector &vecVelocity )
 	m_hSporeTrail = SporeExplosion::CreateSporeExplosion();
 	if ( m_hSporeTrail )
 	{
-		SporeExplosion *pSporeExplosion = (SporeExplosion*)m_hSporeTrail.Get();
+		SporeExplosion *pSporeExplosion = (SporeExplosion *)m_hSporeTrail.Get();
 
-		QAngle	angles;
+		QAngle angles;
 		VectorAngles( Vector( 0, 0, 1 ), angles );
 
 		pSporeExplosion->SetAbsAngles( angles );
@@ -234,19 +227,19 @@ void CWeaponBugbait::BugbaitStickyTouch( CBaseEntity *pOther )
 #endif
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CWeaponBugbait::Precache( void )
 {
 	BaseClass::Precache();
 
-//	UTIL_PrecacheOther( "npc_grenade_bugbait" );
+	//	UTIL_PrecacheOther( "npc_grenade_bugbait" );
 	PrecacheScriptSound( "Weapon_Bugbait.Splat" );
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *pPicker - 
+// Purpose:
+// Input  : *pPicker -
 //-----------------------------------------------------------------------------
 void CWeaponBugbait::OnPickedUp( CBaseCombatCharacter *pNewOwner )
 {
@@ -259,7 +252,7 @@ void CWeaponBugbait::OnPickedUp( CBaseCombatCharacter *pNewOwner )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CWeaponBugbait::PrimaryAttack( void )
 {
@@ -287,7 +280,7 @@ void CWeaponBugbait::PrimaryAttack( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 void CWeaponBugbait::SecondaryAttack( void )
 {
@@ -316,12 +309,12 @@ void CWeaponBugbait::SecondaryAttack( void )
 
 #ifndef CLIENT_DLL
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *pPlayer - 
+// Purpose:
+// Input  : *pPlayer -
 //-----------------------------------------------------------------------------
 void CWeaponBugbait::ThrowGrenade( CBasePlayer *pPlayer )
 {
-	Vector	vForward, vRight, vUp, vThrowPos, vThrowVel;
+	Vector vForward, vRight, vUp, vThrowPos, vThrowVel;
 
 	pPlayer->EyeVectors( &vForward, &vRight, &vUp );
 
@@ -338,8 +331,8 @@ void CWeaponBugbait::ThrowGrenade( CBasePlayer *pPlayer )
 	if ( pGrenade != NULL )
 	{
 		// If the shot is clear to the player, give the missile a grace period
-		trace_t	tr;
-		UTIL_TraceLine( pPlayer->EyePosition(), pPlayer->EyePosition() + (vForward * 128), MASK_SHOT, this, COLLISION_GROUP_NONE, &tr );
+		trace_t tr;
+		UTIL_TraceLine( pPlayer->EyePosition(), pPlayer->EyePosition() + ( vForward * 128 ), MASK_SHOT, this, COLLISION_GROUP_NONE, &tr );
 
 		if ( tr.fraction == 1.0 )
 		{
@@ -351,9 +344,9 @@ void CWeaponBugbait::ThrowGrenade( CBasePlayer *pPlayer )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
-// Input  : *pEvent - 
-//			*pOperator - 
+// Purpose:
+// Input  : *pEvent -
+//			*pOperator -
 //-----------------------------------------------------------------------------
 void CWeaponBugbait::Operator_HandleAnimEvent( animevent_t *pEvent, CBaseCombatCharacter *pOperator )
 {
@@ -362,15 +355,15 @@ void CWeaponBugbait::Operator_HandleAnimEvent( animevent_t *pEvent, CBaseCombatC
 	{
 	case EVENT_WEAPON_SEQUENCE_FINISHED:
 		m_bDrawBackFinished = true;
-	break;
+		break;
 
 	case EVENT_WEAPON_THROW:
 		ThrowGrenade( pOwner );
-	break;
+		break;
 
 	default:
 		BaseClass::Operator_HandleAnimEvent( pEvent, pOperator );
-	break;
+		break;
 	}
 }
 #endif
@@ -388,7 +381,7 @@ void CWeaponBugbait::ItemPostFrame( void )
 	// See if we're cocked and ready to throw
 	if ( m_bDrawBackFinished )
 	{
-		if ( (pOwner->m_nButtons & IN_ATTACK) == false )
+		if ( ( pOwner->m_nButtons & IN_ATTACK ) == false )
 		{
 			SendWeaponAnim( ACT_VM_THROW );
 			m_flNextPrimaryAttack = gpGlobals->curtime + SequenceDuration();
@@ -404,11 +397,11 @@ void CWeaponBugbait::ItemPostFrame( void )
 	else
 	{
 		//See if we're attacking
-		if ( (pOwner->m_nButtons & IN_ATTACK) && (m_flNextPrimaryAttack < gpGlobals->curtime) )
+		if ( ( pOwner->m_nButtons & IN_ATTACK ) && ( m_flNextPrimaryAttack < gpGlobals->curtime ) )
 		{
 			PrimaryAttack();
 		}
-		else if ( (pOwner->m_nButtons & IN_ATTACK2) && (m_flNextSecondaryAttack < gpGlobals->curtime) )
+		else if ( ( pOwner->m_nButtons & IN_ATTACK2 ) && ( m_flNextSecondaryAttack < gpGlobals->curtime ) )
 		{
 			SecondaryAttack();
 		}
@@ -426,7 +419,7 @@ void CWeaponBugbait::ItemPostFrame( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 bool CWeaponBugbait::Deploy( void )
 {
@@ -441,7 +434,7 @@ bool CWeaponBugbait::Deploy( void )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 //-----------------------------------------------------------------------------
 bool CWeaponBugbait::Holster( CBaseCombatWeapon *pSwitchingTo )
 {
@@ -452,12 +445,12 @@ bool CWeaponBugbait::Holster( CBaseCombatWeapon *pSwitchingTo )
 }
 
 //-----------------------------------------------------------------------------
-// Purpose: 
+// Purpose:
 // Output : Returns true on success, false on failure.
 //-----------------------------------------------------------------------------
 bool CWeaponBugbait::Reload( void )
 {
-	if ( (m_bRedraw) && (m_flNextPrimaryAttack <= gpGlobals->curtime) )
+	if ( ( m_bRedraw ) && ( m_flNextPrimaryAttack <= gpGlobals->curtime ) )
 	{
 		//Redraw the weapon
 		SendWeaponAnim( ACT_VM_DRAW );

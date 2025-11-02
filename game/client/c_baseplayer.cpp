@@ -1395,53 +1395,21 @@ void C_BasePlayer::CreateWaterEffects( void )
 void C_BasePlayer::OverrideView( CViewSetup *pSetup )
 {
 #ifdef HL2SB
-
-
 	// adnan
-
-
 	// OVERRIDING THE VIEW
-
-
 	// need to override the angles too
-
-
 	C_BaseCombatWeapon *pWeapon = GetActiveWeapon();
-
-
 	if ( pWeapon )
-
-
 	{
-
-
 		// adnan
-
-
 		if(pWeapon->OverrideViewAngles()) {
-
-
 			// use the useAngles!
-
-
 				// override with the angles the server sends to us as useAngles
-
-
 				// use the useAngles only if we're holding and rotating with the grav gun
-
-
 			pSetup->angles = m_vecUseAngles;
-
-
 		}
-
-
 	}
-
-
 	// end adnan
-
-
 #endif
 }
 

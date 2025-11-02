@@ -1,8 +1,9 @@
-//========= Copyright Me idk lol, All rights reserved. ============//
+//========== Copyright (C) 2025, Team HL2SB++, All rights reserved. ===========//
 //
-// Purpose: 
+// Purpose:
 //
-//=============================================================================//
+//===========================================================================//
+
 #ifndef ADVANCED_G_TAB_H
 #define ADVANCED_G_TAB_H
 #ifdef _WIN32
@@ -25,14 +26,14 @@
 
 class CAdvancedOptionsGameplay : public vgui::PropertyPage
 {
-    DECLARE_CLASS_SIMPLE( CAdvancedOptionsGameplay, vgui::PropertyPage );
+	DECLARE_CLASS_SIMPLE( CAdvancedOptionsGameplay, vgui::PropertyPage );
 
 public:
-    CAdvancedOptionsGameplay( vgui::Panel *parent, const char *panelName );
+	CAdvancedOptionsGameplay( vgui::Panel *parent, const char *panelName );
 
 protected:
-    virtual void OnCommand( const char *command );
-    virtual void PerformLayout();
+	virtual void OnCommand( const char *command );
+	virtual void PerformLayout();
 };
 
 #endif

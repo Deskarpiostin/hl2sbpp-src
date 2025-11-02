@@ -102,7 +102,7 @@ public:
 
 #define MAX_CLIMB_SPEED		200
 
-#if defined(TF_DLL) || defined(TF_CLIENT_DLL)
+#if defined(TF_DLL) || defined(TF_CLIENT_DLL) || defined(HL2SB)
 	#define TIME_TO_DUCK		0.2
 	#define TIME_TO_DUCK_MS		200.0f
 #else
