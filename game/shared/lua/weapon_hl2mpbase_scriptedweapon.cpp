@@ -1354,7 +1354,7 @@ bool CHL2MPScriptedWeapon::Deploy( void )
 #ifdef HL2SB
 	CHL2MP_Player *pPlayer = ToHL2MPPlayer( GetOwner() );
 	if (!pPlayer)
-		return;
+		return false;
 
 	if (!UseHands)
 	{
