@@ -89,7 +89,10 @@
 #endif
 
 
-
+#ifdef _WIN32
+#include <dwmapi.h>
+#pragma comment(lib, "dwmapi.lib")
+#endif
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
@@ -918,6 +921,10 @@ bool CGame::CreateGameWindow( void )
 #endif
 	}
 
+#ifdef _WIN32
+	V_strcat( windowName, " - Direct3D 9", sizeof( windowName ) );
+#endif
+
 #if PIX_ENABLE || defined( PIX_INSTRUMENTATION )
 	// PIX_ENABLE/PIX_INSTRUMENTATION is a big slowdown (that should never be checked in, but sometimes is by accident), so add this to the Window title too.
 	V_strcat( windowName, " - PIX_ENABLE", sizeof( windowName ) );
@@ -1037,6 +1044,18 @@ bool CGame::CreateGameWindow( void )
 		Error( "Fatal Error:  Unable to create game window!" );
 		return false;
 	}
+
+#ifdef _WIN32
+	const DWORD DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
+
+    BOOL bRef = TRUE;
+	DwmSetWindowAttribute(
+        hwnd,
+        DWMWA_USE_IMMERSIVE_DARK_MODE,
+        &bRef,
+        sizeof(bRef)
+    ); // ThePixelMoon: lol reference bool lalodldosaldoaldosaldo
+#endif
 
 	SetMainWindow( hwnd );
 
