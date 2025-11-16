@@ -37,7 +37,8 @@ extern ConVar  sv_packettrace;
 
 enum
 {
-	ENTITY_SENTINEL = 9999	// larger number than any real entity number
+	// https://github.com/Source-Authors/Obsoletium/pull/148/files#diff-4717dda055d5b5538cc339ddcc3adbf48e50b97fff0f7b850f0b1e0916d19f4aR40
+	ENTITY_SENTINEL = INT_MAX	// larger number than any real entity number
 };
 
 #define	FLAG_IS_COMPRESSED	(1<<31)
