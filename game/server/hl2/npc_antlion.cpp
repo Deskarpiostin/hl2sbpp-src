@@ -48,7 +48,7 @@ ConVar	sk_antlion_jump_damage( "sk_antlion_jump_damage", "0" );
 ConVar  sk_antlion_air_attack_dmg( "sk_antlion_air_attack_dmg", "0" );
 
 
-#ifdef HL2_EPISODIC
+//#ifdef HL2_EPISODIC
 
 // workers
 #define ANTLION_WORKERS_BURST() (true)
@@ -61,7 +61,7 @@ ConVar  sk_antlion_worker_spit_speed( "sk_antlion_worker_spit_speed", "0", FCVAR
 // This must agree with the AntlionWorkerBurstRadius() function!
 ConVar  sk_antlion_worker_burst_radius( "sk_antlion_worker_burst_radius", "160", FCVAR_NONE, "Effect radius of an antlion worker's death explosion."  );
 
-#endif
+//#endif
 
 ConVar  g_test_new_antlion_jump( "g_test_new_antlion_jump", "1", FCVAR_ARCHIVE );
 ConVar	antlion_easycrush( "antlion_easycrush", "1" );

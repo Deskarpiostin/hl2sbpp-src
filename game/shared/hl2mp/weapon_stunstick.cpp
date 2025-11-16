@@ -35,6 +35,11 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
+#ifdef HL2SB
+ConVar    sk_plr_dmg_stunstick	( "sk_plr_dmg_stunstick","0");
+ConVar    sk_npc_dmg_stunstick	( "sk_npc_dmg_stunstick","0");
+#endif
+
 extern ConVar metropolice_move_and_melee;
 
 #define	STUNSTICK_RANGE				75.0f
@@ -226,7 +231,14 @@ void CWeaponStunStick::Precache()
 //-----------------------------------------------------------------------------
 float CWeaponStunStick::GetDamageForActivity( Activity hitActivity )
 {
+#ifndef HL2SB
 	return 40.0f;
+#else
+	if ( ( GetOwner() != NULL ) && ( GetOwner()->IsPlayer() ) )
+		return sk_plr_dmg_stunstick.GetFloat();
+	
+	return sk_npc_dmg_stunstick.GetFloat();
+#endif
 }
 
 //-----------------------------------------------------------------------------

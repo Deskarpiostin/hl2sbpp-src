@@ -26,6 +26,11 @@
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
+#ifdef HL2SB
+ConVar    sk_plr_dmg_crowbar		( "sk_plr_dmg_crowbar","0");
+ConVar    sk_npc_dmg_crowbar		( "sk_npc_dmg_crowbar","0");
+#endif
+
 #define	CROWBAR_RANGE	75.0f
 #define	CROWBAR_REFIRE	0.4f
 
@@ -86,7 +91,14 @@ CWeaponCrowbar::CWeaponCrowbar( void )
 //-----------------------------------------------------------------------------
 float CWeaponCrowbar::GetDamageForActivity( Activity hitActivity )
 {
+#ifndef HL2SB
 	return 25.0f;
+#else
+	if ( ( GetOwner() != NULL ) && ( GetOwner()->IsPlayer() ) )
+		return sk_plr_dmg_crowbar.GetFloat();
+
+	return sk_npc_dmg_crowbar.GetFloat();
+#endif
 }
 
 //-----------------------------------------------------------------------------
