@@ -1,3 +1,9 @@
+//========== Copyright (C) 2025, Team HL2SB++, All rights reserved. ===========//
+//
+// Purpose:
+//
+//===========================================================================//
+
 #include "cbase.h"
 #include "creatempdialog.h"
 #include <vgui_controls/PropertyPage.h>
@@ -8,7 +14,7 @@
 #include <vgui_controls/Tooltip.h>
 #include <vgui/IScheme.h>
 #include <vgui/IVGui.h>
-#include "hl2sb/mapload_background.h"
+#include "sbpp/mapload_background.h"
 #include "filesystem.h"
 #include "tier1/utlvector.h"
 #include <list>

@@ -82,7 +82,7 @@
 #include "bonetoworldarray.h"
 #include "cmodel.h"
 #include "debugoverlay_shared.h"
-#include "hl2sb/worldlight.h"
+#include "worldlight.h"
 #include "bspfile.h"
 #include "client_factorylist.h" // FactoryList_Retrieve
 #include "eiface.h" // IVEngineServer

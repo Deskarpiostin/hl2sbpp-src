@@ -1,3 +1,9 @@
+//========== Copyright (C) 2025, Team HL2SB++, All rights reserved. ===========//
+//
+// Purpose:
+//
+//===========================================================================//
+
 #include "hud_hints.h"
 #include <vgui/ISurface.h>
 #include <vgui/IVGui.h>

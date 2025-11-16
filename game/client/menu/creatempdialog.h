@@ -1,3 +1,9 @@
+//========== Copyright (C) 2025, Team HL2SB++, All rights reserved. ===========//
+//
+// Purpose:
+//
+//===========================================================================//
+
 #ifndef CREATEMPDIALOG_H
 #define CREATEMPDIALOG_H
 #ifdef _WIN32

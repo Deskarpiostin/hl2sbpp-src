@@ -1,3 +1,9 @@
+//========== Copyright (C) 2025, Team HL2SB++, All rights reserved. ===========//
+//
+// Purpose:
+//
+//===========================================================================//
+
 #ifndef HUD_HINTS
 #define HUD_HINTS
 #ifdef _WIN32

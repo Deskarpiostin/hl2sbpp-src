@@ -1,6 +1,11 @@
+//========== Copyright (C) 2025, Team HL2SB++, All rights reserved. ===========//
+//
+// Purpose:
+//
+//===========================================================================//
+
 #ifndef IMAGEBUTTON_H
 #define IMAGEBUTTON_H
-
 #ifdef _WIN32
 #pragma once
 #endif

@@ -1,3 +1,9 @@
+//========== Copyright (C) 2025, Team HL2SB++, All rights reserved. ===========//
+//
+// Purpose:
+//
+//===========================================================================//
+
 #include "imageextbutton.h"
 #include "vgui/IInput.h"
 #include "vgui/ISurface.h"

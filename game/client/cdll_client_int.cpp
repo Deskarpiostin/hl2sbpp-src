@@ -177,7 +177,7 @@ extern vgui::IInputInternal *g_InputInternal;
 #endif
 
 #ifdef HL2SB
-#include "hl2sb/dynamicsky.h"
+#include "sbpp/dynamicsky.h"
 /*
 #ifndef __ANDROID__
 #include "httplib.h"
@@ -1035,7 +1035,6 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
         "episodic",
         "ep2",
         "hl2mp",
-        "hl2sb",
         "hl1",
         "dod",
         "portal",

@@ -43,9 +43,11 @@
 #include "xbox/xbox_console.h"
 #endif
 
+#ifdef HL2SB
 // Fenix: Needed for the custom background loading screens
 #include "GameUI/IGameUI.h"
-#include "hl2sb/mapload_background.h"
+#include "sbpp/mapload_background.h"
+#endif
 
 #if defined( REPLAY_ENABLED )
 #include "replay/replaycamera.h"
@@ -88,10 +90,12 @@ class CHudVote;
 
 static vgui::HContext s_hVGuiContext = DEFAULT_VGUI_CONTEXT;
 
+#ifdef HL2SB
 // Fenix: Needed for the custom background loading screens
 // See interface.h/.cpp for specifics: basically this ensures that we actually Sys_UnloadModule the dll and that we don't call Sys_LoadModule 
 // over and over again.
 static CDllDemandLoader g_GameUI( "GameUI" );
+#endif
 
 CLIENTEFFECT_REGISTER_BEGIN( PrecachePostProcessingEffectsGlow )
 CLIENTEFFECT_MATERIAL( "dev/glow_color" )
@@ -108,9 +112,11 @@ extern ConVar voice_modenable;
 
 extern bool IsInCommentaryMode( void );
 
+#ifdef HL2SB
 // Fenix: Needed for the custom background loading screens
 CMapLoadBG *pPanelBg;
 IMaterial *pMatMapBg;
+#endif
 
 #ifdef VOICE_VOX_ENABLE
 void VoxCallback( IConVar *var, const char *oldString, float oldFloat )
@@ -309,9 +315,11 @@ ClientModeShared::ClientModeShared()
 	m_pWeaponSelection = NULL;
 	m_nRootSize[ 0 ] = m_nRootSize[ 1 ] = -1;
 
+#ifdef HL2SB
 	// Fenix: Needed for the custom background loading screens
 	pPanelBg = NULL;
 	pMatMapBg = NULL;
+#endif
 
 #if defined( REPLAY_ENABLED )
 	m_pReplayReminderPanel = NULL;
@@ -411,6 +419,8 @@ void ClientModeShared::Init()
 	HOOK_MESSAGE( VGUIMenu );
 	HOOK_MESSAGE( Rumble );
 
+#ifdef HL2SB
+
 	// Fenix: Custom background loading screens - Injects the custom panel at the loading screen
 	CreateInterfaceFn gameUIFactory = g_GameUI.GetFactory();
 	if ( gameUIFactory )
@@ -431,6 +441,7 @@ void ClientModeShared::Init()
 			pPanelBg->setServerName( serverName );
 		}
 	}
+#endif
 }
 
 

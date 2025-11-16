@@ -97,53 +97,6 @@ IEntityFactoryDictionary *EntityFactoryDictionary()
 	return &s_EntityFactory;
 }
 
-void DumpEntityFactories_f()
-{
-	if ( !UTIL_IsCommandIssuedByServerAdmin() )
-		return;
-
-	CEntityFactoryDictionary *dict = ( CEntityFactoryDictionary * )EntityFactoryDictionary();
-	if ( dict )
-	{
-		for ( int i = dict->m_Factories.First(); i != dict->m_Factories.InvalidIndex(); i = dict->m_Factories.Next( i ) )
-		{
-			Warning( "%s\n", dict->m_Factories.GetElementName( i ) );
-		}
-	}
-}
-
-void DumpEntityToFile()
-{
-	FILE *fp;
-	fp = fopen("hl2sb/addons/menu/entitylist.txt", "w+");
-	
-	if ( !UTIL_IsCommandIssuedByServerAdmin() )
-		return;
-
-	fprintf( fp, "\"EntityList\"\n");
-	fprintf( fp, "{\n"); //for keyvalues, kek
-	
-	CEntityFactoryDictionary *dict = ( CEntityFactoryDictionary * )EntityFactoryDictionary();
-	if ( dict )
-	{
-		for ( int i = dict->m_Factories.First(); i != dict->m_Factories.InvalidIndex(); i = dict->m_Factories.Next( i ) )
-		{
-			if (fp)
-			{
-				fprintf( fp, "\"entity\"");
-				fprintf( fp, "          ");
-				fprintf( fp, "\"%s\"\n", dict->m_Factories.GetElementName( i ) );
-			}
-		}
-	}
-	
-	fprintf( fp, "}");
-	fflush( fp );
-}
-
-static ConCommand dumpentityfactories( "dumpentityfactories", DumpEntityFactories_f, "Lists all entity factory names.", FCVAR_GAMEDLL );
-static ConCommand dumpentitytofile( "dumpentitytofile", DumpEntityToFile, "Lists all entity factory names.", FCVAR_GAMEDLL );
-
 //-----------------------------------------------------------------------------
 // 
 //-----------------------------------------------------------------------------

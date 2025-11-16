@@ -48,7 +48,7 @@ const char *GetProtoVersion()
 	else if ( PROTOCOL_VERSION == 2 )
 		return "Source Engine 2 / 2003";
 	else
-		return "Fucker, what are you even playing on???!?!";
+		return "What are you even playing on?";
 #endif
 }
 
@@ -69,7 +69,7 @@ const char *GetPlatform()
 #elif PLATFORM_HAIKU
 	return "Haiku";
 #else
-	return "Unknown Platform (You on AmigaOS?)"
+	return "Unknown Platform"
 #endif
 }
 
@@ -94,25 +94,25 @@ const char *GetGame()
 
 const char *GetArt( const char *game )
 {
-	return "@@@@@@&#BBGGGGGGGGGGGGGGGGGGGGGGGGG#&@@@\n"
-		   "@&BPY?77!!!!!!!!!!!!!!!!!!!!!!!!!!!7?5#@\n"
-		   "Y7!!!7?JY55555YJ?77!!!77777777777777!!7G\n"
-		   "GJJ5B&@@@@@@@@@@@&#PY7!!77777777777777!?\n"
-		   "@@@@@@@@&&&&&&&@@@@@@&GJ!!777777777777!Y\n"
-		   "@@@@#GP555555555PG#@@@@@B?!7777777777!J&\n"
-		   "@@&PYYY555PPPP5YYYY5#@@@@@5!77777777!?&@\n"
-		   "@@PY5555B@@@@@&P55555#@@@@@5!777777!7#@@\n"
-		   "@@PY5555PB&&@@@@&&&&&&@@@@@@J!7777!7B@@@\n"
-		   "@@&P5YY5YY555PPGB#&@@@@@@@@@G!7777!P@@@@\n"
-		   "@@@@#BGP555YYYYYYY55G&@@@@@@#7777!5@@@@@\n"
-		   "@@@@@@@@@&&#BBP55555YP@@@@@@B!77!Y@@@@@@\n"
-		   "@#PPPPPB@@@@@@@&555555&@@@@@Y!7!J@@@@@@@\n"
-		   "@@PYYYY5G#&&&&#G5555YG@@@@@B77!?&@@@@@@@\n"
-		   "@@@B55YYYY5555YYYY5PB@@@@@B7!!7#@@@@@@@@\n"
-		   "@@@@@#BGPPPPPPPPGB#@@@@@&57!!?#@@@@@@@@@\n"
-		   "@@@@@@@@@@@@@@@@@@@@@@&P?!!!Y&@@@@@@@@@@\n"
-		   "@@@@@@@@@@@@@@@@@@@@@@P!!7JB@@@@@@@@@@@@\n"
-		   "@@@@@@@@@@@@@@@@@@@@@@@BGB@@@@@@@@@@@@@@\n";
+	return " f//////////////////}W@@@@@ci/ffjtjrrjt \n"
+		   " Xnjt///////////////} Q)@B@j'|rtrrfjrrf \n"
+		   " _-jcrf//////////////'b)]@@z '-|tjjjjrn \n"
+		   " ){]_/znjt|((|////-    ]};.r>` .tfjxffx \n"
+		   " (()1[+_+jh@@MJ]l>lZ@@@    @@@@ ft/jrjj \n"
+		   " (((((~]@@    .p@a' @@@@@@@@YJ; |tftjrx \n"
+		   " (((([l@  /@@@B.Io,]z '    p  @[{(/jt/r \n"
+		   " ((()'h@ @W`.`!|nj-Z@ @Zl]`@@ @{1/((rft @\n"
+		   " ((()'@  @.    [-+)l@ @@@@@@  @^[//()/f \n"
+		   " ((()'@  @@p@@ `]1] @        w@@c]//|1t \n"
+		   " )(((<<@B    @@@I^[ $  @@@@@@   @_1//|( \n"
+		   " ))(()+;t@@@    @o; @@@c   @@|@ @*]///| \n"
+		   " ()((([>   z@@@  @# @  @@@>: .@ @#[//// \n"
+		   " 11)([ +   1@. @  @ @  @   ')@  @~xnjt/ \n"
+		   " /1)([X@@@k@W@@@  @ @  @a@@@^  @B,+{jzv \n"
+		   " ||{)[.~@@      @@>.@       j@@[,[){]+- \n"
+		   " /|/))-' [@@@@@@1![+X@@@@@@@/lI[)((((){ \n"
+		   " (||)1))]i'. '^~[)(1-:`.'`I-1(((((((((( \n"
+		   " //||())((((((((((((((((((((((((((((((( \n";
 }
 
 CON_COMMAND_F( sourcefetch, "Print info about engine", FCVAR_NONE )

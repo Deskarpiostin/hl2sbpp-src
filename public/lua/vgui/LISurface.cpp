@@ -15,7 +15,6 @@
 #include "luasrclib.h"
 #include "vgui/LVGUI.h"
 #include "vgui_controls/lPanel.h"
-#include "hl2sb/spawnmenu.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"

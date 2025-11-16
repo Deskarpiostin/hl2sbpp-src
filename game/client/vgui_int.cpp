@@ -30,10 +30,9 @@
 #endif
 
 #ifdef HL2SB
-#include "hl2sb/spawnmenu.h"
 #include "menu/creatempdialog.h"
-#include "hl2sb/mapload_background.h"
-#include "hl2sb/vgui/advanced_options.h"
+#include "sbpp/mapload_background.h"
+#include "sbpp/vgui/advanced_options.h"
 #include "menu/spawnmenu_new.h"
 #endif
 
@@ -232,7 +231,6 @@ void VGui_CreateGlobalPanels( void )
 	touch_panel->Create( toolParent );
 
 #ifdef HL2SB
-	smlmenu->Create(gameParent);
 	maplist->Create(GameUiDll);
 	spawnmenu->Create(gameParent);
 #endif
@@ -272,7 +270,6 @@ void VGui_Shutdown()
 
 #ifdef HL2SB
 	advancedoptpanel->Destroy();
-	smlmenu->Destroy();
 	maplist->Destroy();
 #endif
 

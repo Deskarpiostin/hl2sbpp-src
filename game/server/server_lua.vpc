@@ -79,11 +79,6 @@ $Project "Server (HL2MP)"
 		$File "$SRCDIR/public/lua/lColor.cpp"
 	}
 
-	$Folder "Half-Life 2 Sanbox"
-	{
-		$File "$SRCDIR/game/shared/hl2sb/weapon_physgun.cpp"
-	}
-
 	$Folder "Gunmod"
 	{
 		$File "gunmod/grenade_stickybomb.cpp"

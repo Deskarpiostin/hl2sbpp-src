@@ -1,3 +1,9 @@
+//========== Copyright (C) 2025, Team HL2SB++, All rights reserved. ===========//
+//
+// Purpose:
+//
+//===========================================================================//
+
 #include "cbase.h"
 #include "vgui_imagebutton.h"
 #include "vgui/MouseCode.h"

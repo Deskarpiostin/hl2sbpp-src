@@ -5,8 +5,7 @@
 //-----------------------------------------------------------------------------
 
 $Macro SRCDIR		"..\.."
-$Macro GAMENAME 	"hl2sb" [!$SOURCESDK]
-$Macro GAMENAME 	"mod_hl2sb" [$SOURCESDK]
+$Macro GAMENAME 	"hl2sbpp"
 
 $Include "$SRCDIR\game\client\client_base.vpc"
 
@@ -87,11 +86,6 @@ $Project "Client (HL2SB)"
 		$File "$SRCDIR/public/lua/materialsystem/limaterial.cpp"
 		$File "$SRCDIR/public/lua/licvar.cpp"
 		$File "$SRCDIR/public/lua/vstdlib/lrandom.cpp"
-	}
-
-	$Folder "Half-Life 2 Sandbox"
-	{
-		$File "$SRCDIR/game/shared/hl2sb/weapon_physgun.cpp"
 	}
 
 	$Folder "SMenu"

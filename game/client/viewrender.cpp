@@ -78,7 +78,7 @@
 #include "C_Env_Projected_Texture.h"
 
 #ifdef HL2SB
-#include "hl2sb/dynamicsky.h"
+#include "sbpp/dynamicsky.h"
 #endif
 
 // memdbgon must be the last include file in a .cpp file!!!

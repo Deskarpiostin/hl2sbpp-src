@@ -1,3 +1,9 @@
+//========== Copyright (C) 2025, Team HL2SB++, All rights reserved. ===========//
+//
+// Purpose:
+//
+//===========================================================================//
+
 #include "cbase.h"
 #include "spawnmenu_new.h"
 #include <vgui/IVGui.h>
@@ -207,7 +213,8 @@ int CPngPropertySheet::LoadPNGTexture(const char* pngPath)
             texId = surface()->CreateNewTextureID();
             surface()->DrawSetTextureFile(texId, pathNoExt, false, true);
         }
-        m_textureCache[pngPath] = texId;
+
+        m_textureCache.insert_or_assign(pngPath, texId);
         DevMsg("CPngPropertySheet: Loaded material '%s' -> ID %d\n", pathNoExt, texId);
         return texId;
     }
@@ -287,7 +294,7 @@ int CPngPropertySheet::LoadPNGTexture(const char* pngPath)
         stbi_image_free(image);
     }
 
-    m_textureCache[pngPath] = texId;
+    m_textureCache.insert_or_assign(pngPath, texId);
     
     DevMsg("CPngPropertySheet: Loaded texture '%s' (%dx%d -> %dx%d) -> ID %d\n", pngPath, width, height, finalW, finalH, texId);
     
@@ -310,7 +317,7 @@ void CPngPropertySheet::AddPageWithPNGIcon( Panel *page, const char *title, cons
 			info.height = 16;
 			info.path = pngPath;
 
-			m_tabIcons[pageIndex] = info;
+			m_tabIcons.insert_or_assign(pageIndex, info);
 		}
 	}
 }
@@ -388,12 +395,14 @@ void CPngPropertySheet::PerformLayout()
 	}
 	for ( int idx : toRemove )
 	{
-		Panel *p = m_tabIconPanels[idx];
+		auto it = m_tabIconPanels.find(idx);
+		Panel *p = (it != m_tabIconPanels.end()) ? it->second : nullptr;
 		if ( p )
 		{
 			p->SetParent( (Panel *)NULL );
 			delete p;
 		}
+		
 		m_tabIconPanels.erase( idx );
 	}
 

@@ -1,3 +1,9 @@
+//========== Copyright (C) 2025, Team HL2SB++, All rights reserved. ===========//
+//
+// Purpose:
+//
+//===========================================================================//
+
 #ifndef SPAWNMENU_NEW
 #define SPAWNMENU_NEW
 #ifdef _WIN32
