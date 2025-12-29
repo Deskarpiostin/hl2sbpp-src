@@ -409,6 +409,13 @@ public:
 	virtual bool			IsRunning( void ) const	{ return false; } // bot support under cstrike (AR)
 #endif
 
+#ifdef HL2SB
+	bool					GetDrawPlayerModelExternally( void ) { return m_bDrawPlayerModelExternally; }
+	void					SetDrawPlayerModelExternally( bool bToggle ) { m_bDrawPlayerModelExternally.Set( bToggle ); }
+
+	CNetworkVar( bool, m_bDrawPlayerModelExternally );
+#endif
+
 	bool					HasPhysicsFlag( unsigned int flag ) { return (m_afPhysicsFlags & flag) != 0; }
 
 	// Weapon stuff

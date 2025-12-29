@@ -11,6 +11,12 @@
 #include "utldict.h"
 #include "multiplayer_animstate.h"
 #include "activitylist.h"
+#ifdef GAME_DLL
+#include "iservervehicle.h"
+#else
+#include "iclientvehicle.h"
+#define IServerVehicle IClientVehicle
+#endif
 
 #ifdef CLIENT_DLL
 #include "c_baseplayer.h"
@@ -869,6 +875,31 @@ bool CMultiPlayerAnimState::HandleSwimming( Activity &idealActivity )
 }
 
 //-----------------------------------------------------------------------------
+// Purpose: Vehicle Sit Animation
+// Input  : *idealActivity - 
+//-----------------------------------------------------------------------------
+bool CMultiPlayerAnimState::HandleVehicle(Activity& idealActivity)
+{
+	if (GetBasePlayer()->IsInAVehicle() && GetBasePlayer()->GetVehicle())
+	{
+		const char* classname = GetBasePlayer()->GetVehicle()->GetVehicleEnt()->GetClassname();
+
+		if (Q_stristr(classname, "jeep"))
+			idealActivity = ACT_DRIVE_JEEP;
+		else if (Q_stristr(classname, "airboat"))
+			idealActivity = ACT_DRIVE_AIRBOAT;
+		else if (Q_stristr(classname, "pod"))
+			idealActivity = ACT_DRIVE_POD;
+		else
+			idealActivity = ACT_HL2MP_SIT;
+
+		return true; // hack
+	}
+
+	return false;
+}
+
+//-----------------------------------------------------------------------------
 // Purpose: 
 // Input  : *idealActivity - 
 // Output : Returns true on success, false on failure.
@@ -929,6 +960,7 @@ Activity CMultiPlayerAnimState::CalcMainActivity()
 	if ( HandleJumping( idealActivity ) || 
 		HandleDucking( idealActivity ) || 
 		HandleSwimming( idealActivity ) || 
+		HandleVehicle( idealActivity ) ||
 		HandleDying( idealActivity ) )
 	{
 		// intentionally blank

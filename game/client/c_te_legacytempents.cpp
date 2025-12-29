@@ -2220,7 +2220,7 @@ void CTempEnts::PlaySound ( C_LocalTempEntity *pTemp, float damp )
 		}
 		break;
 
-#ifdef CSTRIKE_DLL || defined( HL2SB )
+#if defined( CSTRIKE_DLL ) || defined( HL2SB )
 
 		case TE_PISTOL_SHELL:
 		{

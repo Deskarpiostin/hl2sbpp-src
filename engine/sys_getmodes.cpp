@@ -10,7 +10,14 @@
 #include "SDL_syswm.h"
 #endif
 
+#if defined( _WIN32 ) && !defined( _X360 )
+#include "winlite.h"
+#elif defined(POSIX)
+typedef void *HDC;
+#endif
+
 #include "appframework/ilaunchermgr.h"
+
 #include "basetypes.h"
 #include "sysexternal.h"
 #include "cmd.h"
@@ -18,6 +25,7 @@
 #include "gl_matsysiface.h"
 #include "vmodes.h"
 #include "modes.h"
+#include "ivideomode.h"
 #include "igame.h"
 #include "iengine.h"
 #include "engine_launcher_api.h"
@@ -53,15 +61,11 @@
 #if !defined(NO_STEAM)
 #include "cl_steamauth.h"
 #endif
-#include "sys_getmodes.h"
 
 // memdbgon must be the last include file in a .cpp file!!!
 #include "tier0/memdbgon.h"
 
 //-----------------------------------------------------------------------------
-
-int startupStep = 0;
-const int totalSteps = 17;
 
 void CL_GetBackgroundLevelName(char *pszBackgroundName, int bufSize, bool bMapName);
 void ClientDLL_HudVidInit( void );
@@ -86,6 +90,139 @@ static void PFMWrite( float *pFloatImage, const char *pFilename, int width, int 
     }
     g_pFileSystem->Close( fp );
 }
+
+//-----------------------------------------------------------------------------
+// Purpose: Functionality shared by all video modes
+//-----------------------------------------------------------------------------
+class CVideoMode_Common : public IVideoMode
+{
+public:
+                        CVideoMode_Common( void );
+    virtual             ~CVideoMode_Common( void );
+
+    // Methods of IVideoMode
+    virtual bool        Init( );
+    virtual void        Shutdown( void );
+    virtual vmode_t     *GetMode( int num );
+    virtual int         GetModeCount( void );
+    virtual bool        IsWindowedMode( void ) const;
+    virtual void        UpdateWindowPosition( void );
+    virtual void        RestoreVideo( void );
+    virtual void        ReleaseVideo( void );
+    virtual void        DrawNullBackground( void *hdc, int w, int h );
+    virtual void        InvalidateWindow();
+    virtual void        DrawStartupGraphic();
+    virtual bool        CreateGameWindow( int nWidth, int nHeight, bool bWindowed );
+    virtual int         GetModeWidth( void ) const;
+    virtual int         GetModeHeight( void ) const;
+	virtual int			GetModeStereoWidth() const;
+	virtual int			GetModeStereoHeight() const;
+	virtual int			GetModeUIWidth() const  OVERRIDE;
+	virtual int			GetModeUIHeight() const OVERRIDE;
+    virtual const vrect_t &GetClientViewRect( ) const;
+    virtual void        SetClientViewRect( const vrect_t &viewRect );
+    virtual void        MarkClientViewRectDirty();
+    virtual void        TakeSnapshotTGA( const char *pFileName );
+    virtual void        TakeSnapshotTGARect( const char *pFilename, int x, int y, int w, int h, int resampleWidth, int resampleHeight, bool bPFM, CubeMapFaceIndex_t faceIndex );
+    virtual void        WriteMovieFrame( const MovieInfo_t& info );
+    virtual void        TakeSnapshotJPEG( const char *pFileName, int quality );
+    virtual bool        TakeSnapshotJPEGToBuffer( CUtlBuffer& buf, int quality );
+protected:
+    bool                GetInitialized( ) const;
+    void                SetInitialized( bool init );
+    void                AdjustWindow( int nWidth, int nHeight, int nBPP, bool bWindowed );
+    void                ResetCurrentModeForNewResolution( int width, int height, bool bWindowed );
+    int                 GetModeBPP( ) const { return 32; }
+    void                DrawStartupVideo();
+    void                ComputeStartupGraphicName( char *pBuf, int nBufLen );
+	void				WriteScreenshotToSteam( uint8 *pImage, int cubImage, int width, int height );
+	void				AddScreenshotToSteam( const char *pchFilenameJpeg, int width, int height );
+#if !defined(NO_STEAM)
+	void				ApplySteamScreenshotTags( ScreenshotHandle hScreenshot );
+#endif
+
+    // Finds the video mode in the list of video modes 
+    int                 FindVideoMode( int nDesiredWidth, int nDesiredHeight, bool bWindowed );
+
+    // Purpose: Returns the optimal refresh rate for the specified mode
+    int                 GetRefreshRateForMode( const vmode_t *pMode );
+
+    // Inline accessors
+    vmode_t&            DefaultVideoMode();
+    vmode_t&            RequestedWindowVideoMode();
+
+private:
+    // Purpose: Loads the startup graphic
+    void                SetupStartupGraphic();
+    void                CenterEngineWindow(void *hWndCenter, int width, int height);
+    void                DrawStartupGraphic( HWND window );
+    void                BlitGraphicToHDC(HDC hdc, byte *rgba, int imageWidth, int imageHeight, int x0, int y0, int x1, int y1);
+    void                BlitGraphicToHDCWithAlpha(HDC hdc, byte *rgba, int imageWidth, int imageHeight, int x0, int y0, int x1, int y1);
+    IVTFTexture         *LoadVTF( CUtlBuffer &temp, const char *szFileName );
+    void                RecomputeClientViewRect();
+
+    // Overridden by derived classes
+    virtual void        ReleaseFullScreen( void );
+    virtual void        ChangeDisplaySettingsToFullscreen( int nWidth, int nHeight, int nBPP );
+    virtual void        ReadScreenPixels( int x, int y, int w, int h, void *pBuffer, ImageFormat format );
+
+    // PFM screenshot methods
+    ITexture *GetBuildCubemaps16BitTexture( void );
+    ITexture *GetFullFrameFB0( void );
+
+    void BlitHiLoScreenBuffersTo16Bit( void );
+    void TakeSnapshotPFMRect( const char *pFilename, int x, int y, int w, int h, int resampleWidth, int resampleHeight, CubeMapFaceIndex_t faceIndex );
+
+protected:
+    enum
+    {
+#if !defined( _X360 )
+        MAX_MODE_LIST = 512
+#else
+        MAX_MODE_LIST = 2
+#endif
+    };
+
+    enum
+    {
+        VIDEO_MODE_DEFAULT = -1,
+        VIDEO_MODE_REQUESTED_WINDOW_SIZE = -2,
+        CUSTOM_VIDEO_MODES = 2
+    };
+
+    // Master mode list
+    int                 m_nNumModes;
+    vmode_t             m_rgModeList[MAX_MODE_LIST];
+    vmode_t             m_nCustomModeList[CUSTOM_VIDEO_MODES];
+    bool                m_bInitialized;
+    bool                m_bPlayedStartupVideo;
+
+    // Renderable surface information
+    int                 m_nModeWidth;
+    int                 m_nModeHeight;
+    int                 m_nStereoWidth;
+    int                 m_nStereoHeight;
+    int                 m_nUIWidth;
+    int                 m_nUIHeight;
+	int					m_nVROverrideX;
+	int					m_nVROverrideY;
+#if defined( USE_SDL )
+	int					m_nRenderWidth;
+	int					m_nRenderHeight;
+#endif
+    bool                m_bWindowed;
+    bool                m_bSetModeOnce;
+	bool				m_bVROverride;
+
+    // Client view rectangle
+    vrect_t             m_ClientViewRect;
+    bool                m_bClientViewRectDirty;
+
+    // loading image
+    IVTFTexture         *m_pBackgroundTexture;
+    IVTFTexture         *m_pLoadingTexture;
+};
+
 
 //-----------------------------------------------------------------------------
 // Inline accessors
@@ -120,7 +257,8 @@ CVideoMode_Common::CVideoMode_Common( void )
     RequestedWindowVideoMode().refreshRate = 0;
     
     m_bClientViewRectDirty = false;
-    m_pHL2SBPPLogo   = NULL;
+    m_pBackgroundTexture   = NULL;
+    m_pLoadingTexture      = NULL;
     m_bWindowed            = false;
     m_nModeWidth           = IsPC() ? 1024 : 640;
     m_nModeHeight          = IsPC() ? 768 : 480;
@@ -645,14 +783,47 @@ void CVideoMode_Common::SetupStartupGraphic()
 {
     COM_TimestampedLog( "CVideoMode_Common::Init  SetupStartupGraphic" );
 
+    char szBackgroundName[_MAX_PATH];
+    CL_GetBackgroundLevelName( szBackgroundName, sizeof(szBackgroundName), false );
+
     // get the image to load
+    char material[_MAX_PATH];
     CUtlBuffer buf;
+
+    float aspectRatio = (float)GetModeWidth() / GetModeHeight();
+    if ( aspectRatio >= 1.6f )
+    {
+        // use the widescreen version
+        Q_snprintf( material, sizeof(material), 
+            "materials/console/%s_widescreen.vtf", szBackgroundName );
+    }
+    else
+    {
+        Q_snprintf( material, sizeof(material), 
+            "materials/console/%s.vtf", szBackgroundName );
+    }
+
+    // load in the background vtf
+	buf.Clear();
+    m_pBackgroundTexture = LoadVTF( buf, material );
+    if ( !m_pBackgroundTexture )
+    {
+        // fallback to opening just the default background
+        m_pBackgroundTexture = LoadVTF( buf, ( aspectRatio >= 1.6f ) ? "materials/console/background01_widescreen.vtf" : "materials/console/background01.vtf" );
+        if ( !m_pBackgroundTexture )
+        {
+            Error( "Can't find background image '%s'\n", material );
+            return;
+        }
+    }
 
     // loading.vtf
 	buf.Clear();	// added this Clear() because we saw cases where LoadVTF was not emptying the buf fully in the above section
-    const char* loading = "materials/vgui/hl2sbpp.vtf";
-    m_pHL2SBPPLogo = LoadVTF( buf, loading );
-    if ( !m_pHL2SBPPLogo )
+    const char* loading = "materials/console/startup_loading.vtf";
+    if ( IsSteamDeck() )
+        loading = "materials/gamepadui/game_logo.vtf";
+    m_pLoadingTexture = LoadVTF( buf, loading );
+    if ( !m_pLoadingTexture )
     {
         Error( "Can't find background image '%s'\n", loading );
         return;
@@ -678,7 +849,6 @@ void CVideoMode_Common::DrawStartupVideo()
     }
 }
 
-static inline float clampf( float v, float a, float b ) { return (v < a) ? a : (v > b) ? b : v; }
 
 //-----------------------------------------------------------------------------
 // Purpose: Renders the startup graphic into the HWND
@@ -688,73 +858,143 @@ void CVideoMode_Common::DrawStartupGraphic()
     if ( IsX360() )
         return;
 
+	char debugstartup = CommandLine()->FindParm("-debugstartupscreen");
+
     SetupStartupGraphic();
 
-    if ( !m_pHL2SBPPLogo )
+    if ( !m_pBackgroundTexture || !m_pLoadingTexture )
         return;
 
     CMatRenderContextPtr pRenderContext( g_pMaterialSystem );
 
-    int w = GetModeStereoWidth();
-    int h = GetModeStereoHeight();
+    char pStartupGraphicName[MAX_PATH];
+    ComputeStartupGraphicName( pStartupGraphicName, sizeof(pStartupGraphicName) );
 
-    pRenderContext->Viewport( 0, 0, w, h );
-    pRenderContext->DepthRange( 0, 1 );
-    pRenderContext->SetToneMappingScaleLinear( Vector(1,1,1) );
+	if(debugstartup)
+	{
+		// slam the startup graphic name for sanity - take your pick
+		strcpy( pStartupGraphicName, "materials/console/background01.vtf");
+		//strcpy( pStartupGraphicName, "materials/console/testramp.vtf");
+	}
+	
+    // Allocate a white material
+    KeyValues *pVMTKeyValues = new KeyValues( "UnlitGeneric" );
+    pVMTKeyValues->SetString( "$basetexture", pStartupGraphicName + 10 );
+    pVMTKeyValues->SetInt( "$ignorez", 1 );
+    pVMTKeyValues->SetInt( "$nofog", 1 );
+    pVMTKeyValues->SetInt( "$no_fullbright", 1 );
+    pVMTKeyValues->SetInt( "$nocull", 1 );
+    IMaterial *pMaterial = g_pMaterialSystem->CreateMaterial( "__background", pVMTKeyValues );
 
-    pRenderContext->ClearColor3ub( 68, 138, 201 );
-    pRenderContext->ClearBuffers( true, true, true );
+    const char* loading = "console/startup_loading.vtf";
+    if ( IsSteamDeck() )
+        loading = "gamepadui/game_logo.vtf";
 
-	KeyValues* pLogoKeyValues = new KeyValues("UnlitGeneric");
-	pLogoKeyValues->SetString("$basetexture", "vgui/hl2sbpp");
-    pLogoKeyValues->SetInt( "$translucent", 1 );
-    pLogoKeyValues->SetInt( "$ignorez", 1 );
-    pLogoKeyValues->SetInt( "$nofog", 1 );
-    pLogoKeyValues->SetInt( "$no_fullbright", 1 );
-    pLogoKeyValues->SetInt( "$nocull", 1 );
-	IMaterial* pLogoMaterial = g_pMaterialSystem->CreateMaterial("__startup_logo", pLogoKeyValues);
-	pLogoMaterial->AlphaModulate(1.0f);
-
-    int lw = m_pHL2SBPPLogo->Width();
-    int lh = m_pHL2SBPPLogo->Height();
-
-	float depth = 0.5f;
-	int logoX = (w - lw) / 2;
-	int logoY = (h - lh) / 5;
-	DrawScreenSpaceRectangle( pLogoMaterial, logoX, logoY, lw, lh, 0, 0, lw-1, lh-1, lw, lh, NULL, 1, 1, depth );
-
-    KeyValues* pVMTKeyValues = new KeyValues( "UnlitGeneric" );
-    pVMTKeyValues->SetString( "$basetexture", "vgui/white" ); // 1x1 white
+    pVMTKeyValues = new KeyValues( "UnlitGeneric" );
+    pVMTKeyValues->SetString( "$basetexture", loading );
     pVMTKeyValues->SetInt( "$translucent", 1 );
     pVMTKeyValues->SetInt( "$ignorez", 1 );
     pVMTKeyValues->SetInt( "$nofog", 1 );
     pVMTKeyValues->SetInt( "$no_fullbright", 1 );
     pVMTKeyValues->SetInt( "$nocull", 1 );
-    IMaterial* pBarMaterial = g_pMaterialSystem->CreateMaterial( "__startup_bar", pVMTKeyValues );
+    IMaterial *pLoadingMaterial = g_pMaterialSystem->CreateMaterial( "__loading", pVMTKeyValues );
 
-    const int barH = max( 2, (int)( h * 0.03f ) );
-    const int barX = w / 4;
-    const int barW = w / 2;
-    const int barY = h - (barH * 6);
+    int w = GetModeStereoWidth();
+    int h = GetModeStereoHeight();
+    int tw = m_pBackgroundTexture->Width();
+    int th = m_pBackgroundTexture->Height();
+    int lw = m_pLoadingTexture->Width();
+    int lh = m_pLoadingTexture->Height();
 
-    float progress = clampf( (float)startupStep / (float)totalSteps, 0.0f, 1.0f );
+	if (debugstartup)
+	{
+		for ( int repeat = 0; repeat<100000; repeat++)
+		{
+			pRenderContext->Viewport( 0, 0, w, h );
+			pRenderContext->DepthRange( 0, 1 );
+			pRenderContext->ClearColor3ub( 0, (repeat & 0x7) << 3, 0 );
+			pRenderContext->ClearBuffers( true, true, true );
+			pRenderContext->SetToneMappingScaleLinear( Vector(1,1,1) );
 
-    pBarMaterial->ColorModulate( 0.75f, 0.75f, 0.75f );
-    pBarMaterial->AlphaModulate( 1.0f );
-    DrawScreenSpaceRectangle( pBarMaterial, barX, barY, barW, barH, 0, 0, 1, 1, 1, 1, NULL, 1, 1, 0.5f );
+			if(1)	// draw normal BK
+			{
+				float depth = 0.55f;
+				int slide = (repeat) % 200;	// 100 down and 100 up
+				if (slide > 100)
+				{
+					slide = 200-slide;		// aka 100-(slide-100).
+				}
+				
+				// stop sliding about
+				slide = 0;
+				
+				DrawScreenSpaceRectangle( pMaterial, 0, 0+slide, w, h-50, 0, 0, tw-1, th-1, tw, th, NULL,1,1,depth );
+                if ( !IsSteamDeck() )
+                    DrawScreenSpaceRectangle( pLoadingMaterial, w-lw, h-lh+slide/2, lw, lh, 0, 0, lw-1, lh-1, lw, lh, NULL,1,1,depth-0.1 );
+                else
+                    // TODO: Steam Deck
+                    DrawScreenSpaceRectangle( pLoadingMaterial, w-lw, h-lh+slide/2, lw, lh, 0, 0, lw-1, lh-1, lw, lh, NULL,1,1,depth-0.1 );
+			}
 
-    int filledW = (int)( barW * progress );
-    if ( filledW > 0 )
-    {
-        pBarMaterial->ColorModulate( 0.0f, 0.8f, 0.0f );
-        pBarMaterial->AlphaModulate( 1.0f );
-        DrawScreenSpaceRectangle( pBarMaterial, barX + 3, barY + 3, filledW - 6, barH - 6, 0, 0, 1, 1, 1, 1, NULL, 1, 1, 0.49f );
-    }
+			if(0)
+			{
+					// draw a grid too
+				int grid_size = 8;
+				float depthacc = 0.0;
+				float depthinc = 1.0 / (float)((grid_size * grid_size)+1);
+				
+				for( int x = 0; x<grid_size; x++)
+				{
+					float cornerx = ((float)x) * 20.0f;
+					
+					for( int y=0; y<grid_size; y++)
+					{
+						float cornery = ((float)y) * 20.0f;
 
-    g_pMaterialSystem->SwapBuffers();
+						//if (! ((x^y) & 1) )
+						{
+							DrawScreenSpaceRectangle( pMaterial, 10.0f+cornerx,10.0f+ cornery, 15, 15, 0, 0, tw-1, th-1, tw, th, NULL,1,1, depthacc );
+						}
+						
+						depthacc += depthinc;
+					}
+				}
+			}
 
-    pBarMaterial->Release();
-	pLogoMaterial->Release();
+			g_pMaterialSystem->SwapBuffers();			
+		}
+	}
+	else
+	{
+		pRenderContext->Viewport( 0, 0, w, h );
+		pRenderContext->DepthRange( 0, 1 );
+		pRenderContext->SetToneMappingScaleLinear( Vector(1,1,1) );
+		
+		float depth = 0.5f;
+
+		// Make sure we clear both front & back buffer.
+		for (int i = 0; i < 2; ++i)
+		{
+			pRenderContext->ClearColor3ub( 0, 0, 0 );
+			pRenderContext->ClearBuffers( true, true, true );
+			DrawScreenSpaceRectangle( pMaterial, 0, 0, w, h, 0, 0, tw-1, th-1, tw, th, NULL,1,1,depth );
+			DrawScreenSpaceRectangle( pLoadingMaterial, w-lw, h-lh, lw, lh, 0, 0, lw-1, lh-1, lw, lh, NULL,1,1,depth );
+			g_pMaterialSystem->SwapBuffers();
+		}
+	}
+
+#ifdef DX_TO_GL_ABSTRACTION
+	g_pMaterialSystem->DoStartupShaderPreloading();
+#endif
+
+    pMaterial->Release();
+    pLoadingMaterial->Release();
+
+    // release graphics
+    DestroyVTFTexture( m_pBackgroundTexture );
+    m_pBackgroundTexture = NULL;
+    DestroyVTFTexture( m_pLoadingTexture );
+    m_pLoadingTexture = NULL;
 }
 
 //-----------------------------------------------------------------------------
@@ -1997,6 +2237,37 @@ void CVideoMode_Common::TakeSnapshotJPEG( const char *pFilename, int quality )
     Assert( 0 );
 #endif
 }
+
+//-----------------------------------------------------------------------------
+// The version of the VideoMode class for the material system 
+//-----------------------------------------------------------------------------
+class CVideoMode_MaterialSystem: public CVideoMode_Common
+{
+public:
+    typedef CVideoMode_Common BaseClass;
+    
+    CVideoMode_MaterialSystem( );
+
+    virtual bool        Init( );
+    virtual void        Shutdown( void );
+    virtual void        SetGameWindow( void *hWnd );
+    virtual bool        SetMode( int nWidth, int nHeight, bool bWindowed );
+    virtual void        ReleaseVideo( void );
+    virtual void        RestoreVideo( void );
+    virtual void        AdjustForModeChange( void );
+    virtual void        ReadScreenPixels( int x, int y, int w, int h, void *pBuffer, ImageFormat format );
+
+private:
+    virtual void        ReleaseFullScreen( void );
+    virtual void        ChangeDisplaySettingsToFullscreen( int nWidth, int nHeight, int nBPP );
+
+#ifdef WIN32
+	int m_nLastCDSWidth;
+	int m_nLastCDSHeight;
+	int m_nLastCDSBPP;
+	int m_nLastCDSFreq;
+#endif
+};
 
 static void VideoMode_AdjustForModeChange( void )
 {

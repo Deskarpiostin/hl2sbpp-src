@@ -454,6 +454,22 @@ void CMapLoadHelper::Init( model_t *pMapModel, const char *loadname )
 	}
 
 	g_pFileSystem->Read( &s_MapHeader, sizeof( dheader_t ), s_MapFileHandle );
+
+	if (s_MapHeader.ident == 30)
+	{
+		hl_BSPHeader_t hlHeader;
+		memcpy(&hlHeader, &s_MapHeader, sizeof(hl_BSPHeader_t));
+		memset(&s_MapHeader, 0, sizeof(dheader_t));
+		for (int i = 0; i < 15; i++)
+		{
+			s_MapHeader.lumps[i].fileofs = hlHeader.lumps[i].fileofs;
+			s_MapHeader.lumps[i].filelen = hlHeader.lumps[i].filelen;
+		}
+
+		s_MapHeader.version = 10;
+		s_MapHeader.ident = IDBSPHEADER;
+	}
+
 	if ( s_MapHeader.ident != IDBSPHEADER )
 	{
 		g_pFileSystem->Close( s_MapFileHandle );
@@ -563,6 +579,11 @@ void CMapLoadHelper::InitFromMemory( model_t *pMapModel, const void *pData, int 
 	s_MapBuffer.SetExternalBuffer( (void *)pData, nDataSize, nDataSize );
 
 	V_memcpy( &s_MapHeader, pData, sizeof( dheader_t ) );
+	if (s_MapHeader.ident == 30)
+	{
+		Warning("Warning: You have loaded a Half-Life 1 map, expect issues");
+		return;
+	}
 
 	if ( s_MapHeader.ident != IDBSPHEADER )
 	{
@@ -5469,6 +5490,11 @@ bool CModelLoader::Map_IsValid( char const *pMapFile, bool bQuiet /* = false */ 
 		memset( &header, 0, sizeof( header ) );
 		g_pFileSystem->Read( &header, sizeof( dheader_t ), mapfile );
 		g_pFileSystem->Close( mapfile );
+		if (s_MapHeader.ident == 30)
+		{
+			Warning("Warning: You have loaded a Half-Life 1 map, expect issues");
+			return true;
+		}
 
 		if ( header.ident == IDBSPHEADER )
 		{

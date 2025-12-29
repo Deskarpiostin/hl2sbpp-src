@@ -196,12 +196,13 @@ public:
 	CUtlVector<int> m_BackgroundTextureIDs;
 	CUtlVector<CUtlString> m_BackgroundFiles;
 	int m_iCurrentBackground = 0;
-	float m_flNextBackgroundSwitch = 0.0f;
-	float m_flFadeDuration = 2.0f;
+	float m_flNextBackgroundSwitch = 0.f;
+	float m_flFadeDuration = 2.f;
 	float m_flZoomAmount = 0.15f;
-	float m_flCurrentZoom = 0.0f;
+	float m_flCurrentZoom = 0.f;
 	float m_flZoomSpeed = 0.001f;
 	int m_maxLoadedBackgrounds = 2;
+	float m_flRotationAmount = 5.f;
 
 	void DestroyBackgroundTexture(int index);
 	void EnsureBackgroundTextureLoaded(int index);

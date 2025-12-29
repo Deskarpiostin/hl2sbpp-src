@@ -29,6 +29,7 @@ static bool PushTableFromRef(lua_State *L, int ref)
     return true;
 }
 
+
 static bool GetFieldRemoveTable(lua_State *L, const char *key)
 {
     if (!lua_istable(L, -1))
@@ -36,19 +37,16 @@ static bool GetFieldRemoveTable(lua_State *L, const char *key)
         lua_pop(L, 1);
         return false;
     }
-
-    lua_getfield(L, -1, key); // push table[key]
-
-    if (lua_istable(L, -2))
+    
+    lua_getfield(L, -1, key); // table[key]
+    
+    if (lua_isnil(L, -1))
     {
-        lua_remove(L, -2);
-    }
-    else
-    {
-        lua_pop(L, 1);
+        lua_pop(L, 2);
         return false;
     }
 
+    lua_remove(L, -2);
     return true;
 }
 #endif

@@ -1428,6 +1428,10 @@ int CWeaponPhysicsGun::DrawModel( int flags )
 		if ( !pOwner )
 			return 0;
 
+		// hack
+		if ( pOwner->InPerspectiveView() && pOwner->InFirstPersonView() )
+			return 0;
+
 		Vector points[3];
 		QAngle tmpAngle;
 		GetAttachment( 1, points[0], tmpAngle );
@@ -1499,37 +1503,40 @@ int CWeaponPhysicsGun::DrawModel( int flags )
 
 		if ( pObject )
 		{
-			IPhysicsObject *pPhys = m_pGrabbedPhys ? m_pGrabbedPhys : GetPhysObjFromPhysicsBone( pObject, m_physicsBone );
-
-			if ( pPhys )
+			if ( pObject->IsNPC() )
 			{
-				//if ( pModel->m_pRagdoll )
-				const char *className = pObject->GetClassname();
-				if ( FStrEq( className, "class C_ServerRagdoll" ) )
-				{
-					points[2] = m_targetPosition;
-				}
-				else if ( pObject->IsNPC() )
-				{
-					points[2] = pObject->GetAbsOrigin();
-				}
-				else
-				{
-					Vector worldGrabPos;
-					pPhys->LocalToWorld( &worldGrabPos, m_worldPosition );
-
-					static Vector s_prevGrabPos = worldGrabPos;
-					const float	  lerpFactor = 0.45f;
-					points[2] = s_prevGrabPos * ( 1.0f - lerpFactor ) + worldGrabPos * lerpFactor;
-					s_prevGrabPos = points[2];
-				}
+				points[2] = pObject->GetAbsOrigin();
 			}
 			else
 			{
-				C_BaseAnimating *pModel = pObject->GetBaseAnimating();
-				if ( pModel )
+				IPhysicsObject *pPhys = m_pGrabbedPhys ? m_pGrabbedPhys : GetPhysObjFromPhysicsBone( pObject, m_physicsBone );
+
+				if ( pPhys )
 				{
-					points[2] = m_targetPosition;
+					//if ( pModel->m_pRagdoll )
+					const char *className = pObject->GetClassname();
+					if ( FStrEq( className, "class C_ServerRagdoll" ) )
+					{
+						points[2] = m_targetPosition;
+					}
+					else
+					{
+						Vector worldGrabPos;
+						pPhys->LocalToWorld( &worldGrabPos, m_worldPosition );
+
+						static Vector s_prevGrabPos = worldGrabPos;
+						const float	  lerpFactor = 0.45f;
+						points[2] = s_prevGrabPos * ( 1.0f - lerpFactor ) + worldGrabPos * lerpFactor;
+						s_prevGrabPos = points[2];
+					}
+				}
+				else
+				{
+					C_BaseAnimating *pModel = pObject->GetBaseAnimating();
+					if ( pModel )
+					{
+						points[2] = m_targetPosition;
+					}
 				}
 			}
 		}
@@ -1656,37 +1663,40 @@ void CWeaponPhysicsGun::ViewModelDrawn( C_BaseViewModel *pBaseViewModel )
 
 	if ( pObject )
 	{
-		IPhysicsObject *pPhys = m_pGrabbedPhys ? m_pGrabbedPhys : GetPhysObjFromPhysicsBone( pObject, m_physicsBone );
-
-		if ( pPhys )
+		if ( pObject->IsNPC() )
 		{
-			//if ( pModel->m_pRagdoll )
-			const char *className = pObject->GetClassname();
-			if ( FStrEq( className, "class C_ServerRagdoll" ) )
-			{
-				points[2] = m_targetPosition;
-			}
-				else if ( pObject->IsNPC() )
-				{
-					points[2] = pObject->GetAbsOrigin();
-				}
-			else
-			{
-				Vector worldGrabPos;
-				pPhys->LocalToWorld( &worldGrabPos, m_worldPosition );
-
-				static Vector s_prevGrabPos = worldGrabPos;
-				const float	  lerpFactor = 0.45f;
-				points[2] = s_prevGrabPos * ( 1.0f - lerpFactor ) + worldGrabPos * lerpFactor;
-				s_prevGrabPos = points[2];
-			}
+			points[2] = pObject->GetAbsOrigin();
 		}
 		else
 		{
-			C_BaseAnimating *pModel = pObject->GetBaseAnimating();
-			if ( pModel )
+			IPhysicsObject *pPhys = m_pGrabbedPhys ? m_pGrabbedPhys : GetPhysObjFromPhysicsBone( pObject, m_physicsBone );
+
+			if ( pPhys )
 			{
-				points[2] = m_targetPosition;
+				//if ( pModel->m_pRagdoll )
+				const char *className = pObject->GetClassname();
+				if ( FStrEq( className, "class C_ServerRagdoll" ) )
+				{
+					points[2] = m_targetPosition;
+				}
+				else
+				{
+					Vector worldGrabPos;
+					pPhys->LocalToWorld( &worldGrabPos, m_worldPosition );
+
+					static Vector s_prevGrabPos = worldGrabPos;
+					const float	  lerpFactor = 0.45f;
+					points[2] = s_prevGrabPos * ( 1.0f - lerpFactor ) + worldGrabPos * lerpFactor;
+					s_prevGrabPos = points[2];
+				}
+			}
+			else
+			{
+				C_BaseAnimating *pModel = pObject->GetBaseAnimating();
+				if ( pModel )
+				{
+					points[2] = m_targetPosition;
+				}
 			}
 		}
 	}

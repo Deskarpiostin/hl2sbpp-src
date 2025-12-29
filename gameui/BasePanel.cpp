@@ -1407,73 +1407,6 @@ void CBasePanel::OnLevelLoadingFinished()
 	}
 }
 
-struct ChangelogData
-{
-    CUtlString title;
-    CUtlString description;
-    CUtlString imagePath;
-    int textureID = -1;
-};
-
-ChangelogData g_Changelog;
-
-static void DrawChangelog(int wide, int tall, int alpha)
-{
-    if (g_Changelog.textureID < 0)
-        return;
-
-    int imgW = 512;
-    int imgH = 256;
-    int padding = 20;
-    int shadowOffset = 5;
-
-    int imgX = wide - imgW - padding;
-    int imgY = padding;
-
-    surface()->DrawSetTexture(g_Changelog.textureID);
-    surface()->DrawSetColor(0, 0, 0, alpha / 2);
-    surface()->DrawTexturedRect(imgX + shadowOffset, imgY + shadowOffset, imgX + imgW + shadowOffset, imgY + imgH + shadowOffset);
-
-    surface()->DrawSetTexture(g_Changelog.textureID);
-    surface()->DrawSetColor(255, 255, 255, alpha);
-    surface()->DrawTexturedRect(imgX, imgY, imgX + imgW, imgY + imgH);
-
-    IScheme* pScheme = vgui::scheme()->GetIScheme(vgui::scheme()->GetScheme("SourceScheme"));
-    HFont hTitleFont = pScheme->GetFont("DefaultLarge");
-
-    wchar_t wTitle[256];
-    g_pVGuiLocalize->ConvertANSIToUnicode(g_Changelog.title, wTitle, sizeof(wTitle));
-
-    int titleX = (imgX + padding) * 1.5;
-    int titleY = imgY + imgH - padding - 40;
-
-    surface()->DrawSetTextFont(hTitleFont);
-    surface()->DrawSetTextColor(0, 0, 0, alpha);
-    surface()->DrawSetTextPos(titleX + 2, titleY + 2);
-    surface()->DrawPrintText(wTitle, wcslen(wTitle));
-
-    surface()->DrawSetTextColor(255, 255, 255, alpha);
-    surface()->DrawSetTextPos(titleX, titleY);
-    surface()->DrawPrintText(wTitle, wcslen(wTitle));
-
-    HFont hDescFont = pScheme->GetFont("Default");
-    surface()->DrawSetTextFont(hDescFont);
-
-    wchar_t wDesc[512];
-    g_pVGuiLocalize->ConvertANSIToUnicode(g_Changelog.description, wDesc, sizeof(wDesc));
-
-    int descX = titleX / 1.4;
-    int descY = titleY + 30;
-
-    surface()->DrawSetTextColor(0, 0, 0, alpha);
-    surface()->DrawSetTextPos(descX + 1, descY + 1);
-    surface()->DrawPrintText(wDesc, wcslen(wDesc));
-
-    surface()->DrawSetTextColor(200, 200, 200, alpha);
-    surface()->DrawSetTextPos(descX, descY);
-    surface()->DrawPrintText(wDesc, wcslen(wDesc));
-}
-
 //-----------------------------------------------------------------------------
 // Draws the background image.
 //-----------------------------------------------------------------------------
@@ -1517,7 +1450,6 @@ void CBasePanel::DrawBackgroundImage()
 		return;
 
 	const float switchInterval = 10.0f;
-
 	int count = m_BackgroundTextureIDs.Count();
 	int iNextBackground = (m_iCurrentBackground + 1) % count;
 
@@ -1567,18 +1499,68 @@ void CBasePanel::DrawBackgroundImage()
 		zoom = peakZoom * (1.0f - tf) + 1.0f * tf;
 	}
 
+	// and rotation
+	float rotation = 0.0f;
+	float peakRotation = m_flRotationAmount; 
+
+	if ( frametime < fadeStart )
+	{
+		float pg = (frametime - lastSwitchTime) / growDur;
+		pg = clamp(pg, 0.0f, 1.0f);
+		float pg_eased = pg * pg * pg * (pg * (pg * 6 - 15) + 10);
+		rotation = peakRotation * pg_eased;
+	}
+	else
+	{
+		float tf = (frametime - fadeStart) / fadeDuration;
+		tf = clamp(tf, 0.0f, 1.0f);
+		rotation = peakRotation * (1.0f - tf);
+	}
+
 	int wZoomed = (int)(wide * zoom);
 	int hZoomed = (int)(tall * zoom);
-	int xOff = (wide - wZoomed) / 2;
-	int yOff = (tall - hZoomed) / 2;
 
+	// rot to rad
+	float rotRad = rotation * (M_PI / 180.0f);
+	float cosR = cos(rotRad);
+	float sinR = sin(rotRad);
+
+	float centerX = wide / 2.0f;
+	float centerY = tall / 2.0f;
+
+	float halfW = wZoomed / 2.0f;
+	float halfH = hZoomed / 2.0f;
+
+	Vector2D corners[4];
+	corners[0] = Vector2D(-halfW, -halfH); // tl
+	corners[1] = Vector2D(halfW, -halfH);  // tr
+	corners[2] = Vector2D(halfW, halfH);   // br
+	corners[3] = Vector2D(-halfW, halfH);  // bl
+
+	vgui::Vertex_t verts[4];
+	for (int i = 0; i < 4; i++)
+	{
+		float x = corners[i].x;
+		float y = corners[i].y;
+
+		float rotX = x * cosR - y * sinR;
+		float rotY = x * sinR + y * cosR;
+
+		verts[i].m_Position.x = centerX + rotX;
+		verts[i].m_Position.y = centerY + rotY;
+
+		verts[i].m_TexCoord.x = (i == 1 || i == 2) ? 1.0f : 0.0f;
+		verts[i].m_TexCoord.y = (i == 2 || i == 3) ? 1.0f : 0.0f;
+	}
+
+	// and finally draw
 	int texIDCurr = m_BackgroundTextureIDs[m_iCurrentBackground];
 	if ( texIDCurr >= 0 )
 	{
 		surface()->DrawSetTexture(texIDCurr);
 		int alphaCurr = (int)(255.0f * (1.0f - fade));
 		surface()->DrawSetColor(128, 128, 128, alphaCurr);
-		surface()->DrawTexturedRect(xOff, yOff, xOff + wZoomed, yOff + hZoomed);
+		surface()->DrawTexturedPolygon(4, verts);
 	}
 
 	if ( fade > 0.0f && count > 1 )
@@ -1589,10 +1571,9 @@ void CBasePanel::DrawBackgroundImage()
 			surface()->DrawSetTexture(texIDNext);
 			int alphaNext = (int)(255.0f * fade);
 			surface()->DrawSetColor(128, 128, 128, alphaNext);
-			surface()->DrawTexturedRect(xOff, yOff, xOff + wZoomed, yOff + hZoomed);
+			surface()->DrawTexturedPolygon(4, verts);
 		}
 	}
-	// end bg
 
 	if ( IsX360() && m_ExitingFrameCount )
 	{
@@ -1641,9 +1622,6 @@ void CBasePanel::DrawBackgroundImage()
 			}
 		}
 	}
-
-	// fixme: maybe put this in a different place?
-    DrawChangelog(wide, tall, alpha);
 }
 
 //-----------------------------------------------------------------------------
@@ -2090,6 +2068,23 @@ void CBasePanel::LoadBackgroundImages()
     }
     g_pFullFileSystem->FindClose(findHandle);
 
+	// shuffle
+    if (m_BackgroundFiles.Count() > 1)
+    {
+        for (int i = m_BackgroundFiles.Count() - 1; i > 0; --i)
+        {
+            int j = RandomInt(0, i);
+
+            CUtlString tempFile = m_BackgroundFiles[i];
+            m_BackgroundFiles[i] = m_BackgroundFiles[j];
+            m_BackgroundFiles[j] = tempFile;
+
+            int tempID = m_BackgroundTextureIDs[i];
+            m_BackgroundTextureIDs[i] = m_BackgroundTextureIDs[j];
+            m_BackgroundTextureIDs[j] = tempID;
+        }
+    }
+
     m_iCurrentBackground = 0;
     m_flNextBackgroundSwitch = engine->Time() + 10.0f;
 
@@ -2098,22 +2093,7 @@ void CBasePanel::LoadBackgroundImages()
     if (m_BackgroundFiles.Count() > 1)
         EnsureBackgroundTextureLoaded((m_iCurrentBackground + 1) % m_BackgroundFiles.Count());
 
-    DevMsg("Discovered %d background image files (textures loaded on demand)\n", m_BackgroundFiles.Count());
-
-	/// fixme: put this in a different place maybe?
-    KeyValues* pKV = new KeyValues("Changelog");
-    if (pKV->LoadFromFile(g_pFullFileSystem, "scripts/changelog.txt", "MOD"))
-    {
-        g_Changelog.title = pKV->GetString("Title", "No Title");
-        g_Changelog.description = pKV->GetString("Description", "No Description");
-        g_Changelog.imagePath = pKV->GetString("Image", "");
-
-        if (!g_Changelog.imagePath.IsEmpty())
-        {
-            g_Changelog.textureID = LoadImageAsTexture(g_Changelog.imagePath);
-        }
-    }
-    pKV->deleteThis();
+    DevMsg("Discovered %d background image files\n", m_BackgroundFiles.Count());
 }
 
 const int MAX_BG_TEXTURE_SIZE = 2048;
