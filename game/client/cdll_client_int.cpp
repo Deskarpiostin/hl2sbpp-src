@@ -178,12 +178,7 @@ extern vgui::IInputInternal *g_InputInternal;
 
 #ifdef HL2SB
 #include "sbpp/dynamicsky.h"
-/*
-#ifndef __ANDROID__
-#include "httplib.h"
-#endif
-*/
-#include <vgui_controls/MessageBox.h>
+#include "sbpp/gameui/loading.h"
 
 #ifdef _WIN32
 #undef MessageBox
@@ -1164,6 +1159,13 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 
 	vgui::VGui_InitMatSysInterfacesList( "ClientDLL", &appSystemFactory, 1 );
 
+#ifdef HL2SB
+	CLoadingScreen* loading = new CLoadingScreen();
+	loading->Initialize();
+
+	loading->UpdateState("Start", 0.1f);
+#endif
+
 #if defined ( LUA_SDK )
 	// Initialize the GameUI state
 	luasrc_init_gameui();
@@ -1171,6 +1173,10 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 	luasrc_dofolder( LGameUI, LUA_PATH_GAMEUI );
 	luasrc_dofolder( LGameUI, LUA_PATH_HANDMODELS );
 	luasrc_dofile( LGameUI, "lua/palm/cl_init.lua" );
+#endif
+
+#ifdef HL2SB
+	loading->UpdateState("Load Lua", 0.3f);
 #endif
 
 	// Add the client systems.	
@@ -1194,6 +1200,10 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 	IGameSystem::Add( CustomTextureToolCacheGameSystem() );
 	IGameSystem::Add( TFSharedContentManager() );
 	#endif
+
+#ifdef HL2SB
+	loading->UpdateState("Initialise Game Systems", 0.5f);
+#endif
 
 #if defined( TF_CLIENT_DLL )
 	if ( g_AbuseReportMgr != NULL )
@@ -1227,6 +1237,10 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 
 	view->Init();
 	vieweffects->Init();
+
+#ifdef HL2SB
+	loading->UpdateState("Finished!", 0.9f);
+#endif
 
 	C_BaseTempEntity::PrecacheTempEnts();
 
@@ -1270,6 +1284,10 @@ int CHLClient::Init( CreateInterfaceFn appSystemFactory, CreateInterfaceFn physi
 	static ConVar* skyname = cvar->FindVar( "sv_skyname" );
 	if ( skyname )
 		skyname->InstallChangeCallback( SvSkyChangeCallback );
+#endif
+
+#ifdef HL2SB
+	loading->Shutdown();
 #endif
 
 	return true;
@@ -1365,48 +1383,6 @@ void CHLClient::PostInit()
 	// protect end
 
 	SwapMapCommand();
-
-/*
-#ifdef HL2SB
-	std::string githubVersionStr;
-	std::string url = "/hl2sbpp/version.txt";
-
-	httplib::Client cli("http://direct.orange.maksw.pl");
-
-	//cli.set_read_timeout(5, 0);
-
-	httplib::Result res = cli.Get(url.c_str());
-	if (!res)
-	{
-		Warning("how did this happen?\n");
-	}
-	else
-	{
-		if (res && res->status == 200) {
-			githubVersionStr = res->body;
-
-			int githubVersion = std::atof(githubVersionStr.c_str());
-			int modVersion = std::atof(GetModVersion());
-
-			if (githubVersion > modVersion) {
-				vgui::MessageBox* pMessageBox = new vgui::MessageBox(
-					"Game Updater",
-					"You're playing on an outdated version. Please update!"
-				);
-				pMessageBox->DoModal();
-			}
-			else
-			{
-				Msg("Latest version detected, i guess...\n");
-			}
-		}
-		else
-		{
-			Warning("Unable to connect to servers: %d\n", res->status);
-		}
-	}
-#endif
-*/
 
 #ifdef HL1MP_CLIENT_DLL
 	if ( s_cl_load_hl1_content.GetBool() && steamapicontext && steamapicontext->SteamApps() )

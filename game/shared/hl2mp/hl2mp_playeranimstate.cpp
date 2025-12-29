@@ -13,6 +13,9 @@
 
 #ifdef CLIENT_DLL
 #include "c_hl2mp_player.h"
+#include "iclientvehicle.h"
+#include "animationlayer.h"
+#define IServerVehicle IClientVehicle
 #else
 #include "hl2mp_player.h"
 #include "iservervehicle.h"
@@ -111,33 +114,146 @@ Activity CHL2MPPlayerAnimState::TranslateActivity( Activity actDesired )
 		if ( danceAct != ACT_INVALID )
 			return danceAct;
 	}
-	
-	if ( pPlayer && pPlayer->IsInAVehicle() )
-	{
-#ifdef GAME_DLL
-		if ( CBaseEntity *pVehicle = pPlayer->GetVehicleEntity() )
-#endif
-		{
-#ifdef GAME_DLL
-			if ( FStrEq( pVehicle->GetClassname(), "prop_prisoner_pod" ) )
-				return ACT_HL2MP_IDLE; // standing
-#endif
 
-			return ACT_HL2MP_SIT;
-		}
-	}
-
-    if (pPlayer->GetMoveType() == MOVETYPE_NOCLIP)
-        return ACT_GMOD_NOCLIP_LAYER;
+	if ( HandleVehicle( actDesired ) )
+		return actDesired; // the vehicle act...
 
 #ifdef CLIENT_DLL
 	extern ConVar is_chatting;
 	if (is_chatting.GetBool())
+	{
+		int iLayer = -1;
+		int iSequence = pPlayer->SelectWeightedSequence(ACT_GMOD_IN_CHAT);
+		if (iSequence < 0 || iSequence >= pPlayer->GetModelPtr()->GetNumSeq())
+   			return actDesired;
+
+		for (int i = 0; i < pPlayer->GetNumAnimOverlays(); i++)
+		{
+			C_AnimationLayer *pLayer = pPlayer->GetAnimOverlay(i);
+			if (pLayer && pLayer->m_nSequence == iSequence && pLayer->m_flWeight > 0.0f)
+			{
+				iLayer = i;
+				break;
+			}
+		}
+		
+		if (iLayer == -1)
+		{
+			for (int i = 0; i < pPlayer->GetNumAnimOverlays(); i++)
+			{
+				C_AnimationLayer *pLayer = pPlayer->GetAnimOverlay(i);
+				if (pLayer && pLayer->m_flWeight < 0.001f)
+				{
+					pLayer->m_nSequence = iSequence;
+					pLayer->m_flCycle = 0.0f;
+					pLayer->m_flPrevCycle = 0.0f;
+					pLayer->m_flWeight = 1.0f;
+					pLayer->m_flPlaybackRate = 1.0f;
+					pLayer->m_nOrder = i;
+					pLayer->m_flLayerAnimtime = gpGlobals->curtime;
+					pLayer->m_flLayerFadeOuttime = 0.0f;
+					break;
+				}
+			}
+		}
+	}
+	else
+	{
+		int iSequence = pPlayer->SelectWeightedSequence(ACT_GMOD_IN_CHAT);
+		
+		if (iSequence != -1)
+		{
+			for (int i = 0; i < pPlayer->GetNumAnimOverlays(); i++)
+			{
+				C_AnimationLayer *pLayer = pPlayer->GetAnimOverlay(i);
+				if (pLayer && pLayer->m_nSequence == iSequence && pLayer->m_flWeight > 0.0f)
+				{
+					pLayer->m_flWeight = 0.0f;
+					pLayer->m_nSequence = 0;
+					break;
+				}
+			}
+		}
+	}
+
+	// noclip
+	if (pPlayer->GetMoveType() == MOVETYPE_NOCLIP && !pPlayer->IsInAVehicle())
+	{
+		int iLayer = -1;
+		int iSequence = pPlayer->SelectWeightedSequence(ACT_GMOD_NOCLIP_LAYER);
+		if (iSequence < 0 || iSequence >= pPlayer->GetModelPtr()->GetNumSeq())
+   			return actDesired;
+		
+		if (iSequence != -1)
+		{
+			for (int i = 0; i < pPlayer->GetNumAnimOverlays(); i++)
+			{
+				C_AnimationLayer *pLayer = pPlayer->GetAnimOverlay(i);
+				if (pLayer && pLayer->m_nSequence == iSequence && pLayer->m_flWeight > 0.0f)
+				{
+					iLayer = i;
+					break;
+				}
+			}
+
+			if (iLayer == -1)
+			{
+				for (int i = 0; i < pPlayer->GetNumAnimOverlays(); i++)
+				{
+					C_AnimationLayer *pLayer = pPlayer->GetAnimOverlay(i);
+					if (pLayer && pLayer->m_flWeight < 0.001f)
+					{
+						pLayer->m_nSequence = iSequence;
+						pLayer->m_flCycle = 0.0f;
+						pLayer->m_flPrevCycle = 0.0f;
+						pLayer->m_flWeight = 1.0f;
+						pLayer->m_flPlaybackRate = 1.0f;
+						pLayer->m_nOrder = 1;
+						pLayer->m_flLayerAnimtime = gpGlobals->curtime;
+						pLayer->m_flLayerFadeOuttime = 0.0f;
+						break;
+					}
+				}
+			}
+		}
+	}
+	else
+	{
+		int iSequence = pPlayer->SelectWeightedSequence(ACT_GMOD_NOCLIP_LAYER);
+		
+		if (iSequence != -1)
+		{
+			for (int i = 0; i < pPlayer->GetNumAnimOverlays(); i++)
+			{
+				C_AnimationLayer *pLayer = pPlayer->GetAnimOverlay(i);
+				if (pLayer && pLayer->m_nSequence == iSequence && pLayer->m_flWeight > 0.0f)
+				{
+					pLayer->m_flWeight = 0.0f;
+					pLayer->m_nSequence = 0;
+					break;
+				}
+			}
+		}
+	}
 #else
-	const char *is_chatting = engine->GetClientConVarValue( pPlayer->entindex(), "is_chatting" );
+	const char *is_chatting = engine->GetClientConVarValue(pPlayer->entindex(), "is_chatting");
 	if (atoi(is_chatting) == 1)
+	{
+		if (pPlayer->FindGestureLayer(ACT_GMOD_IN_CHAT) == -1)
+			pPlayer->AddGestureSequence(ACT_GMOD_IN_CHAT);
+	}
+	else
+		pPlayer->RemoveGesture(ACT_GMOD_IN_CHAT);
+
+	// noclip
+	if (pPlayer->GetMoveType() == MOVETYPE_NOCLIP && !pPlayer->IsInAVehicle())
+	{
+		if (pPlayer->FindGestureLayer(ACT_GMOD_NOCLIP_LAYER) == -1)
+			pPlayer->AddGestureSequence(ACT_GMOD_NOCLIP_LAYER);
+	}
+	else
+		pPlayer->RemoveGesture(ACT_GMOD_NOCLIP_LAYER);
 #endif
-		return ACT_GMOD_IN_CHAT;
 
 	// Hook into baseclass when / if hl2mp player models get swim animations.
 	Activity translateActivity = actDesired; //BaseClass::TranslateActivity( actDesired );
@@ -413,6 +529,13 @@ bool CHL2MPPlayerAnimState::HandleSwimming( Activity &idealActivity )
 	bool bInWater = BaseClass::HandleSwimming( idealActivity );
 
 	return bInWater;
+}
+
+bool CHL2MPPlayerAnimState::HandleVehicle( Activity &idealActivity )
+{
+	bool bInVehicle = BaseClass::HandleVehicle( idealActivity);
+
+	return bInVehicle;
 }
 
 //-----------------------------------------------------------------------------
@@ -787,6 +910,27 @@ void CHL2MPPlayerAnimState::ComputePoseParam_AimYaw( CStudioHdr *pStudioHdr )
 
 	GetBasePlayer()->SetAbsAngles( angle );
 #endif
+
+	ConvergeYawAngles( m_flGoalFeetYaw, 720.0f, gpGlobals->frametime, m_flCurrentFeetYaw );
+	m_flLastAimTurnTime = gpGlobals->curtime;
+
+	if ( GetBasePlayer()->IsInAVehicle())
+	{
+		IServerVehicle *vehicle = GetBasePlayer()->GetVehicle();
+		CBaseAnimating *ent = (CBaseAnimating*)vehicle->GetVehicleEnt();
+		Vector vVector;
+
+		int Attach = ent->LookupAttachment( "vehicle_driver_eyes" );
+		//int Attach = ent->LookupAttachment( "vehicle_feet_passenger0" );
+
+		if ( Attach != -1 )
+			ent->GetAttachment( Attach, vVector, m_angRender );
+	}
+	else
+	{
+		// Rotate the body into position.
+		m_angRender[YAW] = m_flCurrentFeetYaw;
+	}
 }
 
 //-----------------------------------------------------------------------------

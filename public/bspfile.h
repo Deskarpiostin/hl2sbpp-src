@@ -21,7 +21,7 @@
 #define IDBSPHEADER	(('P'<<24)+('S'<<16)+('B'<<8)+'V')		
 
 // MINBSPVERSION is the minimum acceptable version.  The engine will load MINBSPVERSION through BSPVERSION
-#define MINBSPVERSION 18
+#define MINBSPVERSION 10
 #define BSPVERSION 21
 
 
@@ -382,6 +382,11 @@ struct lump_t
 	int		uncompressedSize; // default to zero
 };
 
+struct hl_lump_t
+{
+	DECLARE_BYTESWAP_DATADESC();
+	int		fileofs, filelen;
+};
 
 struct dheader_t
 {
@@ -400,6 +405,13 @@ struct dflagslump_t
 {
 	DECLARE_BYTESWAP_DATADESC();
 	uint32 m_LevelFlags;						// LVLFLAGS_xxx
+};
+
+struct hl_BSPHeader_t
+{
+	DECLARE_BYTESWAP_DATADESC();
+	int			version;
+	hl_lump_t		lumps[15];
 };
 
 struct lumpfileheader_t

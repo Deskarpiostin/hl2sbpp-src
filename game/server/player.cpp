@@ -268,6 +268,10 @@ BEGIN_DATADESC( CBasePlayer )
 	DEFINE_UTLVECTOR( m_hTriggerSoundscapeList, FIELD_EHANDLE ),
 	DEFINE_EMBEDDED( pl ),
 
+#ifdef HL2SB
+	DEFINE_FIELD( m_bDrawPlayerModelExternally, FIELD_BOOLEAN ),
+#endif
+
 	DEFINE_FIELD( m_StuckLast, FIELD_INTEGER ),
 
 	DEFINE_FIELD( m_nButtons, FIELD_INTEGER ),
@@ -8261,24 +8265,14 @@ void SendProxy_CropFlagsToPlayerFlagBitsLength( const SendProp *pProp, const voi
 		SendPropFloat		( SENDINFO( m_flConstraintSpeedFactor ), 0, SPROP_NOSCALE ),
 
 #ifdef HL2SB
-
-
 		// adnan
-
-
 		// send the use angles
-
-
 		// set when the player presses use
-
-
 		SendPropVector		( SENDINFO( m_vecUseAngles ), 0, SPROP_NOSCALE ),
-
-
 		// end adnan
 
-
-#endif // AS_DLL
+		SendPropBool		( SENDINFO( m_bDrawPlayerModelExternally ) ),
+#endif // HL2SB
 
 		SendPropFloat		( SENDINFO( m_flDeathTime ), 0, SPROP_NOSCALE ),
 

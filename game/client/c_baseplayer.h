@@ -181,6 +181,18 @@ public:
 	// Team handlers
 	virtual void	TeamChange( int iNewTeam );
 
+#ifdef HL2SB
+	bool						InPerspectiveView() const;	// In a view that renders directly from the player's perspective (and may, for example, render the playermodel)
+	bool						DrawingPlayerModelExternally() const {return true;}
+	bool						DrawingLegs() const {return false;}
+
+	//virtual CStudioHdr			*OnNewModel( void );
+	//virtual void				BuildTransformations( CStudioHdr *pStudioHdr, Vector *pos, Quaternion q[], const matrix3x4_t &cameraTransform, int boneMask, CBoneBitList &boneComputed );
+
+	// Allows the player's model to draw on non-main views, like monitors or mirrors.
+	bool			m_bDrawPlayerModelExternally = true;
+#endif
+
 	// Flashlight
 	void	Flashlight( void );
 	void	UpdateFlashlight( void );

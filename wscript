@@ -7,6 +7,8 @@ from waflib import Logs, Context, Configure
 import sys
 import os
 
+sys.path.insert(0, os.path.join(os.getcwd(), 'scripts', 'waflib'))
+
 VERSION = '1.0'
 APPNAME = 'source-engine'
 top = '.'
@@ -254,45 +256,43 @@ def options(opt):
 	grp = opt.add_option_group('Common options')
 
 	grp.add_option('-8', '--64bits', action = 'store_true', dest = 'ALLOW64', default = False,
-		help = 'allow targetting 64-bit engine(Linux/Windows/OSX x86 only) [default: %default]')
+		help = 'allow targetting 64-bit engine(Linux/Windows/OSX x86 only) [default: %(default)s]')
 
 	grp.add_option('-d', '--dedicated', action = 'store_true', dest = 'DEDICATED', default = False,
-		help = 'build dedicated server [default: %default]')
+		help = 'build dedicated server [default: %(default)s]')
 
 	grp.add_option('--tests', action = 'store_true', dest = 'TESTS', default = False,
-		help = 'build unit tests [default: %default]')
+		help = 'build unit tests [default: %(default)s]')
 
 	grp.add_option('-D', '--debug-engine', action = 'store_true', dest = 'DEBUG_ENGINE', default = False,
-		help = 'build with -DDEBUG [default: %default]')
+		help = 'build with -DDEBUG [default: %(default)s]')
 
-	grp.add_option('--use-sdl', action = 'store', dest = 'SDL', type = 'int', default = sys.platform != 'win32',
-		help = 'build engine with SDL [default: %default]')
+	grp.add_option('--use-sdl', action = 'store', dest = 'SDL', type = int, default = int(sys.platform != 'win32'),
+		help = 'build engine with SDL [default: %(default)s]')
 
-	grp.add_option('--use-togl', action = 'store', dest = 'GL', type = 'int', default = sys.platform != 'win32',
-		help = 'build engine with ToGL [default: %default]')
+	grp.add_option('--use-togl', action = 'store', dest = 'GL', type = int, default = int(sys.platform != 'win32'),
+		help = 'build engine with ToGL [default: %(default)s]')
 
-	grp.add_option('--build-games', action = 'store', dest = 'GAMES', type = 'string', default = 'hl2',
-		help = 'build games [default: %default]')
+	grp.add_option('--build-games', action = 'store', dest = 'GAMES', type = str, default = 'hl2sbpp',
+		help = 'build games [default: %(default)s]')
 
 	grp.add_option('--use-ccache', action = 'store_true', dest = 'CCACHE', default = False,
-		help = 'build using ccache [default: %default]')
+		help = 'build using ccache [default: %(default)s]')
 
 	grp.add_option('--disable-warns', action = 'store_true', dest = 'DISABLE_WARNS', default = False,
-		help = 'build using ccache [default: %default]')
+		help = 'build using ccache [default: %(default)s]')
 
 	grp.add_option('--togles', action = 'store_true', dest = 'TOGLES', default = False,
-		help = 'build engine with ToGLES [default: %default]')
+		help = 'build engine with ToGLES [default: %(default)s]')
 
 	# TODO(nillerusr): add wscript for opus building
 	grp.add_option('--enable-opus', action = 'store_true', dest = 'OPUS', default = False,
-		help = 'build engine with Opus voice codec [default: %default]')
+		help = 'build engine with Opus voice codec [default: %(default)s]')
 
 	grp.add_option('--sanitize', action = 'store', dest = 'SANITIZE', default = '',
-		help = 'build with sanitizers [default: %default]')
+		help = 'build with sanitizers [default: %(default)s]')
 
-	opt.load('compiler_optimizations subproject')
-
-	opt.load('xcompile compiler_cxx compiler_c sdl2 clang_compilation_database strip_on_install_v2 waf_unit_test subproject')
+	opt.load('subproject xcompile compiler_optimizations compiler_cxx compiler_c sdl2 clang_compilation_database')
 	if sys.platform == 'win32':
 		opt.load('msvc msdev msvs')
 	opt.load('reconfigure')
@@ -514,8 +514,12 @@ def configure(conf):
 			'/Zc:wchar_t',
 			'/GR',
 			'/TP',
-			'/EHsc'
+			'/EHsc',
+			'/MP'
 		]
+
+		if conf.options.BUILD_TYPE == 'release':
+			cflags += ['/GF', '/Gy', '/GR']
 
 		if conf.options.BUILD_TYPE == 'debug':
 			linkflags += [

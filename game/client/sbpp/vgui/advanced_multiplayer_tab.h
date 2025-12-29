@@ -67,6 +67,16 @@ private:
 	int			 m_iTarget;
 };
 
+class CMDLPanelAdv : public CMDLPanel
+{
+	DECLARE_CLASS_SIMPLE( CMDLPanelAdv, CMDLPanel );
+
+public:
+    CMDLPanelAdv( vgui::Panel *pParent, const char *pName );
+
+	void PlayActivity(Activity activity);
+};
+
 class CAdvancedOptionsMultiplayer : public vgui::PropertyPage
 {
 	DECLARE_CLASS_SIMPLE( CAdvancedOptionsMultiplayer, vgui::PropertyPage );
@@ -95,7 +105,7 @@ protected:
 private:
 	vgui::Label				  *m_pNameLabel;
 	vgui::TextEntry			  *m_pNameEntry;
-	CMDLPanel				  *m_pPMModel;
+	CMDLPanelAdv				  *m_pPMModel;
 	vgui::Panel				  *m_pVerticalSeparator;
 	vgui::ComboBox			  *m_pPMSelector;
 	std::vector< std::string > m_PMPaths;

@@ -69,19 +69,16 @@ static bool GetFieldRemoveTable(lua_State *L, const char *key)
         lua_pop(L, 1);
         return false;
     }
-
-    lua_getfield(L, -1, key); // push table[key]
-
-    if (lua_istable(L, -2))
+    
+    lua_getfield(L, -1, key); // table[key]
+    
+    if (lua_isnil(L, -1))
     {
-        lua_remove(L, -2);
-    }
-    else
-    {
-        lua_pop(L, 1);
+        lua_pop(L, 2);
         return false;
     }
 
+    lua_remove(L, -2);
     return true;
 }
 #endif
@@ -259,7 +256,7 @@ void CHL2MPScriptedWeapon::InitScriptedWeapon( void )
 			
 			if ( !lua_istable( L, -1 ) )
 			{
-				Warning( "weapon.get('%s') did not return a table!\n", className );
+				//Warning( "weapon.get('%s') did not return a table!\n", className );
 				lua_pop( L, 1 );
 				lua_newtable( L );
 			}
@@ -267,14 +264,14 @@ void CHL2MPScriptedWeapon::InitScriptedWeapon( void )
 		else
 		{
 			lua_pop( L, 2 );
-			Warning( "weapon.get is not a function!\n" );
+			//Warning( "weapon.get is not a function!\n" );
 			lua_newtable( L );
 		}
 	}
 	else
 	{
 		lua_pop( L, 1 );
-		Warning( "weapon global is not a table!\n" );
+		//Warning( "weapon global is not a table!\n" );
 		lua_newtable( L );
 	}
 

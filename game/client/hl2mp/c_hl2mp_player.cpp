@@ -357,6 +357,11 @@ int C_HL2MP_Player::DrawModel( int flags )
 	if ( !m_bReadyToDraw )
 		return 0;
 
+#ifdef HL2SB
+	if ( InPerspectiveView() )
+		UpdateLookAt();
+#endif
+
     return BaseClass::DrawModel(flags);
 }
 

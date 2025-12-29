@@ -309,6 +309,41 @@ static void ApplyColorToConvarsByTarget( int target, int r, int g, int b )
 	}
 }
 
+CMDLPanelAdv::CMDLPanelAdv( vgui::Panel *pParent, const char *pName )
+    : CMDLPanel( pParent, pName )
+{
+}
+
+void CMDLPanelAdv::PlayActivity(Activity activity)
+{
+	MDLHandle_t h = m_RootMDL.m_MDL.GetMDL();
+	if (h == MDLHANDLE_INVALID) return;
+   
+	studiohdr_t *pStudioHdr = mdlcache->GetStudioHdr( h );
+	if ( !pStudioHdr ) return;
+
+	CStudioHdr hdr( pStudioHdr, mdlcache );
+
+	int bestSeq = -1;
+	int numSeq = hdr.GetNumSeq();
+
+	for ( int i = 0; i < numSeq; i++ )
+	{
+		const mstudioseqdesc_t &seq = hdr.pSeqdesc(i);
+
+		if ( seq.activity == activity )
+		{
+			bestSeq = i;
+			break;
+		}
+	}
+
+	if ( bestSeq >= 0 )
+		SetSequence( bestSeq, true );
+	else
+		DevWarning("no seq for act %d\n", (int)activity);
+}
+
 CAdvancedOptionsMultiplayer::CAdvancedOptionsMultiplayer( Panel *parent, const char *panelName ) :
 	BaseClass( parent, panelName ),
 	m_pPlayerColorBtn( nullptr ),
@@ -318,7 +353,7 @@ CAdvancedOptionsMultiplayer::CAdvancedOptionsMultiplayer( Panel *parent, const c
 {
 	m_pNameLabel = new Label( this, "NameLabel", "Player Name:" );
 	m_pNameEntry = new TextEntry( this, "NameEntry" );
-	m_pPMModel = new CMDLPanel( this, "PMModel" );
+	m_pPMModel = new CMDLPanelAdv( this, "PMModel" );
 
 	m_pNameEntry->SetAllowNonAsciiCharacters( true );
 	m_pNameEntry->SetMaximumCharCount( 32 );
@@ -375,13 +410,19 @@ CAdvancedOptionsMultiplayer::CAdvancedOptionsMultiplayer( Panel *parent, const c
 
 void CAdvancedOptionsMultiplayer::PopulatePlayerModels()
 {
-	m_PMPaths.clear();
+	if ( !m_PMPaths.empty() )
+        return;
+	
 	if ( !m_pPMSelector )
 		return;
+
+	m_PMPaths.clear();
 	m_pPMSelector->DeleteAllItems();
 
 	std::vector< std::string > dirs = { "models/player" };
 
+	char fullPathBuffer[MAX_PATH];
+	
 	while ( !dirs.empty() )
 	{
 		std::string path = dirs.back();
@@ -391,21 +432,18 @@ void CAdvancedOptionsMultiplayer::PopulatePlayerModels()
 
 		while ( file )
 		{
-			if ( Q_stricmp( file, "." ) && Q_stricmp( file, ".." ) )
+			if ( file[0] != '.' )
 			{
-				std::string fullPath = path + "/" + file;
+				Q_snprintf( fullPathBuffer, sizeof( fullPathBuffer ), "%s/%s", path.c_str(), file );
 
-				FileFindHandle_t subfh;
-				const char		*test = g_pFullFileSystem->FindFirst( ( fullPath + "/*" ).c_str(), &subfh );
-				if ( test )
+				if ( g_pFullFileSystem->IsDirectory( fullPathBuffer ) )
 				{
-					dirs.push_back( fullPath );
-					g_pFullFileSystem->FindClose( subfh );
+					dirs.push_back( fullPathBuffer );
 				}
-				else if ( Q_stristr( file, ".mdl" ) )
+				else if ( V_stristr( file, ".mdl" ) )
 				{
-					m_PMPaths.push_back( fullPath );
-					m_pPMSelector->AddItem( fullPath.c_str(), nullptr );
+					m_PMPaths.push_back( fullPathBuffer );
+					m_pPMSelector->AddItem( fullPathBuffer, nullptr );
 				}
 			}
 			file = g_pFullFileSystem->FindNext( fh );
@@ -501,6 +539,9 @@ void CAdvancedOptionsMultiplayer::PopulatePlayerModels()
 		{
 			m_pPMModel->SetMDL( m_PMPaths[foundIndex].c_str() );
 			m_pPMModel->LookAtMDL();
+
+			// this is a sort-of benchmark to see if model has anims
+			m_pPMModel->PlayActivity( ACT_HL2MP_IDLE );
 		}
 	}
 }
@@ -576,6 +617,9 @@ void CAdvancedOptionsMultiplayer::OnTick()
 		{
 			m_pPMModel->SetMDL( modelPath );
 			m_pPMModel->LookAtMDL();
+
+			// this is a sort-of benchmark to see if model has anims
+			m_pPMModel->PlayActivity( ACT_HL2MP_IDLE );
 		}
 	}
 

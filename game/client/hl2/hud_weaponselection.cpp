@@ -728,6 +728,9 @@ void CHudWeaponSelection::Paint()
 					//	ypos += (largeBoxTall + m_flBoxGap);
 					bDrawBucketNumber = false;
 #else
+						// hack
+						slotpos = Clamp(slotpos, 0, 255);
+
 						int iWeaponsInSlotPos = GetNumberOfWeaponsInSlotPos( i, slotpos );
 
 						if ( iWeaponsInSlotPos == 0 )

@@ -64,14 +64,18 @@
 	  args = 2;
 
 #define END_LUA_CALL_HOOK(nArgs, nresults) \
-	  args += nArgs; \
-	  luasrc_pcall(L, args, nresults, 0); \
-	} \
-	else \
-	  lua_pop(L, 2); \
+      args += nArgs; \
+      if (luasrc_pcall(L, args, nresults, 0) != 0) { \
+        lua_settop(L, 0); /* error */ \
+      } \
+    } \
+    else { \
+      lua_pop(L, 2); \
+    } \
   } \
-  else \
-    lua_pop(L, 1);
+  else { \
+    lua_pop(L, 1); \
+  }
 
 #define BEGIN_LUA_CALL_WEAPON_METHOD(functionName) \
   lua_getref(L, m_nTableReference); \

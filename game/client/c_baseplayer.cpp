@@ -49,6 +49,9 @@
 #include "steam/steam_api.h"
 #include "sourcevr/isourcevirtualreality.h"
 #include "client_virtualreality.h"
+#ifdef HL2SB
+#include "viewrender.h"
+#endif
 
 #if defined USES_ECON_ITEMS
 #include "econ_wearable.h"
@@ -247,6 +250,8 @@ END_RECV_TABLE()
 		// get the use angles
 		RecvPropVector		( RECVINFO( m_vecUseAngles ) ),
 		// end adnan
+
+		RecvPropBool		( RECVINFO( m_bDrawPlayerModelExternally ) ),
 #endif
 
 		RecvPropInt			( RECVINFO( m_nWaterLevel ) ),
@@ -1426,14 +1431,51 @@ bool C_BasePlayer::ShouldInterpolate()
 	return BaseClass::ShouldInterpolate();
 }
 
+#ifdef HL2SB
+bool C_BasePlayer::InPerspectiveView() const
+{
+	// VIEW_NONE is used by the water intersection view, see CAboveWaterView::CIntersectionView::Draw()
+	// (TODO: Consider changing the view ID at the source to VIEW_REFRACTION? VIEW_NONE could be an oversight)
+	view_id_t viewID = CurrentViewID();
+	return (viewID == VIEW_MAIN || viewID == VIEW_INTRO_CAMERA || viewID == VIEW_REFRACTION || viewID == VIEW_NONE);
+}
+#endif
 
 bool C_BasePlayer::ShouldDraw()
 {
+#ifdef HL2SB
+	// We have to "always draw" a player with m_bDrawPlayerModelExternally in order to show up in whatever rendering list all of the views use, 
+	// but we can't put this in ShouldDrawThisPlayer() because we would have no way of knowing if it stomps the other checks that draw the player model anyway.
+	// As a result, we have to put it here in the central ShouldDraw() function. DrawModel() makes sure we only draw in non-main views and nothing's drawing the model anyway.
+	return (ShouldDrawThisPlayer() || DrawingPlayerModelExternally() || DrawingLegs()) && BaseClass::ShouldDraw();
+#else
 	return ShouldDrawThisPlayer() && BaseClass::ShouldDraw();
+#endif
 }
 
 int C_BasePlayer::DrawModel( int flags )
 {
+#ifdef HL2SB
+	if (DrawingLegs() && InFirstPersonView() && InPerspectiveView())
+	{
+		return BaseClass::DrawModel( flags );
+	}
+
+	if (DrawingPlayerModelExternally())
+	{
+		// Draw the player in any view except the main or "intro" view, both of which are default first-person views.
+		// HACKHACK: Also don't draw in shadow depth textures if the player's flashlight is on, as that causes the playermodel to block it.
+		if (InPerspectiveView() || (CurrentViewID() == VIEW_SHADOW_DEPTH_TEXTURE && IsEffectActive(EF_DIMLIGHT)))
+		{
+			// Make sure the player model wouldn't draw anyway...
+			if (!ShouldDrawThisPlayer())
+				return 0;
+		}
+
+		return BaseClass::DrawModel( flags );
+	}
+#endif
+
 #ifndef PORTAL
 	// In Portal this check is already performed as part of
 	// C_Portal_Player::DrawModel()
@@ -2917,13 +2959,21 @@ void C_BasePlayer::BuildFirstPersonMeathookTransformations( CStudioHdr *hdr, Vec
 		return;
 	}
 
+#ifdef HL2SB
+	if ( !ShouldDrawThisPlayer() && !DrawingPlayerModelExternally() && !DrawingLegs() )
+#else
 	if ( !DrawingMainView() )
+#endif
 	{
 		return;
 	}
 
 	// If we aren't drawing the player anyway, don't mess with the bones. This can happen in Portal.
+#ifdef HL2SB
+	if ( !ShouldDrawThisPlayer() && !DrawingPlayerModelExternally() && !DrawingLegs() )
+#else
 	if( !ShouldDrawThisPlayer() )
+#endif
 	{
 		return;
 	}
