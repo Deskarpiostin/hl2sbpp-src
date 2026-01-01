@@ -118,8 +118,14 @@ void IVP_Core::get_diff_surface_speed_of_two_cores_on_test(const IVP_Core *this_
 }
 
 // @ThePixelMoon: ugly
-#ifndef _WIN32
+#if defined(POSIX) && !defined(OSX)
 #define _finite finite
+#elif defined(OSX)
+// @DecalOverdose: OSX (that hopefully has this)
+static inline int _finite(float a)
+{
+	return std::__math::isfinite(a);
+}
 #endif
 
 IVP_DOUBLE IVP_Core::calc_virt_mass_worst_case(const IVP_U_Float_Point *core_point) const {
