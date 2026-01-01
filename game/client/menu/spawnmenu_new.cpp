@@ -294,7 +294,7 @@ int CPngPropertySheet::LoadPNGTexture(const char* pngPath)
         stbi_image_free(image);
     }
 
-    m_textureCache.insert_or_assign(pngPath, texId);
+	m_textureCache[pngPath] = texId;
     
     DevMsg("CPngPropertySheet: Loaded texture '%s' (%dx%d -> %dx%d) -> ID %d\n", pngPath, width, height, finalW, finalH, texId);
     
