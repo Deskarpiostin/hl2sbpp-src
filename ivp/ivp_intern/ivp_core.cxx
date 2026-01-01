@@ -126,7 +126,6 @@ static inline int _finite(float a)
 {
 	return std::__math::isfinite(a);
 }
-#define _finite finite
 #endif
 
 IVP_DOUBLE IVP_Core::calc_virt_mass_worst_case(const IVP_U_Float_Point *core_point) const {
