@@ -13,7 +13,7 @@
 #include <GameUI/IGameUI.h>
 #include <vgui_controls/Label.h>
 #include "filesystem.h"
-#include "tier1/keyvalues.h"
+#include "tier1/KeyValues.h"
 
 #include "basepanel.h"
 
