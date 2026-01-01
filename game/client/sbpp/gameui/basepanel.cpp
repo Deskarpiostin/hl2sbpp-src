@@ -10,7 +10,7 @@
 #include <vgui/IScheme.h>
 #include <ienginevgui.h>
 #include <vgui_controls/Panel.h>
-#include <gameui/IGameUI.h>
+#include <GameUI/IGameUI.h>
 #include <vgui_controls/Label.h>
 #include "filesystem.h"
 #include "tier1/keyvalues.h"
