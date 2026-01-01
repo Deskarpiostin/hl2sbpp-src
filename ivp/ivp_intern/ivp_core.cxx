@@ -121,10 +121,10 @@ void IVP_Core::get_diff_surface_speed_of_two_cores_on_test(const IVP_Core *this_
 #if defined(POSIX) && !defined(OSX)
 #define _finite finite
 #elif defined(OSX)
-// OSX (that hopefully has this)
+// @DecalOverdose: OSX (that hopefully has this)
 static inline int _finite(float a)
 {
-	return std::isfinite(a);
+	return std::__math::isfinite(a);
 }
 #define _finite finite
 #endif
