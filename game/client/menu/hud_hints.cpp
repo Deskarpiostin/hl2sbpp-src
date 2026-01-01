@@ -86,26 +86,31 @@ void NoticePanel::SetLegacyType( int t )
 
 	switch ( m_nType )
 	{
-	case NOTIFY_GENERIC:
-	{
-		m_pImage->SetImage( "notices/generic" );
-	}
-	case NOTIFY_ERROR:
-	{
-		m_pImage->SetImage( "notices/error" );
-	}
-	case NOTIFY_UNDO:
-	{
-		m_pImage->SetImage( "notices/undo" );
-	}
-	case NOTIFY_CLEANUP:
-	{
-		m_pImage->SetImage( "notices/cleanup" );
-	}
-	default:
-	{
-		m_pImage->SetImage( "notices/hint" );
-	}
+		case NOTIFY_GENERIC:
+		{
+			m_pImage->SetImage( "notices/generic" );
+			break;
+		}
+		case NOTIFY_ERROR:
+		{
+			m_pImage->SetImage( "notices/error" );
+			break;
+		}
+		case NOTIFY_UNDO:
+		{
+			m_pImage->SetImage( "notices/undo" );
+			break;
+		}
+		case NOTIFY_CLEANUP:
+		{
+			m_pImage->SetImage( "notices/cleanup" );
+			break;
+		}
+		default:
+		{
+			m_pImage->SetImage( "notices/hint" );
+			break;
+		}
 	}
 	InvalidateLayout();
 }
