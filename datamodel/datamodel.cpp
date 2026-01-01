@@ -151,7 +151,7 @@ InitReturnVal_t CDataModel::Init( )
 //#define _ELEMENT_HISTOGRAM_
 #ifdef _ELEMENT_HISTOGRAM_
 CUtlMap< UtlSymId_t, int > g_typeHistogram( 0, 100, DefLessFunc( UtlSymId_t ) );
-#endif _ELEMENT_HISTOGRAM_
+#endif //_ELEMENT_HISTOGRAM_
 
 
 //-----------------------------------------------------------------------------
@@ -166,7 +166,7 @@ void CDataModel::Shutdown()
 		Msg( "%d\t%s\n", g_typeHistogram.Element( i ), GetString( g_typeHistogram.Key( i ) ) );
 	}
 	Msg( "\n" );
-#endif _ELEMENT_HISTOGRAM_
+#endif //_ELEMENT_HISTOGRAM_
 
 	int c = GetAllocatedElementCount();
 	if ( c > 0 )
