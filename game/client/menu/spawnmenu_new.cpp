@@ -214,7 +214,7 @@ int CPngPropertySheet::LoadPNGTexture(const char* pngPath)
             surface()->DrawSetTextureFile(texId, pathNoExt, false, true);
         }
 
-        m_textureCache.insert_or_assign(pngPath, texId);
+        m_textureCache[pngPath] = texId;
         DevMsg("CPngPropertySheet: Loaded material '%s' -> ID %d\n", pathNoExt, texId);
         return texId;
     }
@@ -317,7 +317,7 @@ void CPngPropertySheet::AddPageWithPNGIcon( Panel *page, const char *title, cons
 			info.height = 16;
 			info.path = pngPath;
 
-			m_tabIcons.insert_or_assign(pageIndex, info);
+			m_tabIcons[pageIndex] = info;
 		}
 	}
 }
